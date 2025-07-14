@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can only access their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Garage isolation - users can only access data from their garage
+    match /garages/{garageId} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == garageId;
+    }
+    
+    // Clients - only accessible by users from the same garage
+    match /clients/{clientId} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+    }
+    
+    // Vehicles - only accessible by users from the same garage
+    match /vehicles/{vehicleId} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+    }
+    
+    // Visits - only accessible by users from the same garage
+    match /visits/{visitId} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+    }
+    
+    // Diagnostics - only accessible by users from the same garage
+    match /diagnostics/{diagnosticId} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+    }
+    
+    // Quotes - only accessible by users from the same garage
+    match /quotes/{quoteId} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+    }
+    
+    // Interventions - only accessible by users from the same garage
+    match /interventions/{interventionId} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+    }
+    
+    // Invoices - only accessible by users from the same garage
+    match /invoices/{invoiceId} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+    }
+    
+    // Payments - only accessible by users from the same garage
+    match /payments/{paymentId} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+    }
+    
+    // Reports - only accessible by users from the same garage
+    match /reports/{reportId} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+    }
+  }
+}

@@ -1,0 +1,241 @@
+import { Component, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Diagnostic } from '../../models/diagnostic.model';
+import { Client, Vehicle, Visit } from '../../models/client.model';
+import { GarageDataService } from '../../services/garage-data.service';
+import { NotificationService } from '../../services/notification.service';
+import { PDFService } from '../../services/pdf.service';
+import { Personnel } from '../../models/garage.model';
+import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+
+
+@Component({
+  selector: 'app-diagnostic-detail',
+  standalone: true,
+  imports: [CommonModule, RouterModule, FirestoreDatePipe],
+  template: `
+    <div class="space-y-6" *ngIf="diagnostic">
+      <div class="md:flex md:items-center md:justify-between">
+        <div class="flex-1 min-w-0">
+          <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+            Diagnostic Report
+          </h2>
+          <p class="text-lg text-gray-600">{{ diagnostic.category }} - {{ diagnostic.createdAt | firestoreDate | date:'full' }}</p>
+        </div>
+        <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
+          <button
+            (click)="downloadPDF()"
+            class="btn-secondary"
+          >
+            Download PDF
+          </button>
+          <button
+            [routerLink]="['/quotes/create', diagnostic.id]"
+            class="btn-primary"
+            *ngIf="diagnostic.finalDecision === 'Repair'"
+          >
+            Create Quote
+          </button>
+        </div>
+      </div>
+
+      <!-- Vehicle & Client Info -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card" *ngIf="client">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Client Information</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="text-sm font-medium text-gray-500">Name</label>
+              <p class="mt-1 text-sm text-gray-900">{{ client.firstName }} {{ client.lastName }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Phone</label>
+              <p class="mt-1 text-sm text-gray-900">{{ client.phone }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Email</label>
+              <p class="mt-1 text-sm text-gray-900">{{ client.email }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" *ngIf="vehicle">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Vehicle Information</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="text-sm font-medium text-gray-500">Vehicle</label>
+              <p class="mt-1 text-sm text-gray-900">{{ vehicle.brand }} {{ vehicle.model }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">License Plate</label>
+              <p class="mt-1 text-sm text-gray-900">{{ vehicle.licensePlate }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Year</label>
+              <p class="mt-1 text-sm text-gray-900">{{ vehicle.year }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Diagnostic Details -->
+      <div class="card">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Diagnostic Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div>
+            <label class="text-sm font-medium text-gray-500">Category</label>
+            <p class="mt-1 text-sm text-gray-900">{{ diagnostic.category }}</p>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500">Technician</label>
+            <p class="mt-1 text-sm text-gray-900" *ngIf="technician">
+              {{ technician.firstName }} {{ technician.lastName }}
+            </p>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500">Final Decision</label>
+            <p class="mt-1">
+              <span class="status-badge" [ngClass]="getDecisionClass(diagnostic.finalDecision)">
+                {{ diagnostic.finalDecision }}
+              </span>
+            </p>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500">Date</label>
+            <p class="mt-1 text-sm text-gray-900">{{ diagnostic.createdAt | firestoreDate | date:'medium' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Diagnostic Checks -->
+      <div class="card">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Diagnostic Checks</h3>
+        <div class="space-y-4">
+          <div *ngFor="let check of diagnostic.checks; let i = index"
+               class="border rounded-lg p-4"
+               [ngClass]="check.compliant ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <h4 class="font-medium text-gray-900">{{ check.description }}</h4>
+                <div class="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span class="text-gray-500">Status:</span>
+                    <span class="ml-1" [ngClass]="check.compliant ? 'text-green-600' : 'text-red-600'">
+                      {{ check.compliant ? 'Compliant' : 'Non-Compliant' }}
+                    </span>
+                  </div>
+                  <div>
+                    <span class="text-gray-500">Severity:</span>
+                    <span class="ml-1" [ngClass]="getSeverityClass(check.severityLevel)">
+                      {{ check.severityLevel }}
+                    </span>
+                  </div>
+                  <div *ngIf="check.quantity">
+                    <span class="text-gray-500">Quantity:</span>
+                    <span class="ml-1 text-gray-900">{{ check.quantity }}</span>
+                  </div>
+                  <div>
+                    <span class="text-gray-500">Post-Repair:</span>
+                    <span class="ml-1 text-gray-900">{{ check.postRepairVerification ? 'Yes' : 'No' }}</span>
+                  </div>
+                </div>
+                <div *ngIf="check.comments" class="mt-2">
+                  <span class="text-gray-500">Comments:</span>
+                  <p class="mt-1 text-sm text-gray-900">{{ check.comments }}</p>
+                </div>
+              </div>
+              <div class="ml-4">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium"
+                      [ngClass]="check.compliant ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'">
+                  {{ check.compliant ? '✓' : '✗' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="card">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Summary</h3>
+        <p class="text-gray-900 whitespace-pre-wrap">{{ diagnostic.summary }}</p>
+      </div>
+    </div>
+  `
+})
+export class DiagnosticDetailComponent implements OnInit {
+  diagnostic: Diagnostic | null = null;
+  visit: Visit | null = null;
+  client: Client | null = null;
+  vehicle: Vehicle | null = null;
+  diagnosticId: string | null = null;
+  technician: Personnel | null = null;
+
+  constructor(
+    private garageDataService: GarageDataService,
+    private notificationService: NotificationService,
+    private pdfService: PDFService,
+    private route: ActivatedRoute
+  ) {}
+
+  async ngOnInit(): Promise<void> {
+    this.diagnosticId = this.route.snapshot.paramMap.get('id');
+    if (this.diagnosticId) {
+      await this.loadDiagnosticData();
+    }
+  }
+
+  private async loadDiagnosticData(): Promise<void> {
+    try {
+      this.diagnostic = await this.garageDataService.getById<Diagnostic>('diagnostics', this.diagnosticId!);
+
+      if (this.diagnostic) {
+        [this.visit, this.vehicle, this.technician] = await Promise.all([
+          this.garageDataService.getById<Visit>('visits', this.diagnostic.visitId),
+          this.garageDataService.getById<Vehicle>('vehicles', this.diagnostic.vehicleId),
+          this.garageDataService.getById<Personnel>('personnel', this.diagnostic.technicianId)
+        ]);
+
+        if (this.visit) {
+          this.client = await this.garageDataService.getById<Client>('clients', this.visit.clientId);
+        }
+      }
+    } catch (error) {
+      this.notificationService.showError('Failed to load diagnostic data');
+    }
+  }
+
+  async downloadPDF(): Promise<void> {
+    if (!this.diagnostic || !this.client || !this.vehicle) return;
+
+    try {
+      const clientName = `${this.client.firstName} ${this.client.lastName}`;
+      const vehicleInfo = `${this.vehicle.brand} ${this.vehicle.model} (${this.vehicle.licensePlate})`;
+
+      await this.pdfService.generateDiagnosticReportPDF(this.diagnostic, clientName, vehicleInfo);
+      this.notificationService.showSuccess('PDF downloaded successfully');
+    } catch (error) {
+      this.notificationService.showError('Failed to generate PDF');
+    }
+  }
+
+  getDecisionClass(decision: string): string {
+    switch (decision) {
+      case 'Repair': return 'status-accepted';
+      case 'Monitor': return 'status-pending';
+      case 'NonRepairable': return 'status-rejected';
+      default: return 'status-pending';
+    }
+  }
+
+  getSeverityClass(severity: string): string {
+    switch (severity) {
+      case 'Low': return 'text-green-600';
+      case 'Medium': return 'text-yellow-600';
+      case 'High': return 'text-orange-600';
+      case 'Critical': return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  }
+}
