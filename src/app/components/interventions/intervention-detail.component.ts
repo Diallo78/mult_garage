@@ -14,6 +14,11 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
   standalone: true,
   imports: [CommonModule, RouterModule, ReactiveFormsModule, FirestoreDatePipe],
   template: `
+    <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
+  </div>
+
+  <div *ngIf="!isLoading">
     <div class="space-y-6" *ngIf="intervention">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
@@ -209,6 +214,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
         <p class="text-gray-900 whitespace-pre-wrap">{{ intervention.finalReport }}</p>
       </div>
     </div>
+    </div>
   `
 })
 export class InterventionDetailComponent implements OnInit {
@@ -217,7 +223,7 @@ export class InterventionDetailComponent implements OnInit {
   client: Client | null = null;
   vehicle: Vehicle | null = null;
   interventionId: string | null = null;
-
+  isLoading = true;
   constructor(
     private readonly garageDataService: GarageDataService,
     private readonly notificationService: NotificationService,
@@ -232,6 +238,7 @@ export class InterventionDetailComponent implements OnInit {
   }
 
   private async loadInterventionData(): Promise<void> {
+    this.isLoading = true
     try {
       this.intervention = await this.garageDataService.getById<Intervention>('interventions', this.interventionId!);
 
@@ -247,6 +254,8 @@ export class InterventionDetailComponent implements OnInit {
       }
     } catch (error) {
       this.notificationService.showError('Failed to load intervention data');
+    }finally{
+      this.isLoading = false
     }
   }
 

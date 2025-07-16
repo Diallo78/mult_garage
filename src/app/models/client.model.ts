@@ -1,6 +1,7 @@
 export interface Client {
   id: string;
   garageId: string;
+  userId?: string; // Référence vers User dans Firebase Auth
   firstName: string;
   lastName: string;
   phone: string;

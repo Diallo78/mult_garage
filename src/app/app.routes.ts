@@ -4,16 +4,33 @@ import { AuthGuard } from './guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/garage-setup',
+    redirectTo: '/login',
     pathMatch: 'full'
   },
-  {
-    path: 'garage-setup',
-    loadComponent: () => import('./components/garage/garage-setup.component').then(m => m.GarageSetupComponent)
-  },
+
   {
     path: 'login',
     loadComponent: () => import('./components/auth/login.component').then(m => m.LoginComponent)
+  },
+  // Client Portal Routes
+  {
+    path: 'client',
+    canActivate: [AuthGuard],
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./components/client-portal/client-dashboard.component').then(m => m.ClientDashboardComponent)
+      },
+      {
+        path: 'quotes',
+        loadComponent: () => import('./components/client-portal/client-quotes.component').then(m => m.ClientQuotesComponent)
+      },
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      }
+    ]
   },
   {
     path: '',
@@ -147,6 +164,14 @@ export const routes: Routes = [
       {
         path: 'personnel/:id/edit',
         loadComponent: () => import('./components/personnel/personnel-form.component').then(m => m.PersonnelFormComponent)
+      },
+      {
+        path: 'personnel/:id',
+        loadComponent: () => import('./components/personnel/personnel-detail.component').then(m => m.PersonnelDetailComponent)
+      },
+      {
+        path: 'garage-setup',
+        loadComponent: () => import('./components/garage/garage-setup.component').then(m => m.GarageSetupComponent)
       }
     ]
   },

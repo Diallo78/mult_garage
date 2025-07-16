@@ -4,9 +4,12 @@ import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } fr
 import { Router, ActivatedRoute } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
-import { Quote, QuoteItem } from '../../models/quote.model';
+import { Quote } from '../../models/quote.model';
 import { Diagnostic } from '../../models/diagnostic.model';
 import { Visit, Client, Vehicle } from '../../models/client.model';
+import { UserManagementService } from '../../services/user-management.service';
+import { AuthService } from '../../services/auth.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-quote-form',
@@ -175,12 +178,15 @@ import { Visit, Client, Vehicle } from '../../models/client.model';
             </button>
             <button
               type="submit"
-              [disabled]="quoteForm.invalid || isLoading"
+              [disabled]="quoteForm.invalid || isLoading || !canEdit"
               class="btn-primary"
             >
               <span *ngIf="isLoading" class="mr-2">Creating...</span>
               Create Quote
             </button>
+            <div *ngIf="!canEdit" class="text-sm text-red-600">
+              You don't have permission to create/edit quotes
+            </div>
           </div>
         </form>
       </div>
@@ -195,17 +201,20 @@ export class QuoteFormComponent implements OnInit {
   vehicle: Vehicle | null = null;
   diagnosticId: string | null = null;
   isLoading = false;
+  canEdit = false;
 
   subtotal = 0;
   vatAmount = 0;
   total = 0;
 
   constructor(
-    private fb: FormBuilder,
-    private garageDataService: GarageDataService,
-    private notificationService: NotificationService,
-    private router: Router,
-    private route: ActivatedRoute
+    private readonly fb: FormBuilder,
+    private readonly garageDataService: GarageDataService,
+    private readonly authService: AuthService,
+    private readonly userManagementService: UserManagementService,
+    private readonly notificationService: NotificationService,
+    private readonly router: Router,
+    private readonly route: ActivatedRoute
   ) {
     this.quoteForm = this.fb.group({
       quoteNumber: [''],
@@ -219,12 +228,23 @@ export class QuoteFormComponent implements OnInit {
     return this.quoteForm.get('items') as FormArray;
   }
 
-  async ngOnInit(): Promise<void> {
-    this.diagnosticId = this.route.snapshot.paramMap.get('diagnosticId');
+  ngOnInit(){
+    (async() => {
+      this.diagnosticId = this.route.snapshot.paramMap.get('diagnosticId');
     if (this.diagnosticId) {
       await this.loadDiagnosticData();
       this.generateQuoteNumber();
       this.setDefaultValidUntil();
+      await this.checkEditPermissions();
+    }
+    })()
+  }
+
+  private async checkEditPermissions(): Promise<void> {
+    const currentUser = await firstValueFrom(this.authService.currentUser$) ;
+    if (currentUser) {
+      this.canEdit = this.userManagementService.hasPermission(currentUser.role, 'quotes:write') ||
+                     this.userManagementService.hasPermission(currentUser.role, 'quotes:approve');
     }
   }
 

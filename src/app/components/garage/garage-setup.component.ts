@@ -5,8 +5,8 @@ import { Router } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { AuthService } from '../../services/auth.service';
-import { Garage, GarageSettings } from '../../models/garage.model';
 import { firstValueFrom } from 'rxjs';
+import { Garage, GarageSettings } from '../../models/user.model';
 
 @Component({
   selector: 'app-garage-setup',

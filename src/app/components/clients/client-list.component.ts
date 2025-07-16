@@ -13,7 +13,13 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, FirestoreDatePipe],
 template: `
-    <div class="space-y-6">
+
+    <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
+    </div>
+
+    <div *ngIf="!isLoading">
+      <div class="space-y-6">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
           <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
@@ -109,12 +115,14 @@ template: `
         </div>
       </div>
     </div>
+  </div>
   `
 })
 export class ClientListComponent implements OnInit {
   clients: Client[] = [];
   filteredClients: Client[] = [];
   searchTerm = '';
+  isLoading = true;
 
   constructor(
     private readonly garageDataService: GarageDataService,
@@ -128,11 +136,14 @@ export class ClientListComponent implements OnInit {
   }
 
   private async loadClients(): Promise<void> {
+    this.isLoading = true;
     try {
       this.clients = await this.garageDataService.getAll<Client>('clients');
       this.filteredClients = [...this.clients];
     } catch (error) {
       this.notificationService.showError('Failed to load clients');
+    } finally {
+      this.isLoading = false;
     }
   }
 

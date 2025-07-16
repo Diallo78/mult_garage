@@ -84,6 +84,23 @@ export class LoginComponent {
     });
   }
 
+  // async onSubmit(): Promise<void> {
+  //   if (this.loginForm.invalid) return;
+
+  //   this.isLoading = true;
+
+  //   try {
+  //     const { email, password } = this.loginForm.value;
+  //     await this.authService.signIn(email, password);
+  //     this.notificationService.showSuccess('Successfully signed in!');
+  //     this.router.navigate(['/dashboard']);
+  //   } catch (error: any) {
+  //     this.notificationService.showError(error.message || 'Failed to sign in');
+  //   } finally {
+  //     this.isLoading = false;
+  //   }
+  // }
+
   async onSubmit(): Promise<void> {
     if (this.loginForm.invalid) return;
 
@@ -92,12 +109,28 @@ export class LoginComponent {
     try {
       const { email, password } = this.loginForm.value;
       await this.authService.signIn(email, password);
-      this.notificationService.showSuccess('Successfully signed in!');
+
+      this.notificationService.showSuccess('Connexion réussie !');
       this.router.navigate(['/dashboard']);
     } catch (error: any) {
-      this.notificationService.showError(error.message || 'Failed to sign in');
+      // Firebase Auth error handling
+      let message = 'Échec de connexion';
+      this.notificationService.showError('Échec de connexion.')
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        message = 'Email ou mot de passe incorrect.';
+        this.notificationService.showError('Email ou mot de passe incorrect.')
+      } else if (error.code === 'auth/invalid-email') {
+        message = 'Format d’email invalide.';
+        this.notificationService.showError('Format d’email invalide.')
+      } else if (error.code === 'auth/too-many-requests') {
+        this.notificationService.showError('Trop de tentatives. Veuillez réessayer plus tard')
+        message = 'Trop de tentatives. Veuillez réessayer plus tard.';
+      }
+
+      this.notificationService.showError(message);
     } finally {
       this.isLoading = false;
     }
   }
+
 }

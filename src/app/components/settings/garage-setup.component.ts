@@ -5,8 +5,8 @@ import { Router } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { AuthService } from '../../services/auth.service';
-import { Garage, GarageSettings } from '../../models/garage.model';
 import { firstValueFrom } from 'rxjs';
+import { Garage, GarageSettings } from '../../models/user.model';
 
 @Component({
   selector: 'app-garage-setup',
@@ -206,11 +206,11 @@ export class GarageSetupComponent implements OnInit {
   ];
 
   constructor(
-    private fb: FormBuilder,
-    private garageDataService: GarageDataService,
-    private notificationService: NotificationService,
-    private authService: AuthService,
-    private router: Router
+    private readonly fb: FormBuilder,
+    private readonly garageDataService: GarageDataService,
+    private readonly notificationService: NotificationService,
+    private readonly authService: AuthService,
+    private readonly router: Router
   ) {
     this.garageForm = this.fb.group({
       name: ['', Validators.required],
@@ -305,8 +305,10 @@ export class GarageSetupComponent implements OnInit {
 
       this.notificationService.showSuccess('Garage created successfully!');
       this.router.navigate(['/dashboard']);
-    } catch (error) {
-      this.notificationService.showError('Failed to create garage');
+    } catch (error: any) {
+      console.error('Error creating garage:', error);
+      const message = error?.message || 'Failed to create garage';
+      this.notificationService.showError(message);
     } finally {
       this.isLoading = false;
     }

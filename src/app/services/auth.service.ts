@@ -15,35 +15,62 @@ import {
 import { BehaviorSubject } from 'rxjs';
 import { User, UserRole } from '../models/user.model';
 import { auth, db } from '../../../firebase.config';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private  currentUserSubject = new BehaviorSubject<User | null>(null);
+  private readonly currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor() {
+  constructor(private readonly router: Router) {
     this.initializeAuthListener();
   }
+
+  // private initializeAuthListener(): void {
+  //   onAuthStateChanged(auth, async (firebaseUser) => {
+  //     if (firebaseUser) {
+  //       const userData = await this.getUserData(firebaseUser.uid);
+  //       this.currentUserSubject.next(userData);
+  //     } else {
+  //       this.currentUserSubject.next(null);
+  //     }
+  //   });
+  // }
 
   private initializeAuthListener(): void {
     onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const userData = await this.getUserData(firebaseUser.uid);
+        if (userData?.garageId) {
+          localStorage.setItem('garageId', userData.garageId); // ⬅️ Persist here
+        }
         this.currentUserSubject.next(userData);
       } else {
+        localStorage.removeItem('garageId'); // nettoyer à la déconnexion
         this.currentUserSubject.next(null);
       }
     });
   }
 
+  // async signIn(email: string, password: string): Promise<void> {
+  //   try {
+  //     await signInWithEmailAndPassword(auth, email, password);
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // }
+
   async signIn(email: string, password: string): Promise<void> {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      throw error;
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const userData = await this.getUserData(userCredential.user.uid);
+
+    if (userData?.garageId) {
+      localStorage.setItem('garageId', userData.garageId);  // ⬅️ Ajout ici
     }
+
+    this.currentUserSubject.next(userData);
   }
 
   async signUp(email: string, password: string, displayName: string, garageId: string, role: UserRole): Promise<void> {
@@ -68,10 +95,25 @@ export class AuthService {
     }
   }
 
+  // async signOut(): Promise<void> {
+  //   try {
+  //     await signOut(auth);
+  //     this.currentUserSubject.next(null);
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // }
+
   async signOut(): Promise<void> {
     try {
       await signOut(auth);
       this.currentUserSubject.next(null);
+
+      // Nettoyage du localStorage
+      localStorage.removeItem('garageId');
+
+      // Redirection vers la page de connexion
+      this.router.navigate(['/login']);
     } catch (error) {
       throw error;
     }

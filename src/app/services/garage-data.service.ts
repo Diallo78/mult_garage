@@ -25,15 +25,15 @@ import { db } from '../../../firebase.config';
 export class GarageDataService {
   private garageId: string | null = null;
 
-  constructor(private readonly authService: AuthService) {
-    this.authService.currentUser$.subscribe(user => {
-      this.garageId = user?.garageId || null;
-    });
+  constructor() {
+    // this.authService.currentUser$.subscribe(user => {
+    //   this.garageId = user?.garageId || null;
+    // });
+    this.garageId = localStorage.getItem('garageId');
   }
 
   async create<T>(collectionName: string, data: Omit<T, 'id'>): Promise<string> {
     if (!this.garageId) throw new Error('No garage ID available');
-    console.log(data);
 
     const docData = {
       ...data,

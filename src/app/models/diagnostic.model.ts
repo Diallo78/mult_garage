@@ -16,16 +16,16 @@ export interface Diagnostic {
   }
 
   export type DiagnosticCategory =
-    | 'Brakes'
-    | 'Engine'
-    | 'Electrical'
-    | 'Transmission'
-    | 'Suspension'
-    | 'Cooling'
-    | 'Exhaust'
-    | 'Fuel'
-    | 'Steering'
-    | 'Other';
+  | 'Freinage'         // Brakes
+  | 'Moteur'           // Engine
+  | 'Électricité'      // Electrical
+  | 'Transmission'     // Transmission
+  | 'Suspension'       // Suspension
+  | 'Refroidissement'  // Cooling
+  | 'Échappement'      // Exhaust
+  | 'Carburant'        // Fuel
+  | 'Direction'        // Steering
+  | 'Autre'            // Other
 
   export interface DiagnosticCheck {
     id: string;

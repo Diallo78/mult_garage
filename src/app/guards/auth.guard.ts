@@ -28,3 +28,36 @@ export class AuthGuard {
     );
   }
 }
+
+// export class AuthGuard {
+//   constructor(
+//     private readonly authService: AuthService,
+//     private readonly router: Router
+//   ) {}
+
+//   canActivate() {
+//     return this.authService.currentUser$.pipe(
+//       take(1),
+//       map(user => {
+//         console.log(user);
+
+//         if (user) {
+//           // Redirect clients to client portal
+//           if (user.role === 'Client' && !window.location.pathname.startsWith('/client')) {
+//             this.router.navigate(['/client/dashboard']);
+//             return false;
+//           }
+//           // Redirect non-clients away from client portal
+//           if (user.role !== 'Client' && window.location.pathname.startsWith('/client')) {
+//             this.router.navigate(['/dashboard']);
+//             return false;
+//           }
+//           return true;
+//         } else {
+//           this.router.navigate(['/login']);
+//           return false;
+//         }
+//       })
+//     );
+//   }
+// }

@@ -6,11 +6,12 @@ import { RouterModule } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { Personnel } from '../../models/garage.model';
+import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
 
 @Component({
   selector: 'app-personnel-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, FirestoreDatePipe],
   template: `
     <div class="space-y-6">
       <div class="md:flex md:items-center md:justify-between">
@@ -122,7 +123,7 @@ import { Personnel } from '../../models/garage.model';
                   {{ person.phone }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ person.hireDate | date:'short' }}
+                  {{ person.hireDate | firestoreDate | date:'short' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span class="status-badge" [ngClass]="person.isActive ? 'status-accepted' : 'status-rejected'">

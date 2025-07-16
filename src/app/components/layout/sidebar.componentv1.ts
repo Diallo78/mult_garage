@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { Observable } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
-import { Observable } from 'rxjs';
+
 
 @Component({
   selector: 'app-sidebar',
@@ -38,7 +39,7 @@ import { Observable } from 'rxjs';
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
           >
             <span class="mr-3">🚗</span>
-            Vehicles
+            Véhicules
           </a>
 
           <a
@@ -47,7 +48,7 @@ import { Observable } from 'rxjs';
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
           >
             <span class="mr-3">🏥</span>
-            Déclaration / Visits
+            Visites
           </a>
 
           <a
@@ -57,7 +58,7 @@ import { Observable } from 'rxjs';
             *ngIf="canAccessDiagnostics"
           >
             <span class="mr-3">🔍</span>
-            Diagnostics
+            Diagnostic
           </a>
 
           <a
@@ -66,7 +67,7 @@ import { Observable } from 'rxjs';
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
           >
             <span class="mr-3">💰</span>
-            Devis
+            Citations
           </a>
 
           <a
@@ -85,7 +86,7 @@ import { Observable } from 'rxjs';
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
           >
             <span class="mr-3">🧾</span>
-            Facture
+            Factures
           </a>
 
           <a
@@ -95,7 +96,7 @@ import { Observable } from 'rxjs';
             *ngIf="canAccessPayments"
           >
             <span class="mr-3">💳</span>
-            Payments
+            Paiements
           </a>
 
           <a
@@ -105,7 +106,7 @@ import { Observable } from 'rxjs';
             *ngIf="canAccessReports"
           >
             <span class="mr-3">📈</span>
-            Reports
+            Rapports
           </a>
 
           <a
@@ -117,16 +118,6 @@ import { Observable } from 'rxjs';
             <span class="mr-3">👨‍💼</span>
             Personnel
           </a>
-
-          <a
-            routerLink="/garage-setup"
-            routerLinkActive="bg-primary-600"
-            class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="canAccessSuperAdmin"
-          >
-            <span class="mr-3">👨‍💼</span>
-            Garage
-          </a>
         </nav>
       </div>
     </div>
@@ -135,35 +126,27 @@ import { Observable } from 'rxjs';
 export class SidebarComponent {
   currentUser$: Observable<User | null>;
 
-  constructor(private authService: AuthService) {
+  constructor(private readonly authService: AuthService) {
     this.currentUser$ = this.authService.currentUser$;
   }
 
   get canAccessDiagnostics(): boolean {
-    return this.authService.hasAnyRole(['AdminGarage', 'Technician', 'SuperAdmin']);
+    return this.authService.hasAnyRole(['AdminGarage', 'Technician']);
   }
 
   get canAccessInterventions(): boolean {
-    return this.authService.hasAnyRole(['AdminGarage', 'Technician', 'SuperAdmin']);
+    return this.authService.hasAnyRole(['AdminGarage', 'Technician']);
   }
 
   get canAccessPayments(): boolean {
-    return this.authService.hasAnyRole(['AdminGarage', 'Accountant', 'Receptionist', 'SuperAdmin']);
+    return this.authService.hasAnyRole(['AdminGarage', 'Accountant', 'Receptionist']);
   }
 
   get canAccessReports(): boolean {
-    return this.authService.hasAnyRole(['AdminGarage', 'Accountant', 'SuperAdmin']);
+    return this.authService.hasAnyRole(['AdminGarage', 'Accountant']);
   }
 
   get canAccessPersonnel(): boolean {
-    return this.authService.hasAnyRole(['AdminGarage', 'Manager', 'SuperAdmin']);
-  }
-
-  get canAccessSuperAdmin(): boolean {
-    return this.authService.hasAnyRole(['SuperAdmin']);
-  }
-
-  get isClient(): boolean {
-    return this.authService.hasRole('Client');
+    return this.authService.hasAnyRole(['AdminGarage', 'Manager']);
   }
 }

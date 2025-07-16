@@ -1,15 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
+import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { MainLayoutComponent } from './components/layout/main-layout.component';
 import { AuthService } from './services/auth.service';
 
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, MainLayoutComponent],
+  imports: [CommonModule, RouterOutlet],
   template: `
 
       <router-outlet></router-outlet>

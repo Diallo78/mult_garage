@@ -15,142 +15,149 @@ import { Personnel } from '../../models/garage.model';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, FirestoreDatePipe],
   template: `
-  <div class="space-y-6">
-    <div class="md:flex md:items-center md:justify-between">
-      <div class="flex-1 min-w-0">
-        <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-          Diagnostics
-        </h2>
-      </div>
-    </div>
 
-    <!-- Search and Filter -->
-    <div class="card">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <label class="form-label">Search</label>
-          <input
-            type="text"
-            [(ngModel)]="searchTerm"
-            (input)="filterDiagnostics()"
-            class="form-input"
-            placeholder="Search by client or vehicle"
-          />
-        </div>
-        <div>
-          <label class="form-label">Category</label>
-          <select
-            [(ngModel)]="categoryFilter"
-            (change)="filterDiagnostics()"
-            class="form-input"
-          >
-            <option value="">All Categories</option>
-            <option value="Brakes">Brakes</option>
-            <option value="Engine">Engine</option>
-            <option value="Electrical">Electrical</option>
-            <option value="Transmission">Transmission</option>
-            <option value="Suspension">Suspension</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">Decision</label>
-          <select
-            [(ngModel)]="decisionFilter"
-            (change)="filterDiagnostics()"
-            class="form-input"
-          >
-            <option value="">All Decisions</option>
-            <option value="Repair">Repair</option>
-            <option value="Monitor">Monitor</option>
-            <option value="NonRepairable">Non-Repairable</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">Date Range</label>
-          <input
-            type="date"
-            [(ngModel)]="fromDate"
-            (change)="filterDiagnostics()"
-            class="form-input"
-          />
+  <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
+  </div>
+
+  <div *ngIf="!isLoading">
+    <div class="space-y-6">
+      <div class="md:flex md:items-center md:justify-between">
+        <div class="flex-1 min-w-0">
+          <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+            Diagnostics
+          </h2>
         </div>
       </div>
-    </div>
 
-    <!-- Diagnostics Table -->
-    <div class="card">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Vehicle
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Client
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Category
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Technician
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Decision
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr *ngFor="let diagnostic of filteredDiagnostics" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">
-                  {{ diagnostic.createdAt | firestoreDate | date:'medium' }}
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">{{ getVehicleInfo(diagnostic.vehicleId) }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">{{ getClientName(diagnostic.visitId) }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                  {{ diagnostic.category }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">{{ getTechnicianName(diagnostic.technicianId) }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="status-badge" [ngClass]="getDecisionClass(diagnostic.finalDecision)">
-                  {{ diagnostic.finalDecision }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <button
-                  [routerLink]="['/diagnostics', diagnostic.id]"
-                  class="text-primary-600 hover:text-primary-900 mr-3"
-                >
-                  View
-                </button>
-                <button
-                  [routerLink]="['/quotes/create', diagnostic.id]"
-                  class="text-secondary-600 hover:text-secondary-900"
-                  *ngIf="diagnostic.finalDecision === 'Repair'"
-                >
-                  Create Quote
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Search and Filter -->
+      <div class="card">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label class="form-label">Search</label>
+            <input
+              type="text"
+              [(ngModel)]="searchTerm"
+              (input)="filterDiagnostics()"
+              class="form-input"
+              placeholder="Search by client or vehicle"
+            />
+          </div>
+          <div>
+            <label class="form-label">Category</label>
+            <select
+              [(ngModel)]="categoryFilter"
+              (change)="filterDiagnostics()"
+              class="form-input"
+            >
+              <option value="">All Categories</option>
+              <option value="Brakes">Brakes</option>
+              <option value="Engine">Engine</option>
+              <option value="Electrical">Electrical</option>
+              <option value="Transmission">Transmission</option>
+              <option value="Suspension">Suspension</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Decision</label>
+            <select
+              [(ngModel)]="decisionFilter"
+              (change)="filterDiagnostics()"
+              class="form-input"
+            >
+              <option value="">All Decisions</option>
+              <option value="Repair">Repair</option>
+              <option value="Monitor">Monitor</option>
+              <option value="NonRepairable">Non-Repairable</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Date Range</label>
+            <input
+              type="date"
+              [(ngModel)]="fromDate"
+              (change)="filterDiagnostics()"
+              class="form-input"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Diagnostics Table -->
+      <div class="card">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Vehicle
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Client
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Category
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Technician
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Decision
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let diagnostic of filteredDiagnostics" class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900">
+                    {{ diagnostic.createdAt | firestoreDate | date:'medium' }}
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">{{ getVehicleInfo(diagnostic.vehicleId) }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">{{ getClientName(diagnostic.visitId) }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                    {{ diagnostic.category }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">{{ getTechnicianName(diagnostic.technicianId) }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="status-badge" [ngClass]="getDecisionClass(diagnostic.finalDecision)">
+                    {{ diagnostic.finalDecision }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button
+                    [routerLink]="['/diagnostics', diagnostic.id]"
+                    class="text-primary-600 hover:text-primary-900 mr-3"
+                  >
+                    View
+                  </button>
+                  <button
+                    [routerLink]="['/quotes/create', diagnostic.id]"
+                    class="text-secondary-600 hover:text-secondary-900"
+                    *ngIf="diagnostic.finalDecision === 'Repair'"
+                  >
+                    Create Quote
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -167,7 +174,7 @@ searchTerm = '';
 categoryFilter = '';
 decisionFilter = '';
 fromDate = '';
-
+isLoading = true;
 constructor(
   private garageDataService: GarageDataService,
   private notificationService: NotificationService
@@ -189,6 +196,8 @@ private async loadData(): Promise<void> {
     this.filteredDiagnostics = [...this.diagnostics];
   } catch (error) {
     this.notificationService.showError('Failed to load diagnostics');
+  }finally{
+    this.isLoading = false
   }
 }
 

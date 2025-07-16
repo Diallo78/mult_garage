@@ -12,7 +12,7 @@ export interface Notification {
   providedIn: 'root'
 })
 export class NotificationService {
-  private notificationsSubject = new BehaviorSubject<Notification[]>([]);
+  private readonly notificationsSubject = new BehaviorSubject<Notification[]>([]);
   public notifications$ = this.notificationsSubject.asObservable();
 
   showSuccess(message: string, duration: number = 3000): void {
