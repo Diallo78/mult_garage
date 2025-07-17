@@ -26,7 +26,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
           <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
             Diagnostic Report
           </h2>
-          <p class="text-lg text-gray-600">{{ diagnostic.category }} - {{ diagnostic.createdAt | firestoreDate | date:'full' }}</p>
+          <p class="text-lg text-gray-600">{{ diagnostic.title }} - {{ diagnostic.createdAt | firestoreDate | date:'full' }}</p>
         </div>
         <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
           <button
@@ -89,8 +89,8 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
         <h3 class="text-lg font-medium text-gray-900 mb-4">Diagnostic Information</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div>
-            <label class="text-sm font-medium text-gray-500">Category</label>
-            <p class="mt-1 text-sm text-gray-900">{{ diagnostic.category }}</p>
+            <label class="text-sm font-medium text-gray-500">Titre diagnostique</label>
+            <p class="mt-1 text-sm text-gray-900">{{ diagnostic.title }}</p>
           </div>
           <div>
             <label class="text-sm font-medium text-gray-500">Technician</label>
@@ -116,6 +116,10 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
       <!-- Diagnostic Checks -->
       <div class="card">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Diagnostic Checks</h3>
+        <!-- Bouton Tout valider -->
+        <div class="mb-4" *ngIf="hasUnvalidatedChecks()">
+          <button (click)="validerTout()" class="btn-primary">Tout valider</button>
+        </div>
         <div class="space-y-4">
           <div *ngFor="let check of diagnostic.checks; let i = index"
                class="border rounded-lg p-4"
@@ -123,7 +127,13 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <h4 class="font-medium text-gray-900">{{ check.description }}</h4>
-                <div class="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div class="mt-2 grid grid-cols-2 md:grid-cols-5 gap-5 text-sm">
+                 <div>
+                    <span class="text-gray-500">Category:</span>
+                    <span class="ml-1" [ngClass]="check.category ? 'text-green-600' : 'text-red-600'">
+                      {{ check.category }}
+                    </span>
+                  </div>
                   <div>
                     <span class="text-gray-500">Status:</span>
                     <span class="ml-1" [ngClass]="check.compliant ? 'text-green-600' : 'text-red-600'">
@@ -150,11 +160,19 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                   <p class="mt-1 text-sm text-gray-900">{{ check.comments }}</p>
                 </div>
               </div>
-              <div class="ml-4">
+              <div class="ml-4 flex flex-col items-end gap-2">
                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium"
                       [ngClass]="check.compliant ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'">
                   {{ check.compliant ? '✓' : '✗' }}
                 </span>
+                <!-- Bouton Valider individuel -->
+                <button
+                  *ngIf="!check.postRepairVerification"
+                  (click)="validerCheck(i)"
+                  class="btn-secondary px-2 py-1 text-xs rounded mt-2"
+                >
+                  Valider
+                </button>
               </div>
             </div>
           </div>
@@ -247,5 +265,41 @@ export class DiagnosticDetailComponent implements OnInit {
       case 'Critical': return 'text-red-600';
       default: return 'text-gray-600';
     }
+  }
+
+  async validerCheck(index: number): Promise<void> {
+    if (!this.diagnostic) return;
+    const updatedChecks = this.diagnostic.checks.map((c, i) =>
+      i === index ? { ...c, postRepairVerification: true } : c
+    );
+    try {
+      await this.garageDataService.update('diagnostics', this.diagnostic.id, {
+        checks: updatedChecks,
+        updatedAt: new Date()
+      });
+      this.diagnostic.checks = updatedChecks;
+      this.notificationService.showSuccess('Check validé avec succès');
+    } catch (error) {
+      this.notificationService.showError('Erreur lors de la validation du check');
+    }
+  }
+
+  async validerTout(): Promise<void> {
+    if (!this.diagnostic) return;
+    const updatedChecks = this.diagnostic.checks.map(c => ({ ...c, postRepairVerification: true }));
+    try {
+      await this.garageDataService.update('diagnostics', this.diagnostic.id, {
+        checks: updatedChecks,
+        updatedAt: new Date()
+      });
+      this.diagnostic.checks = updatedChecks;
+      this.notificationService.showSuccess('Tous les checks ont été validés');
+    } catch (error) {
+      this.notificationService.showError('Erreur lors de la validation globale');
+    }
+  }
+
+  hasUnvalidatedChecks(): boolean {
+    return !!this.diagnostic?.checks.some(c => !c.postRepairVerification);
   }
 }

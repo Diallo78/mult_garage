@@ -31,6 +31,21 @@ import { Personnel } from '../../models/garage.model';
 
       <div class="card">
         <form [formGroup]="diagnosticForm" (ngSubmit)="onSubmit()" class="space-y-6">
+          <!-- Diagnostic Title -->
+          <div>
+            <label class="form-label">Titre de diagnostic *</label>
+            <input
+              type="text"
+              formControlName="title"
+              class="form-input"
+              [class.border-red-500]="diagnosticForm.get('title')?.invalid && diagnosticForm.get('title')?.touched"
+              placeholder="Entrer le titre du diagnostic"
+            />
+            <div *ngIf="diagnosticForm.get('title')?.invalid && diagnosticForm.get('title')?.touched" class="mt-1 text-sm text-red-600">
+              Le titre est requis
+            </div>
+          </div>
+
           <!-- Technician Information -->
           <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 class="text-lg font-medium text-blue-900 mb-3">Technician Information</h3>
@@ -58,31 +73,6 @@ import { Personnel } from '../../models/garage.model';
             </div>
           </div>
 
-          <!-- Category Selection -->
-          <div>
-            <label class="form-label">Diagnostic Category *</label>
-            <select
-              formControlName="category"
-              class="form-input"
-              [class.border-red-500]="diagnosticForm.get('category')?.invalid && diagnosticForm.get('category')?.touched"
-            >
-              <option value="">Select a category</option>
-              <option value="Brakes">Brakes</option>
-              <option value="Engine">Engine</option>
-              <option value="Electrical">Electrical</option>
-              <option value="Transmission">Transmission</option>
-              <option value="Suspension">Suspension</option>
-              <option value="Cooling">Cooling</option>
-              <option value="Exhaust">Exhaust</option>
-              <option value="Fuel">Fuel</option>
-              <option value="Steering">Steering</option>
-              <option value="Other">Other</option>
-            </select>
-            <div *ngIf="diagnosticForm.get('category')?.invalid && diagnosticForm.get('category')?.touched" class="mt-1 text-sm text-red-600">
-              Please select a category
-            </div>
-          </div>
-
           <!-- Diagnostic Checks -->
           <div>
             <div class="flex items-center justify-between mb-4">
@@ -101,21 +91,38 @@ import { Personnel } from '../../models/garage.model';
                    [formGroupName]="i"
                    class="border rounded-lg p-4 bg-gray-50">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <!-- Category for each check -->
+                  <div>
+                    <label class="form-label">Catégorie *</label>
+                    <select formControlName="category" class="form-input">
+                      <option value="">Sélectionner une catégorie</option>
+                      <option value="Freinage">Freinage</option>
+                      <option value="Moteur">Moteur</option>
+                      <option value="Électricité">Électricité</option>
+                      <option value="Transmission">Transmission</option>
+                      <option value="Suspension">Suspension</option>
+                      <option value="Refroidissement">Refroidissement</option>
+                      <option value="Échappement">Échappement</option>
+                      <option value="Carburant">Carburant</option>
+                      <option value="Direction">Direction</option>
+                      <option value="Autre">Autre</option>
+                    </select>
+                  </div>
                   <div class="md:col-span-2">
                     <label class="form-label">Description *</label>
                     <input
                       type="text"
                       formControlName="description"
                       class="form-input"
-                      placeholder="Describe what was checked"
+                      placeholder="Décrire ce qui a été vérifié"
                     />
                   </div>
 
                   <div>
                     <label class="form-label">Compliant</label>
                     <select formControlName="compliant" class="form-input">
-                      <option [value]="true">Yes - Compliant</option>
-                      <option [value]="false">No - Non-Compliant</option>
+                      <option [value]="true">Oui - Conforme</option>
+                      <option [value]="false">Non - Non conforme</option>
                     </select>
                   </div>
 
@@ -142,18 +149,18 @@ import { Personnel } from '../../models/garage.model';
                   <div>
                     <label class="form-label">Post-Repair Verification</label>
                     <select formControlName="postRepairVerification" class="form-input">
-                      <option [value]="false">No</option>
-                      <option [value]="true">Yes</option>
+                      <option [value]="false">Non</option>
+                      <option [value]="true">Oui</option>
                     </select>
                   </div>
 
                   <div class="md:col-span-2">
-                    <label class="form-label">Comments</label>
+                    <label class="form-label">Commentaires</label>
                     <textarea
                       formControlName="comments"
                       rows="2"
                       class="form-input"
-                      placeholder="Additional comments or observations"
+                      placeholder="Commentaires ou observations supplémentaires"
                     ></textarea>
                   </div>
                 </div>
@@ -180,28 +187,28 @@ import { Personnel } from '../../models/garage.model';
               rows="4"
               class="form-input"
               [class.border-red-500]="diagnosticForm.get('summary')?.invalid && diagnosticForm.get('summary')?.touched"
-              placeholder="Provide a comprehensive summary of the diagnostic findings"
+              placeholder="Fournir un résumé complet des résultats du diagnostic"
             ></textarea>
             <div *ngIf="diagnosticForm.get('summary')?.invalid && diagnosticForm.get('summary')?.touched" class="mt-1 text-sm text-red-600">
-              Summary is required
+              Le résumé est requis
             </div>
           </div>
 
           <!-- Final Decision -->
           <div>
-            <label class="form-label">Final Decision *</label>
+            <label class="form-label">Décision finale *</label>
             <select
               formControlName="finalDecision"
               class="form-input"
               [class.border-red-500]="diagnosticForm.get('finalDecision')?.invalid && diagnosticForm.get('finalDecision')?.touched"
             >
-              <option value="">Select final decision</option>
-              <option value="Repair">Repair Required</option>
-              <option value="Monitor">Monitor Condition</option>
-              <option value="NonRepairable">Non-Repairable</option>
+              <option value="">Sélectionner la décision finale</option>
+              <option value="Repair">Réparation requise</option>
+              <option value="Monitor">Surveiller l'état</option>
+              <option value="NonRepairable">Non réparable</option>
             </select>
             <div *ngIf="diagnosticForm.get('finalDecision')?.invalid && diagnosticForm.get('finalDecision')?.touched" class="mt-1 text-sm text-red-600">
-              Final decision is required
+              La décision finale est requise
             </div>
           </div>
 
@@ -246,7 +253,7 @@ export class DiagnosticFormComponent implements OnInit {
     private route: ActivatedRoute
   ) {
     this.diagnosticForm = this.fb.group({
-      category: ['', Validators.required],
+      title: ['', Validators.required], // <-- nouveau champ
       checks: this.fb.array([this.createCheckGroup()]),
       summary: ['', Validators.required],
       finalDecision: ['', Validators.required]
@@ -309,6 +316,7 @@ export class DiagnosticFormComponent implements OnInit {
   private createCheckGroup(): FormGroup {
     return this.fb.group({
       id: [this.generateId()],
+      category: ['', Validators.required], // <-- nouveau champ obligatoire
       description: ['', Validators.required],
       compliant: [true],
       quantity: [1],
@@ -340,11 +348,11 @@ export class DiagnosticFormComponent implements OnInit {
 
       const formValue = this.diagnosticForm.value;
       const diagnosticData: Omit<Diagnostic, 'id'> = {
+        title: formValue.title, // <-- nouveau champ
         garageId: currentUser.garageId,
         visitId: this.visitId!,
         vehicleId: this.visit.vehicleId,
         technicianId: currentUser.uid,
-        category: formValue.category,
         checks: formValue.checks,
         summary: formValue.summary,
         finalDecision: formValue.finalDecision,

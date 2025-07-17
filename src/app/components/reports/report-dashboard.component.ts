@@ -377,7 +377,7 @@ export class ReportDashboardComponent implements OnInit {
     const categories: { [key: string]: number } = {};
 
     this.diagnostics.forEach(diagnostic => {
-      categories[diagnostic.category] = (categories[diagnostic.category] || 0) + 1;
+      categories[diagnostic.title] = (categories[diagnostic.title] || 0) + 1;
     });
 
     this.diagnosticCategories = Object.entries(categories)

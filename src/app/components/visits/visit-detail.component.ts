@@ -16,7 +16,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
           <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Visit Details
+            Déclaration / Visit Details
           </h2>
           <p class="text-lg text-gray-600">{{ visit.visitDate | firestoreDate | date:'full' }}</p>
         </div>
@@ -133,8 +133,8 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label class="text-sm font-medium text-gray-500">Category</label>
-            <p class="mt-1 text-sm text-gray-900">{{ diagnostic.category }}</p>
+            <label class="text-sm font-medium text-gray-500">Titre de diagnostique</label>
+            <p class="mt-1 text-sm text-gray-900">{{ diagnostic.title }}</p>
           </div>
           <div>
             <label class="text-sm font-medium text-gray-500">Final Decision</label>

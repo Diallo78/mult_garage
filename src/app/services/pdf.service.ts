@@ -121,7 +121,7 @@ export class PDFService {
     doc.text(`Date: ${diagnostic.createdAt.toLocaleDateString()}`, 20, 35);
     doc.text(`Client: ${clientName}`, 20, 45);
     doc.text(`Vehicle: ${vehicleInfo}`, 20, 55);
-    doc.text(`Category: ${diagnostic.category}`, 20, 65);
+    doc.text(`Category: ${diagnostic.title}`, 20, 65);
 
     // Checks
     let yPosition = 85;

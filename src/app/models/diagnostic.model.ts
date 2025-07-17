@@ -1,10 +1,10 @@
 export interface Diagnostic {
     id: string;
+    title: string;
     garageId: string;
     visitId: string;
     vehicleId: string;
     technicianId: string;
-    category: DiagnosticCategory;
     checks: DiagnosticCheck[];
     summary: string;
     finalDecision: 'Repair' | 'Monitor' | 'NonRepairable';
@@ -29,6 +29,7 @@ export interface Diagnostic {
 
   export interface DiagnosticCheck {
     id: string;
+    category: DiagnosticCategory;
     description: string;
     compliant: boolean;
     quantity?: number;
