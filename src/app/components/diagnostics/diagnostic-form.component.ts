@@ -17,6 +17,11 @@ import { Personnel } from '../../models/garage.model';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
+    <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
+    </div>
+
+    <div *ngIf="!isLoading">
     <div class="space-y-6" *ngIf="visit && vehicle && client">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
@@ -49,6 +54,19 @@ import { Personnel } from '../../models/garage.model';
           <!-- Technician Information -->
           <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 class="text-lg font-medium text-blue-900 mb-3">Technician Information</h3>
+            <div class="mb-4">
+              <label class="text-sm font-medium text-blue-700">Sélectionner un technicien</label>
+              <select
+                class="form-input"
+                [ngModel]="currentTechnician?.id"
+                (ngModelChange)="onTechnicianSelect($event)"
+                [ngModelOptions]="{standalone: true}"
+              >
+                <option *ngFor="let tech of personnel" [value]="tech.id">
+                  {{ tech.firstName }} {{ tech.lastName }}
+                </option>
+              </select>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="currentTechnician">
               <div>
                 <label class="text-sm font-medium text-blue-700">Technician Name</label>
@@ -232,6 +250,7 @@ import { Personnel } from '../../models/garage.model';
         </form>
       </div>
     </div>
+    </div>
   `
 })
 export class DiagnosticFormComponent implements OnInit {
@@ -267,49 +286,79 @@ export class DiagnosticFormComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.visitId = this.route.snapshot.paramMap.get('visitId');
     if (this.visitId) {
-      await this.loadVisitData();
-      await this.loadPersonnel();
-      await this.loadCurrentTechnician();
+      // await this.loadVisitData();
+      // await this.loadPersonnel();
+      this.loadVisitAndPersonnelData()
     }
   }
 
-  private async loadVisitData(): Promise<void> {
+  // private async loadVisitData(): Promise<void> {
+  //   try {
+  //     this.visit = await this.garageDataService.getById<Visit>('visits', this.visitId!);
+
+  //     if (this.visit) {
+  //       [this.vehicle, this.client] = await Promise.all([
+  //         this.garageDataService.getById<Vehicle>('vehicles', this.visit.vehicleId),
+  //         this.garageDataService.getById<Client>('clients', this.visit.clientId)
+  //       ]);
+  //     }
+  //   } catch (error) {
+  //     this.notificationService.showError('Failed to load visit data');
+  //   }
+  // }
+
+  // private async loadPersonnel(): Promise<void> {
+  //   try {
+  //     this.personnel = await this.garageDataService.getWithFilter<Personnel>('personnel', [
+  //       { field: 'role', operator: '==', value: 'Technician' },
+  //       { field: 'isActive', operator: '==', value: true }
+  //     ]);
+
+  //     // console.log(this.personnel);
+
+  //   } catch (error) {
+  //     this.notificationService.showError('Failed to load personnel');
+  //   }
+  // }
+
+  private async loadVisitAndPersonnelData(): Promise<void> {
+  this.isLoading = true;
+
     try {
+      // Charger la visite
       this.visit = await this.garageDataService.getById<Visit>('visits', this.visitId!);
 
       if (this.visit) {
+        // Charger le véhicule et le client en parallèle
         [this.vehicle, this.client] = await Promise.all([
           this.garageDataService.getById<Vehicle>('vehicles', this.visit.vehicleId),
           this.garageDataService.getById<Client>('clients', this.visit.clientId)
         ]);
       }
-    } catch (error) {
-      this.notificationService.showError('Failed to load visit data');
-    }
-  }
 
-  private async loadPersonnel(): Promise<void> {
-    try {
+      // Charger le personnel (techniciens actifs)
       this.personnel = await this.garageDataService.getWithFilter<Personnel>('personnel', [
         { field: 'role', operator: '==', value: 'Technician' },
         { field: 'isActive', operator: '==', value: true }
       ]);
-
-      console.log(this.personnel);
-
     } catch (error) {
-      this.notificationService.showError('Failed to load personnel');
+      this.notificationService.showError('Erreur lors du chargement des données');
+      console.error('Chargement échoué :', error);
+    } finally {
+      this.isLoading = false;
     }
   }
 
-  private async loadCurrentTechnician(): Promise<void> {
-    try {
-      const currentUser = await firstValueFrom(this.authService.currentUser$);
-      if (currentUser) {
-        this.currentTechnician = await this.garageDataService.getById<Personnel>('personnel', currentUser.uid);
+  onTechnicianSelect(id: string) {
+    this.loadCurrentTechnicianID(id);
+  }
+
+  private loadCurrentTechnicianID(id: string) {
+    if (id) {
+      const found = this.personnel.find(p => p.id === id);
+      if (found) {
+        this.currentTechnician = found;
       }
-    } catch (error) {
-      console.error('Error loading current technician:', error);
     }
   }
 
@@ -346,13 +395,15 @@ export class DiagnosticFormComponent implements OnInit {
 
       if (!currentUser) throw new Error('No user logged in');
 
+      if (!this.currentTechnician) throw new Error('No user logged in');
+
       const formValue = this.diagnosticForm.value;
       const diagnosticData: Omit<Diagnostic, 'id'> = {
         title: formValue.title, // <-- nouveau champ
         garageId: currentUser.garageId,
         visitId: this.visitId!,
         vehicleId: this.visit.vehicleId,
-        technicianId: currentUser.uid,
+        technicianId: this.currentTechnician.id,
         checks: formValue.checks,
         summary: formValue.summary,
         finalDecision: formValue.finalDecision,

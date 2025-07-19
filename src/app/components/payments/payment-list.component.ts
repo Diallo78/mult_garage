@@ -13,6 +13,11 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, FirestoreDatePipe],
   template: `
+    <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
+    </div>
+
+    <div *ngIf="!isLoading">
     <div class="space-y-6">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
@@ -204,6 +209,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
         </div>
       </div>
     </div>
+    </div>
   `
 })
 export class PaymentListComponent implements OnInit {
@@ -215,6 +221,7 @@ export class PaymentListComponent implements OnInit {
   methodFilter = '';
   fromDate = '';
   toDate = '';
+  isLoading = true;
 
   constructor(
     private garageDataService: GarageDataService,
@@ -226,6 +233,7 @@ export class PaymentListComponent implements OnInit {
   }
 
   private async loadData(): Promise<void> {
+    this.isLoading = true;
     try {
       [this.invoices, this.clients] = await Promise.all([
         this.garageDataService.getAll<Invoice>('invoices'),
@@ -236,7 +244,7 @@ export class PaymentListComponent implements OnInit {
       this.filteredPayments = [...this.payments];
     } catch (error) {
       this.notificationService.showError('Failed to load payments');
-    }
+    }finally{this.isLoading = false}
   }
 
   private extractPayments(): void {

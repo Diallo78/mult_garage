@@ -13,6 +13,11 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
   standalone: true,
   imports: [CommonModule, RouterModule, FirestoreDatePipe],
   template: `
+    <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
+    </div>
+
+    <div *ngIf="!isLoading">
     <div class="space-y-6" *ngIf="quote">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
@@ -193,6 +198,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
         </div>
       </div>
     </div>
+    </div>
   `
 })
 export class QuoteDetailComponent implements OnInit {
@@ -200,7 +206,7 @@ export class QuoteDetailComponent implements OnInit {
   client: Client | null = null;
   vehicle: Vehicle | null = null;
   quoteId: string | null = null;
-
+  isLoading = true;
   constructor(
     private garageDataService: GarageDataService,
     private notificationService: NotificationService,
@@ -216,6 +222,7 @@ export class QuoteDetailComponent implements OnInit {
   }
 
   private async loadQuoteData(): Promise<void> {
+    this.isLoading = true
     try {
       this.quote = await this.garageDataService.getById<Quote>('quotes', this.quoteId!);
 
@@ -227,7 +234,7 @@ export class QuoteDetailComponent implements OnInit {
       }
     } catch (error) {
       this.notificationService.showError('Failed to load quote data');
-    }
+    }finally{this.isLoading = false}
   }
 
   async updateStatus(status: 'Accepted' | 'Rejected'): Promise<void> {

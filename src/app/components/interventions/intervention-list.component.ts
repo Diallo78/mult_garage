@@ -114,7 +114,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                     {{ intervention.startDate | firestoreDate | date:'short' }}
                   </div>
                   <div class="text-sm text-gray-500" *ngIf="intervention.endDate">
-                    End: {{ intervention.endDate | date:'short' }}
+                    End: {{ intervention.endDate | firestoreDate | date:'short' }}
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">

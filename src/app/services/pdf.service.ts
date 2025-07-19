@@ -4,6 +4,7 @@ import html2canvas from 'html2canvas';
 import { Quote } from '../models/quote.model';
 import { Invoice } from '../models/invoice.model';
 import { Diagnostic } from '../models/diagnostic.model';
+import autoTable from 'jspdf-autotable';
 
 @Injectable({
   providedIn: 'root'
@@ -162,26 +163,78 @@ export class PDFService {
 
   async generatePaymentReceiptPDF(payment: any, invoiceNumber: string, clientName: string): Promise<void> {
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
 
-    // Header
-    doc.setFontSize(20);
-    doc.text('PAYMENT RECEIPT', 20, 20);
+    // --- LOGO ENTREPRISE ---
+    const logoBase64 = await this.getBase64FromUrl('/image/logo.png');
+    const logoWidth = 40;
+    const logoHeight = 20;
+    doc.addImage(logoBase64, 'PNG', (pageWidth - logoWidth) / 2, 10, logoWidth, logoHeight);
 
+    // --- COORDONNÉES ENTREPRISE ---
     doc.setFontSize(12);
-    doc.text(`Receipt Date: ${payment.date.toLocaleDateString()}`, 20, 35);
-    doc.text(`Invoice #: ${invoiceNumber}`, 20, 45);
-    doc.text(`Client: ${clientName}`, 20, 55);
-    doc.text(`Payment Method: ${payment.method}`, 20, 65);
-    doc.text(`Amount Paid: $${payment.amount.toFixed(2)}`, 20, 75);
+    const companyInfo = [
+      "Nom de l'Entreprise",
+      "Adresse de l'entreprise",
+      "Téléphone : 01 23 45 67 89",
+      "Email : contact@entreprise.com"
+    ];
+    let y = 32;
+    companyInfo.forEach(line => {
+      doc.text(line, pageWidth / 2, y, { align: 'center' });
+      y += 6;
+    });
 
-    if (payment.reference) {
-      doc.text(`Reference: ${payment.reference}`, 20, 85);
-    }
+    // --- TITRE ---
+    doc.setFontSize(20);
+    doc.text('REÇU DE PAIEMENT', pageWidth / 2, y + 10, { align: 'center' });
 
-    if (payment.notes) {
-      doc.text(`Notes: ${payment.notes}`, 20, 95);
-    }
+    // --- INFOS CLIENT & PAIEMENT CENTRÉES ---
+    doc.setFontSize(12);
+
+    const tableStartY = y + 25;
+    const rowHeight = 10;
+    const col1X = pageWidth / 2 - 50;
+    const col2X = pageWidth / 2 + 10;
+    const tableWidth = 100;
+    const tableRows = [
+      ["Date du reçu", payment.date.toLocaleDateString()],
+      ["Facture n°", invoiceNumber],
+      ["Client", clientName],
+      ["Méthode de paiement", payment.method],
+      ["Montant payé", `$${payment.amount.toFixed(2)}`],
+      payment.reference ? ["Référence", payment.reference] : null,
+      payment.notes ? ["Notes", payment.notes] : null
+    ].filter(Boolean) as [string, string][];
+
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.2);
+    doc.rect(col1X - 10, tableStartY - 5, tableWidth, rowHeight * tableRows.length + 2, 'S');
+
+    tableRows.forEach(([label, value], i) => {
+      const yPos = tableStartY + i * rowHeight;
+      doc.text(label + " :", col1X, yPos);
+      doc.text(value, col2X, yPos);
+      // Ligne horizontale
+      if (i < tableRows.length - 1) {
+        doc.setDrawColor(230, 230, 230);
+        doc.line(col1X - 10, yPos + 4, col1X - 10 + tableWidth, yPos + 4);
+      }
+    });
 
     doc.save(`receipt-${payment.id}.pdf`);
+  }
+
+
+  // Fonction utilitaire pour charger une image en base64
+  getBase64FromUrl(url: string): Promise<string> {
+    return fetch(url)
+      .then(response => response.blob())
+      .then(blob => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      }));
   }
 }

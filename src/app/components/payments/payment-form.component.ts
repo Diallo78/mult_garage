@@ -308,10 +308,15 @@ export class PaymentFormComponent implements OnInit {
         id: this.generateId(),
         amount: paymentAmount,
         method: formValue.method as PaymentMethod,
-        reference: formValue.reference || undefined,
-        date: new Date(formValue.date),
-        notes: formValue.notes || undefined
+        date: new Date(formValue.date)
       };
+
+      if (formValue.reference) {
+        payment.reference = formValue.reference;
+      }
+      if (formValue.notes) {
+        payment.notes = formValue.notes;
+      }
 
       // Update invoice
       const updatedPayments = [...this.invoice.payments, payment];
@@ -344,6 +349,8 @@ export class PaymentFormComponent implements OnInit {
       this.router.navigate(['/invoices', this.invoiceId]);
     } catch (error) {
       this.notificationService.showError('Failed to record payment');
+      console.log("Échec de l'enregistrement du paiement" + error);
+
     } finally {
       this.isLoading = false;
     }

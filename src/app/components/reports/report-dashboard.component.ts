@@ -15,6 +15,11 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
   standalone: true,
   imports: [CommonModule, FormsModule, FirestoreDatePipe],
   template: `
+    <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
+    </div>
+
+    <div *ngIf="!isLoading">
     <div class="space-y-6">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
@@ -233,12 +238,13 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
         </div>
       </div>
     </div>
+    </div>
   `
 })
 export class ReportDashboardComponent implements OnInit {
   fromDate = '';
   toDate = '';
-
+  isLoading = true
   // Data
   clients: Client[] = [];
   vehicles: Vehicle[] = [];
@@ -278,6 +284,7 @@ export class ReportDashboardComponent implements OnInit {
   }
 
   private async loadData(): Promise<void> {
+    this.isLoading = true
     try {
       [
         this.clients,
@@ -298,7 +305,7 @@ export class ReportDashboardComponent implements OnInit {
       ]);
     } catch (error) {
       this.notificationService.showError('Failed to load report data');
-    }
+    }finally{this.isLoading = false}
   }
 
   private setDefaultDateRange(): void {

@@ -14,6 +14,11 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, FirestoreDatePipe],
   template: `
+    <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
+    </div>
+
+    <div *ngIf="!isLoading">
     <div class="space-y-6">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
@@ -144,6 +149,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
         </div>
       </div>
     </div>
+    </div>
   `
 })
 export class QuoteListComponent implements OnInit {
@@ -155,7 +161,7 @@ export class QuoteListComponent implements OnInit {
   statusFilter = '';
   fromDate = '';
   toDate = '';
-
+  isLoading = true;
   constructor(
     private readonly garageDataService: GarageDataService,
     private readonly notificationService: NotificationService
@@ -166,6 +172,7 @@ export class QuoteListComponent implements OnInit {
   }
 
   private async loadData(): Promise<void> {
+    this.isLoading = true
     try {
       [this.quotes, this.clients, this.vehicles] = await Promise.all([
         this.garageDataService.getAll<Quote>('quotes'),
@@ -175,7 +182,7 @@ export class QuoteListComponent implements OnInit {
       this.filteredQuotes = [...this.quotes];
     } catch (error) {
       this.notificationService.showError('Failed to load quotes');
-    }
+    }finally{this.isLoading = false}
   }
 
   filterQuotes(): void {

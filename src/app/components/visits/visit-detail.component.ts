@@ -12,6 +12,12 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
   standalone: true,
   imports: [CommonModule, RouterModule, FirestoreDatePipe],
   template: `
+
+  <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
+  </div>
+
+  <div *ngIf="!isLoading">
     <div class="space-y-6" *ngIf="visit">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
@@ -147,6 +153,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
         </div>
       </div>
     </div>
+    </div>
   `
 })
 export class VisitDetailComponent implements OnInit {
@@ -156,7 +163,7 @@ export class VisitDetailComponent implements OnInit {
   diagnostic: Diagnostic | null = null;
   visitId: string | null = null;
   hasDiagnostic = false;
-
+  isLoading = true;
   constructor(
     private garageDataService: GarageDataService,
     private notificationService: NotificationService,
@@ -171,6 +178,7 @@ export class VisitDetailComponent implements OnInit {
   }
 
   private async loadVisitData(): Promise<void> {
+    this.isLoading = true
     try {
       // Load visit
       this.visit = await this.garageDataService.getById<Visit>('visits', this.visitId!);
@@ -194,6 +202,8 @@ export class VisitDetailComponent implements OnInit {
       }
     } catch (error) {
       this.notificationService.showError('Failed to load visit data');
+    }finally{
+      this.isLoading = false
     }
   }
 

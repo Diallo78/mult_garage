@@ -114,7 +114,7 @@ import { Observable } from 'rxjs';
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
             *ngIf="canAccessPersonnel"
           >
-            <span class="mr-3">👨‍💼</span>
+            <span class="mr-3"> 👨🏻‍🔧 </span>
             Personnel
           </a>
 
@@ -124,7 +124,7 @@ import { Observable } from 'rxjs';
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
             *ngIf="canAccessSuperAdmin"
           >
-            <span class="mr-3">👨‍💼</span>
+            <span class="mr-3"> 🛠️ </span>
             Garage
           </a>
         </nav>

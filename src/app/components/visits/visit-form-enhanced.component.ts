@@ -21,6 +21,11 @@ interface VisitDocument {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
+  <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
+  </div>
+
+  <div *ngIf="!isLoading">
     <div class="space-y-6">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
@@ -282,6 +287,7 @@ interface VisitDocument {
         </form>
       </div>
     </div>
+    </div>
   `
 })
 export class VisitFormEnhancedComponent implements OnInit {
@@ -348,6 +354,7 @@ export class VisitFormEnhancedComponent implements OnInit {
   }
 
   private async loadData(): Promise<void> {
+    this.isLoading = false
     try {
       [this.clients, this.vehicles] = await Promise.all([
         this.garageDataService.getAll<Client>('clients'),
@@ -355,7 +362,7 @@ export class VisitFormEnhancedComponent implements OnInit {
       ]);
     } catch (error) {
       this.notificationService.showError('Failed to load data');
-    }
+    }finally{this.isLoading = true}
   }
 
   private async loadVisit(): Promise<void> {
