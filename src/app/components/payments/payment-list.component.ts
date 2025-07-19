@@ -170,7 +170,7 @@ import { DateFonction } from '../../services/fonction/date-fonction';
               <tr *ngFor="let payment of filteredPayments" class="hover:bg-gray-50">
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm font-medium text-gray-900">
-                    {{ payment.date | firestoreDate | date:'short' }}
+                    {{ payment.date | firestoreDate | date:'dd-MM-yyyy, hh:mm' }}
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -180,7 +180,7 @@ import { DateFonction } from '../../services/fonction/date-fonction';
                   <div class="text-sm text-gray-900">{{ payment.clientName }}</div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900">\${{ payment.amount.toFixed(2) }}</div>
+                  <div class="text-sm font-medium text-gray-900">{{ payment.amount | currency: 'GNF' : 'symbol' : '1.0-0' : 'fr' }}</div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
@@ -333,7 +333,6 @@ export class PaymentListComponent implements OnInit {
   async downloadReceipt(payment: any) {
     // Implementation for downloading receipt
     // Generate receipt
-     console.log(payment);
     const pipeDate = new FirestoreDatePipeTS()
     const dateFonctio = pipeDate.transform(payment.date)
     payment.date = new Date(dateFonctio);
@@ -342,7 +341,7 @@ export class PaymentListComponent implements OnInit {
         if (payment) {
         await this.pdfService.generatePaymentReceiptPDF(payment, payment.invoiceNumber, payment.clientName);
       }
-       this.notificationService.showSuccess('Receipt download feature coming soon');
+      //  this.notificationService.showSuccess('Receipt download feature coming soon');
       } catch (error) {
         this.notificationService.showError('Erreure de telechargement'+ error);
       }finally{this.isLoading = false}

@@ -6,7 +6,7 @@ import { NotificationService } from '../../services/notification.service';
 import { PDFService } from '../../services/pdf.service';
 import { Invoice } from '../../models/invoice.model';
 import { Client, Vehicle } from '../../models/client.model';
-import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 
 @Component({
   selector: 'app-invoice-detail',
@@ -283,10 +283,18 @@ export class InvoiceDetailComponent implements OnInit {
       const clientName = `${this.client.firstName} ${this.client.lastName}`;
       const vehicleInfo = `${this.vehicle.brand} ${this.vehicle.model} (${this.vehicle.licensePlate})`;
 
+      const pipeDate = new FirestoreDatePipeTS()
+      const _createdAt = pipeDate.transform(this.invoice.createdAt)
+      const dueDate = pipeDate.transform(this.invoice.dueDate)
+      this.invoice.dueDate = new Date(dueDate);
+      this.invoice.createdAt = new Date(_createdAt);
+
       await this.pdfService.generateInvoicePDF(this.invoice, clientName, vehicleInfo);
       this.notificationService.showSuccess('PDF downloaded successfully');
     } catch (error) {
       this.notificationService.showError('Failed to generate PDF');
+      console.log('Failed to generate PDF '+ error);
+
     }
   }
 

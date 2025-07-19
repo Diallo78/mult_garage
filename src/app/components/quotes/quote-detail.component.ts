@@ -6,7 +6,7 @@ import { NotificationService } from '../../services/notification.service';
 import { PDFService } from '../../services/pdf.service';
 import { Quote } from '../../models/quote.model';
 import { Client, Vehicle } from '../../models/client.model';
-import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 
 @Component({
   selector: 'app-quote-detail',
@@ -256,6 +256,9 @@ export class QuoteDetailComponent implements OnInit {
       const clientName = `${this.client.firstName} ${this.client.lastName}`;
       const vehicleInfo = `${this.vehicle.brand} ${this.vehicle.model} (${this.vehicle.licensePlate})`;
 
+      const pipeDate = new FirestoreDatePipeTS()
+      const dateFonctio = pipeDate.transform(this.quote.createdAt)
+      this.quote.createdAt = new Date(dateFonctio);
       await this.pdfService.generateQuotePDF(this.quote, clientName, vehicleInfo);
       this.notificationService.showSuccess('PDF downloaded successfully');
     } catch (error) {

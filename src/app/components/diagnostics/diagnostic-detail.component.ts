@@ -7,7 +7,7 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { PDFService } from '../../services/pdf.service';
 import { Personnel } from '../../models/garage.model';
-import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 
 
 @Component({
@@ -240,6 +240,10 @@ export class DiagnosticDetailComponent implements OnInit {
     try {
       const clientName = `${this.client.firstName} ${this.client.lastName}`;
       const vehicleInfo = `${this.vehicle.brand} ${this.vehicle.model} (${this.vehicle.licensePlate})`;
+
+          const pipeDate = new FirestoreDatePipeTS()
+          const dateFonctio = pipeDate.transform(this.diagnostic.createdAt)
+          this.diagnostic.createdAt = new Date(dateFonctio);
 
       await this.pdfService.generateDiagnosticReportPDF(this.diagnostic, clientName, vehicleInfo);
       this.notificationService.showSuccess('PDF downloaded successfully');
