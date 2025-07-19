@@ -6,7 +6,9 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { Invoice, Payment } from '../../models/invoice.model';
 import { Client, Vehicle } from '../../models/client.model';
-import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
+import { PDFService } from '../../services/pdf.service';
+import { DateFonction } from '../../services/fonction/date-fonction';
 
 @Component({
   selector: 'app-payment-list',
@@ -225,7 +227,8 @@ export class PaymentListComponent implements OnInit {
 
   constructor(
     private garageDataService: GarageDataService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private pdfService: PDFService,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -327,8 +330,21 @@ export class PaymentListComponent implements OnInit {
     return this.payments.length;
   }
 
-  downloadReceipt(payment: any): void {
+  async downloadReceipt(payment: any) {
     // Implementation for downloading receipt
-    this.notificationService.showSuccess('Receipt download feature coming soon');
+    // Generate receipt
+     console.log(payment);
+    const pipeDate = new FirestoreDatePipeTS()
+    const dateFonctio = pipeDate.transform(payment.date)
+    payment.date = new Date(dateFonctio);
+    this.isLoading = true
+      try {
+        if (payment) {
+        await this.pdfService.generatePaymentReceiptPDF(payment, payment.invoiceNumber, payment.clientName);
+      }
+       this.notificationService.showSuccess('Receipt download feature coming soon');
+      } catch (error) {
+        this.notificationService.showError('Erreure de telechargement'+ error);
+      }finally{this.isLoading = false}
   }
 }
