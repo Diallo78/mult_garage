@@ -28,49 +28,57 @@ export class AuthService {
     this.initializeAuthListener();
   }
 
-  // private initializeAuthListener(): void {
-  //   onAuthStateChanged(auth, async (firebaseUser) => {
-  //     if (firebaseUser) {
-  //       const userData = await this.getUserData(firebaseUser.uid);
-  //       this.currentUserSubject.next(userData);
-  //     } else {
-  //       this.currentUserSubject.next(null);
-  //     }
-  //   });
-  // }
-
   private initializeAuthListener(): void {
     onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const userData = await this.getUserData(firebaseUser.uid);
         if (userData?.garageId) {
-          localStorage.setItem('garageId', userData.garageId); // ⬅️ Persist here
+          localStorage.setItem('garageId', userData.garageId);
         }
         this.currentUserSubject.next(userData);
       } else {
-        localStorage.removeItem('garageId'); // nettoyer à la déconnexion
+        localStorage.removeItem('garageId');
         this.currentUserSubject.next(null);
       }
     });
   }
 
-  // async signIn(email: string, password: string): Promise<void> {
-  //   try {
-  //     await signInWithEmailAndPassword(auth, email, password);
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // }
-
   async signIn(email: string, password: string): Promise<void> {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const userData = await this.getUserData(userCredential.user.uid);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userData = await this.getUserData(userCredential.user.uid);
 
-    if (userData?.garageId) {
-      localStorage.setItem('garageId', userData.garageId);  // ⬅️ Ajout ici
+      if (userData?.garageId) {
+        localStorage.setItem('garageId', userData.garageId);
+      }
+
+      this.currentUserSubject.next(userData);
+    } catch (error: any) {
+      let errorMessage = 'Une erreur est survenue lors de la connexion';
+
+      switch (error.code) {
+        case 'auth/invalid-email':
+          errorMessage = 'L\'adresse email est invalide';
+          break;
+        case 'auth/user-disabled':
+          errorMessage = 'Ce compte utilisateur a été désactivé';
+          break;
+        case 'auth/user-not-found':
+          errorMessage = 'Aucun compte ne correspond à cet email';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'Mot de passe incorrect';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Trop de tentatives de connexion. Veuillez réessayer plus tard';
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = 'Erreur de connexion réseau. Vérifiez votre connexion internet';
+          break;
+      }
+
+      throw new Error(errorMessage);
     }
-
-    this.currentUserSubject.next(userData);
   }
 
   async signUp(email: string, password: string, displayName: string, garageId: string, role: UserRole): Promise<void> {
@@ -95,24 +103,13 @@ export class AuthService {
     }
   }
 
-  // async signOut(): Promise<void> {
-  //   try {
-  //     await signOut(auth);
-  //     this.currentUserSubject.next(null);
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // }
-
   async signOut(): Promise<void> {
     try {
       await signOut(auth);
       this.currentUserSubject.next(null);
 
-      // Nettoyage du localStorage
       localStorage.removeItem('garageId');
 
-      // Redirection vers la page de connexion
       this.router.navigate(['/login']);
     } catch (error) {
       throw error;

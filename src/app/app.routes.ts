@@ -171,7 +171,7 @@ export const routes: Routes = [
       },
       {
         path: 'garage-setup',
-        loadComponent: () => import('./components/garage/garage-setup.component').then(m => m.GarageSetupComponent)
+        loadComponent: () => import('./components/garage/garage-setting.component').then(m => m.GarageSetupComponent)
       }
     ]
   },

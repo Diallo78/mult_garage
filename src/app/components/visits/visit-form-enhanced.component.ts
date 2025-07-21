@@ -354,7 +354,7 @@ export class VisitFormEnhancedComponent implements OnInit {
   }
 
   private async loadData(): Promise<void> {
-    this.isLoading = false
+    this.isLoading = true
     try {
       [this.clients, this.vehicles] = await Promise.all([
         this.garageDataService.getAll<Client>('clients'),
@@ -362,7 +362,7 @@ export class VisitFormEnhancedComponent implements OnInit {
       ]);
     } catch (error) {
       this.notificationService.showError('Failed to load data');
-    }finally{this.isLoading = true}
+    }finally{this.isLoading = false}
   }
 
   private async loadVisit(): Promise<void> {

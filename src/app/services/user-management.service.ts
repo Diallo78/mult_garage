@@ -10,17 +10,20 @@ import {
   doc,
   setDoc,
   updateDoc,
-  getDoc
+  getDoc,
+  addDoc,
+  collection
 } from 'firebase/firestore';
 
 import { AuthService } from './auth.service';
 import { GarageDataService } from './garage-data.service';
 import { NotificationService } from './notification.service';
-import { User, UserRole } from '../models/user.model';
+import { Garage, User, UserRole } from '../models/user.model';
 import { Client } from '../models/client.model';
 import { Personnel } from '../models/garage.model';
 import { firstValueFrom } from 'rxjs';
 import { auth, db } from '../../../firebase.config';
+import { User as FirebaseUser } from 'firebase/auth';
 
 @Injectable({
   providedIn: 'root'
@@ -102,68 +105,6 @@ export class UserManagementService {
     }
   }
 
-  async createClientAccountv2(clientData: Omit<Client, 'id'>, _garageId: string): Promise<{ clientId: string; userId: string }> {
-    try {
-      // 🔐 Récupère et sauvegarde AVANT création du nouvel utilisateur
-      const currentUser = await firstValueFrom(this.authService.currentUser$);
-      if (!currentUser) throw new Error('No user logged in');
-
-
-      const currentUserEmail = currentUser.email!;
-      const currentUserPassword = await this.promptForCurrentPassword();
-
-      // 📦 Mot de passe temporaire pour le client
-      const tempPassword = this.generateTempPassword();
-
-      // 🔧 Créer compte client
-      const userCredential = await createUserWithEmailAndPassword(auth, clientData.email, tempPassword);
-      const firebaseUser = userCredential.user;
-
-      // 👤 Mettre à jour le profil
-      await updateProfile(firebaseUser, {
-        displayName: `${clientData.firstName} ${clientData.lastName}`
-      });
-
-      // 🔐 Créer le document utilisateur
-      const userData: User = {
-        uid: firebaseUser.uid,
-        email: clientData.email,
-        displayName: `${clientData.firstName} ${clientData.lastName}`,
-        garageId: _garageId,
-        role: 'Client' as UserRole,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      await setDoc(doc(db, 'users', firebaseUser.uid), userData);
-
-      // 📁 Créer le document client
-      const clientId = await this.garageDataService.create('clients', {
-        ...clientData,
-        userId: firebaseUser.uid
-      });
-
-      // 🔄 Renvoyer lien de mot de passe
-      await sendPasswordResetEmail(auth, clientData.email);
-
-      // 🧹 Reconnecter l’utilisateur d’origine
-      await signOut(auth);
-      await signInWithEmailAndPassword(auth, currentUserEmail, currentUserPassword);
-
-      this.notificationService.showSuccess(
-        `Compte client créé. Email de réinitialisation envoyé à ${clientData.email}`, 5000
-      );
-
-      return { clientId, userId: firebaseUser.uid };
-    } catch (error: any) {
-      this.notificationService.showError(`Échec de création du compte client: ${error.message}`);
-      console.log(`Échec de création du compte client: ${error.message}`);
-      throw error;
-    }
-  }
-
-
   async createPersonnelAccount(personnelData: Omit<Personnel, 'id'>): Promise<{ personnelId: string; userId: string }> {
     try {
       const currentUser = await firstValueFrom(this.authService.currentUser$);
@@ -228,6 +169,36 @@ export class UserManagementService {
 
       throw error;
     }
+  }
+
+  async createGarageAccount(garageData: Omit<Garage, 'id'> & { password: string, firstName: string, lastName: string }): Promise<{ garageId: string, userId: string }> {
+    // 1. Créer le compte utilisateur
+    const userCredential = await createUserWithEmailAndPassword(auth, garageData.email, garageData.password);
+    const firebaseUser = userCredential.user;
+
+    // 2. Créer le document garage (on a besoin de l'id généré)
+    const garageRef = await addDoc(collection(db, 'garages'), {
+      ...garageData,
+      ownerId: firebaseUser.uid,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    const garageId = garageRef.id;
+
+    // 3. Créer le document utilisateur
+    const userData: User = {
+      uid: firebaseUser.uid,
+      email: garageData.email,
+      displayName: `${garageData.firstName} ${garageData.lastName}`,
+      garageId: garageId,
+      role: 'AdminGarage' as UserRole,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+
+    return { garageId, userId: firebaseUser.uid };
   }
 
   async createClientAccountWithoutAuth(clientData: Omit<Client, 'id'>): Promise<string> {
@@ -420,4 +391,5 @@ export class UserManagementService {
       return null;
     }
   }
+
 }
