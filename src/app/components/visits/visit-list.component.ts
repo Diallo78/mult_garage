@@ -28,7 +28,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
       </div>
       <div class="mt-4 flex md:mt-0 md:ml-4">
         <button routerLink="/visits/new" class="btn-primary">
-          New Visit
+          Nouvelle visite
         </button>
       </div>
     </div>
@@ -37,7 +37,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
     <div class="card">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <label class="form-label">Search</label>
+          <label class="form-label">Recherche</label>
           <input
             type="text"
             [(ngModel)]="searchTerm"
@@ -47,21 +47,21 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
           />
         </div>
         <div>
-          <label class="form-label">Status</label>
+          <label class="form-label">Statut</label>
           <select
             [(ngModel)]="statusFilter"
             (change)="filterVisits()"
             class="form-input"
           >
-            <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="InProgress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
+            <option value="">Tous les statuts</option>
+            <option value="Pending">En attente</option>
+            <option value="InProgress">En cours</option>
+            <option value="Completed">Complété</option>
+            <option value="Cancelled">Annulé</option>
           </select>
         </div>
         <div>
-          <label class="form-label">From Date</label>
+          <label class="form-label">À partir de la date</label>
           <input
             type="date"
             [(ngModel)]="fromDate"
@@ -70,7 +70,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
           />
         </div>
         <div>
-          <label class="form-label">To Date</label>
+          <label class="form-label">À ce jour</label>
           <input
             type="date"
             [(ngModel)]="toDate"
@@ -88,19 +88,19 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
           <thead class="bg-gray-50">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Visit Date
+                Date de la visite
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Client
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Vehicle
+                Véhicule
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Issues
+                Problèmes
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+                Statut
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -138,13 +138,13 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                   [routerLink]="['/visits', visit.id]"
                   class="text-primary-600 hover:text-primary-900 mr-3"
                 >
-                  View
+                  Voir
                 </button>
                 <button
                   [routerLink]="['/visits', visit.id, 'edit']"
                   class="text-secondary-600 hover:text-secondary-900 mr-3"
                 >
-                  Edit
+                  Modifier
                 </button>
                 <button
                   (click)="downloadDocuments(visit)"
@@ -159,7 +159,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                   class="text-accent-600 hover:text-accent-900 mr-3"
                   *ngIf="visit.status === 'InProgress'"
                 >
-                  Diagnose
+                  Diagnostiquer
                 </button>
               </td>
             </tr>

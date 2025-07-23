@@ -38,7 +38,7 @@ export interface Visit {
   garageId: string;
   clientId: string;
   vehicleId: string;
-  driverId?: string;
+  driverId?: Driver;
   visitDate: Date;
   reportedIssues: string[];
   documents?: VisitDocument[];

@@ -6,6 +6,7 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { StorageService } from '../../services/storage.service';
 import { NotificationService } from '../../services/notification.service';
 import { Visit, Client, Vehicle, Driver } from '../../models/client.model';
+import { FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 
 interface VisitDocument {
   id: string;
@@ -30,7 +31,7 @@ interface VisitDocument {
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
           <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            {{ isEditMode ? 'Edit Visit' : 'New Visit' }}
+            {{ isEditMode ? 'Modifier la visite' : 'Nouvelle visite' }}
           </h2>
         </div>
       </div>
@@ -39,7 +40,7 @@ interface VisitDocument {
         <form [formGroup]="visitForm" (ngSubmit)="onSubmit()" class="space-y-6">
           <!-- Visit Date -->
           <div>
-            <label class="form-label">Visit Date *</label>
+            <label class="form-label">Date de la visite *</label>
             <input
               type="datetime-local"
               formControlName="visitDate"
@@ -60,7 +61,7 @@ interface VisitDocument {
               class="form-input"
               [class.border-red-500]="visitForm.get('clientId')?.invalid && visitForm.get('clientId')?.touched"
             >
-              <option value="">Select a client</option>
+              <option value="">Sélectionnez un client</option>
               <option *ngFor="let client of clients" [value]="client.id">
                 {{ client.firstName }} {{ client.lastName }}
               </option>
@@ -72,13 +73,13 @@ interface VisitDocument {
 
           <!-- Vehicle Selection -->
           <div>
-            <label class="form-label">Vehicle *</label>
+            <label class="form-label">Véhicule *</label>
             <select
               formControlName="vehicleId"
               class="form-input"
               [class.border-red-500]="visitForm.get('vehicleId')?.invalid && visitForm.get('vehicleId')?.touched"
             >
-              <option value="">Select a vehicle</option>
+              <option value="">Sélectionnez un Véhicule *</option>
               <option *ngFor="let vehicle of selectedClientVehicles" [value]="vehicle.id">
                 {{ vehicle.brand }} {{ vehicle.model }} ({{ vehicle.licensePlate }})
               </option>
@@ -90,10 +91,10 @@ interface VisitDocument {
 
           <!-- Driver Information -->
           <div class="border rounded-lg p-4 bg-gray-50">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Driver Information (Optional)</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Informations sur le conducteur (facultatif)</h3>
             <div formGroupName="driver" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="form-label">Driver Name</label>
+                <label class="form-label">Nom du conducteur</label>
                 <input
                   type="text"
                   formControlName="name"
@@ -102,7 +103,7 @@ interface VisitDocument {
                 />
               </div>
               <div>
-                <label class="form-label">Driver Phone</label>
+                <label class="form-label">Téléphone du conducteur</label>
                 <input
                   type="tel"
                   formControlName="phone"
@@ -111,7 +112,7 @@ interface VisitDocument {
                 />
               </div>
               <div>
-                <label class="form-label">License Number</label>
+                <label class="form-label">Numéro de licence</label>
                 <input
                   type="text"
                   formControlName="licenseNumber"
@@ -124,7 +125,7 @@ interface VisitDocument {
 
           <!-- Issue Declaration Method -->
           <div class="border rounded-lg p-4 bg-blue-50">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Issue Declaration</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Déclaration d'émission</h3>
             <div class="mb-4">
               <div class="flex items-center space-x-6">
                 <div class="flex items-center">
@@ -135,7 +136,7 @@ interface VisitDocument {
                     formControlName="declarationMethod"
                     class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
                   />
-                  <label for="manual" class="ml-2 text-sm text-gray-700">Manual Entry</label>
+                  <label for="manual" class="ml-2 text-sm text-gray-700">Saisie manuelle</label>
                 </div>
                 <div class="flex items-center">
                   <input
@@ -145,7 +146,7 @@ interface VisitDocument {
                     formControlName="declarationMethod"
                     class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
                   />
-                  <label for="document" class="ml-2 text-sm text-gray-700">Upload Document</label>
+                  <label for="document" class="ml-2 text-sm text-gray-700">Télécharger le document</label>
                 </div>
               </div>
             </div>
@@ -153,13 +154,13 @@ interface VisitDocument {
             <!-- Manual Entry -->
             <div *ngIf="visitForm.get('declarationMethod')?.value === 'manual'">
               <div class="flex items-center justify-between mb-4">
-                <label class="form-label">Reported Issues *</label>
+                <label class="form-label">Problèmes signalés *</label>
                 <button
                   type="button"
                   (click)="addIssue()"
                   class="btn-secondary text-sm"
                 >
-                  Add Issue
+                  Ajouter un problème
                 </button>
               </div>
               <div formArrayName="reportedIssues" class="space-y-3">
@@ -176,7 +177,7 @@ interface VisitDocument {
                     class="text-red-600 hover:text-red-900"
                     [disabled]="reportedIssuesArray.length === 1"
                   >
-                    Remove
+                    Retirer
                   </button>
                 </div>
               </div>
@@ -186,7 +187,7 @@ interface VisitDocument {
             <div *ngIf="visitForm.get('declarationMethod')?.value === 'document'">
               <div class="space-y-4">
                 <div>
-                  <label class="form-label">Upload Declaration Document</label>
+                  <label class="form-label">Télécharger le document de déclaration</label>
                   <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-primary-400 transition-colors">
                     <div class="space-y-1 text-center">
                       <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -194,7 +195,7 @@ interface VisitDocument {
                       </svg>
                       <div class="flex text-sm text-gray-600">
                         <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
-                          <span>Upload files</span>
+                          <span>Télécharger des fichiers</span>
                           <input
                             id="file-upload"
                             type="file"
@@ -204,9 +205,9 @@ interface VisitDocument {
                             (change)="onFileSelect($event)"
                           />
                         </label>
-                        <p class="pl-1">or drag and drop</p>
+                        <p class="pl-1">ou glisser-déposer</p>
                       </div>
-                      <p class="text-xs text-gray-500">PDF, DOC, DOCX, JPG, PNG up to 10MB each</p>
+                      <p class="text-xs text-gray-500">PDF, DOC, DOCX, JPG, PNG jusqu'à 10 Mo chacun</p>
                     </div>
                   </div>
                 </div>
@@ -241,7 +242,7 @@ interface VisitDocument {
                           (click)="removeDocument(i)"
                           class="text-red-600 hover:text-red-900 text-sm"
                         >
-                          Remove
+                          Annuler
                         </button>
                       </div>
                     </div>
@@ -258,12 +259,12 @@ interface VisitDocument {
 
           <!-- Status -->
           <div>
-            <label class="form-label">Status</label>
+            <label class="form-label">Statut</label>
             <select formControlName="status" class="form-input">
-              <option value="Pending">Pending</option>
-              <option value="InProgress">In Progress</option>
-              <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
+              <option value="Pending">En attente</option>
+              <option value="InProgress">En cours</option>
+              <option value="Completed">Complété</option>
+              <option value="Cancelled">Annulé</option>
             </select>
           </div>
 
@@ -273,7 +274,7 @@ interface VisitDocument {
               (click)="goBack()"
               class="btn-outline"
             >
-              Cancel
+              Annuler
             </button>
             <button
               type="submit"
@@ -281,7 +282,7 @@ interface VisitDocument {
               class="btn-primary"
             >
               <span *ngIf="isLoading" class="mr-2">Saving...</span>
-              {{ isEditMode ? 'Update Visit' : 'Create Visit' }}
+              {{ isEditMode ? 'Modifier une Visit' : 'Créer une visite' }}
             </button>
           </div>
         </form>
@@ -361,7 +362,9 @@ export class VisitFormEnhancedComponent implements OnInit {
         this.garageDataService.getAll<Vehicle>('vehicles')
       ]);
     } catch (error) {
-      this.notificationService.showError('Failed to load data');
+      this.notificationService.showError('Échec du chargement des données.' );
+      console.log("Échec du chargement des données " + error);
+
     }finally{this.isLoading = false}
   }
 
@@ -385,9 +388,10 @@ export class VisitFormEnhancedComponent implements OnInit {
           this.visitForm.patchValue({ declarationMethod: 'document' });
           // Load documents from storage
         }
-
+        const pipeDate = new FirestoreDatePipeTS()
         this.visitForm.patchValue({
-          visitDate: new Date(visit.visitDate).toISOString().slice(0, 16),
+          // visitDate: new Date(visit.visitDate).toISOString().slice(0, 16),
+          visitDate: pipeDate.transform(visit.visitDate),
           clientId: visit.clientId,
           vehicleId: visit.vehicleId,
           status: visit.status
@@ -396,7 +400,8 @@ export class VisitFormEnhancedComponent implements OnInit {
         this.onClientChange();
       }
     } catch (error) {
-      this.notificationService.showError('Failed to load visit data');
+      this.notificationService.showError('Échec du chargement des données.' );
+      console.log("Échec du chargement des données " + error);
     }
   }
 

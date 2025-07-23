@@ -106,6 +106,7 @@ import { Garage, GarageSettings } from '../../models/user.model';
                 <div>
                   <label class="form-label">Currency</label>
                   <select formControlName="currency" class="form-input">
+                   <option value="GNF">Fran Guinée (GNF)</option>
                     <option value="EUR">Euro (€)</option>
                     <option value="USD">US Dollar ($)</option>
                     <option value="GBP">British Pound (£)</option>

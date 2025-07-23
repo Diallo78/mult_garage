@@ -150,10 +150,6 @@ export const routes: Routes = [
         loadComponent: () => import('./components/reports/report-dashboard.component').then(m => m.ReportDashboardComponent)
       },
       {
-        path: 'settings',
-        loadComponent: () => import('./components/settings/garage-setup.component').then(m => m.GarageSetupComponent)
-      },
-      {
         path: 'personnel',
         loadComponent: () => import('./components/personnel/personnel-list.component').then(m => m.PersonnelListComponent)
       },
@@ -172,7 +168,11 @@ export const routes: Routes = [
       {
         path: 'garage-setup',
         loadComponent: () => import('./components/garage/garage-setting.component').then(m => m.GarageSetupComponent)
-      }
+      },
+      {
+        path: 'settings',
+        loadComponent: () => import('./components/settings/garage-setup.component').then(m => m.GarageSetupComponent)
+      },
     ]
   },
   {

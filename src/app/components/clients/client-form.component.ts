@@ -229,7 +229,7 @@ template: `
   <div class="md:flex md:items-center md:justify-between">
     <div class="flex-1 min-w-0">
       <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-        {{ isEditMode ? 'Edit Client' : 'Add New Client' }}
+        {{ isEditMode ? 'Modifier le client' : 'Ajouter un nouveau client' }}
       </h2>
     </div>
   </div>
@@ -238,7 +238,7 @@ template: `
     <form [formGroup]="clientForm" (ngSubmit)="onSubmit()" class="space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="form-label">First Name *</label>
+          <label class="form-label">Prénom *</label>
           <input
             type="text"
             formControlName="firstName"
@@ -252,7 +252,7 @@ template: `
         </div>
 
         <div>
-          <label class="form-label">Last Name *</label>
+          <label class="form-label">Nom de famille *</label>
           <input
             type="text"
             formControlName="lastName"
@@ -266,7 +266,7 @@ template: `
         </div>
 
         <div>
-          <label class="form-label">Phone *</label>
+          <label class="form-label">Téléphone *</label>
           <input
             type="tel"
             formControlName="phone"
@@ -280,7 +280,7 @@ template: `
         </div>
 
         <div>
-          <label class="form-label">Email *</label>
+          <label class="form-label">E-mail *</label>
           <input
             type="email"
             formControlName="email"
@@ -304,12 +304,12 @@ template: `
             class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
           />
           <label for="createAccount" class="ml-2 text-sm text-gray-700">
-            Create user account for client (recommended)
+            Créer un compte utilisateur pour le client (recommandé)
           </label>
         </div>
         <p class="mt-2 text-xs text-gray-600">
-          This will create a user account allowing the client to view their quotes, invoices, and vehicle history online.
-          A password reset email will be sent to the client.
+          Cela créera un compte utilisateur permettant au client de consulter ses devis, factures et l'historique de
+          son véhicule en ligne. Un e-mail de réinitialisation du mot de passe lui sera envoyé..
         </p>
       </div>
 
@@ -329,7 +329,7 @@ template: `
           (click)="goBack()"
           class="btn-outline"
         >
-          Cancel
+          Annuler
         </button>
         <button
           type="submit"
@@ -337,7 +337,7 @@ template: `
           class="btn-primary"
         >
           <span *ngIf="isLoading" class="mr-2">Saving...</span>
-          {{ isEditMode ? 'Update Client' : 'Create Client' }}
+          {{ isEditMode ? 'Modifier un Client' : 'Créer un Client' }}
         </button>
       </div>
     </form>

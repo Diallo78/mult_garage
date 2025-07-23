@@ -40,8 +40,8 @@ import { AuthService } from '../../services/auth.service';
                 *ngIf="showDropdown"
                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
               >
-                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
-                <a routerLink="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Paramètre</a>
+                <a routerLink="/garage-setup" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                <a enable = false routerLink="/garage-setup" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Paramètre</a>
                 <button
                   (click)="signOut()"
                   class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

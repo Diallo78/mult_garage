@@ -38,7 +38,7 @@ import { Observable } from 'rxjs';
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
           >
             <span class="mr-3">🚗</span>
-            Vehicles
+            Véhicules
           </a>
 
           <a

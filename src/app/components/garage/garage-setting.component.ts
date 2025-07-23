@@ -25,10 +25,10 @@ import { UserManagementService } from '../../services/user-management.service';
           <form [formGroup]="garageForm" (ngSubmit)="onSubmit()" class="space-y-8">
             <!-- Basic Information -->
             <div>
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Informations de base</h2>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label class="form-label">Garage Name *</label>
+                  <label class="form-label">Nom du garage *</label>
                   <input
                     type="text"
                     formControlName="name"
@@ -107,7 +107,7 @@ import { UserManagementService } from '../../services/user-management.service';
               <h2 class="text-xl font-semibold text-gray-900 mb-4">Business Information</h2>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label class="form-label">SIRET Number</label>
+                  <label class="form-label">Numéro SIRET</label>
                   <input
                     type="text"
                     formControlName="siret"
@@ -116,7 +116,7 @@ import { UserManagementService } from '../../services/user-management.service';
                   />
                 </div>
                 <div>
-                  <label class="form-label">VAT Number</label>
+                  <label class="form-label">Numéro de TVA</label>
                   <input
                     type="text"
                     formControlName="vatNumber"
@@ -129,11 +129,12 @@ import { UserManagementService } from '../../services/user-management.service';
 
             <!-- Settings -->
             <div>
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">Default Settings</h2>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Paramètres par défaut</h2>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label class="form-label">Currency</label>
                   <select formControlName="currency" class="form-input">
+                    <option value="GNF">Fran Guinée (GNF)</option>
                     <option value="EUR">Euro (€)</option>
                     <option value="USD">US Dollar ($)</option>
                     <option value="GBP">British Pound (£)</option>
@@ -141,7 +142,7 @@ import { UserManagementService } from '../../services/user-management.service';
                   </select>
                 </div>
                 <div>
-                  <label class="form-label">Default VAT Rate (%)</label>
+                  <label class="form-label">Taux de TVA par défaut (%)</label>
                   <input
                     type="number"
                     formControlName="defaultVatRate"
@@ -152,7 +153,7 @@ import { UserManagementService } from '../../services/user-management.service';
                   />
                 </div>
                 <div>
-                  <label class="form-label">Invoice Prefix</label>
+                  <label class="form-label">Préfixe de facture</label>
                   <input
                     type="text"
                     formControlName="invoicePrefix"
@@ -165,7 +166,7 @@ import { UserManagementService } from '../../services/user-management.service';
 
             <!-- Working Hours -->
             <div>
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">Working Hours</h2>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Horaires de travail</h2>
               <div class="space-y-4">
                 <div *ngFor="let day of weekDays" class="flex items-center space-x-4">
                   <div class="w-24">
@@ -223,15 +224,25 @@ export class GarageSetupComponent implements OnInit {
   garageForm: FormGroup;
   isLoading = false;
 
+  // weekDays = [
+  //   { key: 'monday', label: 'Monday' },
+  //   { key: 'tuesday', label: 'Tuesday' },
+  //   { key: 'wednesday', label: 'Wednesday' },
+  //   { key: 'thursday', label: 'Thursday' },
+  //   { key: 'friday', label: 'Friday' },
+  //   { key: 'saturday', label: 'Saturday' },
+  //   { key: 'sunday', label: 'Sunday' }
+  // ];
+
   weekDays = [
-    { key: 'monday', label: 'Monday' },
-    { key: 'tuesday', label: 'Tuesday' },
-    { key: 'wednesday', label: 'Wednesday' },
-    { key: 'thursday', label: 'Thursday' },
-    { key: 'friday', label: 'Friday' },
-    { key: 'saturday', label: 'Saturday' },
-    { key: 'sunday', label: 'Sunday' }
-  ];
+    { key: 'lundi', label: 'Lundi' },
+    { key: 'mardi', label: 'Mardi' },
+    { key: 'mercredi', label: 'Mercredi' },
+    { key: 'jeudi', label: 'Jeudi' },
+    { key: 'vendredi', label: 'Vendredi' },
+    { key: 'samedi', label: 'Samedi' },
+    { key: 'dimanche', label: 'Dimanche' }
+  ]
 
   constructor(
     private readonly fb: FormBuilder,
@@ -247,7 +258,7 @@ export class GarageSetupComponent implements OnInit {
       website: [''],
       siret: [''],
       vatNumber: [''],
-      currency: ['EUR'],
+      currency: ['GNF'],
       defaultVatRate: [20],
       invoicePrefix: ['INV'],
       // Nouveaux champs utilisateur
@@ -255,27 +266,34 @@ export class GarageSetupComponent implements OnInit {
       lastName: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(6)]],
       // Working hours
-      mondayIsOpen: [true],
-      mondayOpenTime: ['08:00'],
-      mondayCloseTime: ['18:00'],
-      tuesdayIsOpen: [true],
-      tuesdayOpenTime: ['08:00'],
-      tuesdayCloseTime: ['18:00'],
-      wednesdayIsOpen: [true],
-      wednesdayOpenTime: ['08:00'],
-      wednesdayCloseTime: ['18:00'],
-      thursdayIsOpen: [true],
-      thursdayOpenTime: ['08:00'],
-      thursdayCloseTime: ['18:00'],
-      fridayIsOpen: [true],
-      fridayOpenTime: ['08:00'],
-      fridayCloseTime: ['18:00'],
-      saturdayIsOpen: [false],
-      saturdayOpenTime: ['08:00'],
-      saturdayCloseTime: ['12:00'],
-      sundayIsOpen: [false],
-      sundayOpenTime: [''],
-      sundayCloseTime: ['']
+      lundiIsOpen: [true],
+      lundiOpenTime: ['08:00'],
+      lundiCloseTime: ['18:00'],
+
+      mardiIsOpen: [true],
+      mardiOpenTime: ['08:00'],
+      mardiCloseTime: ['18:00'],
+
+      mercrediIsOpen: [true],
+      mercrediOpenTime: ['08:00'],
+      mercrediCloseTime: ['18:00'],
+
+      jeudiIsOpen: [true],
+      jeudiOpenTime: ['08:00'],
+      jeudiCloseTime: ['18:00'],
+
+      vendrediIsOpen: [true],
+      vendrediOpenTime: ['08:00'],
+      vendrediCloseTime: ['18:00'],
+
+      samediIsOpen: [false],
+      samediOpenTime: ['08:00'],
+      samediCloseTime: ['12:00'],
+
+      dimancheIsOpen: [false],
+      dimancheOpenTime: [''],
+      dimancheCloseTime: ['']
+
     });
   }
 
