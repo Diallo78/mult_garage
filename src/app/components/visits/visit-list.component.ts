@@ -6,6 +6,7 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { Client, Vehicle, Visit } from '../../models/client.model';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+import { AuthService } from '../../services/auth.service';
 
 
 @Component({
@@ -28,7 +29,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
       </div>
       <div class="mt-4 flex md:mt-0 md:ml-4">
         <button routerLink="/visits/new" class="btn-primary">
-          Nouvelle visite
+          Nouvelle déclaration / visite
         </button>
       </div>
     </div>
@@ -124,7 +125,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                 <div class="text-sm text-gray-900">
                   {{ visit.reportedIssues.slice(0, 2).join(', ') }}
                   <span *ngIf="visit.reportedIssues.length > 2" class="text-gray-500">
-                    +{{ visit.reportedIssues.length - 2 }} more
+                    +{{ visit.reportedIssues.length - 2 }} autres
                   </span>
                 </div>
               </td>
@@ -140,12 +141,15 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                 >
                   Voir
                 </button>
-                <button
-                  [routerLink]="['/visits', visit.id, 'edit']"
-                  class="text-secondary-600 hover:text-secondary-900 mr-3"
-                >
-                  Modifier
-                </button>
+                @if(visit.status !== 'Completed'){
+                  <button
+                    [routerLink]="['/visits', visit.id, 'edit']"
+                    class="text-secondary-600 hover:text-secondary-900 mr-3"
+                  >
+                    Modifier
+                  </button>
+                }
+
                 <button
                   (click)="downloadDocuments(visit)"
                   class="text-accent-600 hover:text-accent-900 mr-3"
@@ -184,7 +188,8 @@ isLoading = true;
 
 constructor(
   private garageDataService: GarageDataService,
-  private notificationService: NotificationService
+  private notificationService: NotificationService,
+  public authService: AuthService
 ) {}
 
 async ngOnInit(): Promise<void> {

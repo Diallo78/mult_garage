@@ -15,25 +15,34 @@ export interface Diagnostic {
     updatedAt: Date;
   }
 
-  export type DiagnosticCategory =
-  | 'Freinage'         // Brakes
-  | 'Moteur'           // Engine
-  | 'Électricité'      // Electrical
-  | 'Transmission'     // Transmission
-  | 'Suspension'       // Suspension
-  | 'Refroidissement'  // Cooling
-  | 'Échappement'      // Exhaust
-  | 'Carburant'        // Fuel
-  | 'Direction'        // Steering
-  | 'Autre'            // Other
+  // export type DiagnosticCategory =
+  // | 'Freinage'         // Brakes
+  // | 'Moteur'           // Engine
+  // | 'Électricité'      // Electrical
+  // | 'Transmission'     // Transmission
+  // | 'Suspension'       // Suspension
+  // | 'Refroidissement'  // Cooling
+  // | 'Échappement'      // Exhaust
+  // | 'Carburant'        // Fuel
+  // | 'Direction'        // Steering
+  // | 'Autre'            // Other
 
   export interface DiagnosticCheck {
     id: string;
-    category: DiagnosticCategory;
+    category: string;
     description: string;
     compliant: boolean;
     quantity?: number;
     severityLevel: 'Low' | 'Medium' | 'High' | 'Critical';
     postRepairVerification?: boolean;
     comments?: string;
+  }
+
+  export interface DiagnosticCategory{
+    id: string;
+    categorie: string;
+    description: string;
+    garageId: string;
+    createdAt: Date,
+    updatedAt: Date
   }

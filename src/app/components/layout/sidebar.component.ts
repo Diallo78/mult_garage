@@ -54,7 +54,7 @@ import { Observable } from 'rxjs';
             routerLink="/diagnostics"
             routerLinkActive="bg-primary-600"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="canAccessDiagnostics"
+            *ngIf="this.authService.canAccessDiagnostics"
           >
             <span class="mr-3">🔍</span>
             Diagnostics
@@ -73,7 +73,7 @@ import { Observable } from 'rxjs';
             routerLink="/interventions"
             routerLinkActive="bg-primary-600"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="canAccessInterventions"
+            *ngIf="this.authService.canAccessInterventions"
           >
             <span class="mr-3">🔧</span>
             Interventions
@@ -92,7 +92,7 @@ import { Observable } from 'rxjs';
             routerLink="/payments"
             routerLinkActive="bg-primary-600"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="canAccessPayments"
+            *ngIf="this.authService.canAccessPayments"
           >
             <span class="mr-3">💳</span>
             Payments
@@ -102,17 +102,27 @@ import { Observable } from 'rxjs';
             routerLink="/reports"
             routerLinkActive="bg-primary-600"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="canAccessReports"
+            *ngIf="this.authService.canAccessReports"
           >
             <span class="mr-3">📈</span>
             Reports
           </a>
 
           <a
+            routerLink="/stockDashboard"
+            routerLinkActive="bg-primary-600"
+            class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
+            *ngIf="this.authService.canAccessPersonnel"
+          >
+            <span class="mr-3"> 🗄️ </span>
+            Stocks
+          </a>
+
+          <a
             routerLink="/personnel"
             routerLinkActive="bg-primary-600"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="canAccessPersonnel"
+            *ngIf="this.authService.canAccessPersonnel"
           >
             <span class="mr-3"> 👨🏻‍🔧 </span>
             Personnel
@@ -122,7 +132,7 @@ import { Observable } from 'rxjs';
             routerLink="/garage-setup"
             routerLinkActive="bg-primary-600"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="canAccessSuperAdmin"
+            *ngIf="this.authService.canAccessSuperAdmin"
           >
             <span class="mr-3"> 🛠️ </span>
             Garage
@@ -135,35 +145,9 @@ import { Observable } from 'rxjs';
 export class SidebarComponent {
   currentUser$: Observable<User | null>;
 
-  constructor(private authService: AuthService) {
+  constructor(public authService: AuthService) {
     this.currentUser$ = this.authService.currentUser$;
   }
 
-  get canAccessDiagnostics(): boolean {
-    return this.authService.hasAnyRole(['AdminGarage', 'Technician', 'SuperAdmin']);
-  }
 
-  get canAccessInterventions(): boolean {
-    return this.authService.hasAnyRole(['AdminGarage', 'Technician', 'SuperAdmin']);
-  }
-
-  get canAccessPayments(): boolean {
-    return this.authService.hasAnyRole(['AdminGarage', 'Accountant', 'Receptionist', 'SuperAdmin']);
-  }
-
-  get canAccessReports(): boolean {
-    return this.authService.hasAnyRole(['AdminGarage', 'Accountant', 'SuperAdmin']);
-  }
-
-  get canAccessPersonnel(): boolean {
-    return this.authService.hasAnyRole(['AdminGarage', 'Manager', 'SuperAdmin']);
-  }
-
-  get canAccessSuperAdmin(): boolean {
-    return this.authService.hasAnyRole(['SuperAdmin']);
-  }
-
-  get isClient(): boolean {
-    return this.authService.hasRole('Client');
-  }
 }

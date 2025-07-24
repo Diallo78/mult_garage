@@ -6,6 +6,7 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { Client, Vehicle } from '../../models/client.model';
 import { VehicleService } from '../../services/vehicle.service';
+import { AuthService } from '../../services/auth.service';
 
 
 @Component({
@@ -108,18 +109,21 @@ import { VehicleService } from '../../services/vehicle.service';
                     >
                       Voir
                     </button>
-                    <button
-                      [routerLink]="['/vehicles', vehicle.id, 'edit']"
-                      class="text-secondary-600 hover:text-secondary-900 mr-3"
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      (click)="deleteVehicle(vehicle)"
-                      class="text-red-600 hover:text-red-900"
-                    >
-                      Supprimer
-                    </button>
+                    @if(this.authService.canAccessBtnEdit){
+                      <button
+                        [routerLink]="['/vehicles', vehicle.id, 'edit']"
+                        class="text-secondary-600 hover:text-secondary-900 mr-3"
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        (click)="deleteVehicle(vehicle)"
+                        class="text-red-600 hover:text-red-900"
+                      >
+                        Supprimer
+                      </button>
+                    }
+
                   </td>
                 </tr>
               </tbody>
@@ -141,7 +145,8 @@ isLoading = true;
 constructor(
   private readonly garageDataService: GarageDataService,
   private readonly notificationService: NotificationService,
-  private readonly vehicleService: VehicleService
+  private readonly vehicleService: VehicleService,
+  public authService: AuthService
 ) {}
 
 ngOnInit() {

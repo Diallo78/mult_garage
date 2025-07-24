@@ -4,12 +4,14 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Client, Vehicle, Visit } from '../../models/client.model';
 import { NotificationService } from '../../services/notification.service';
 import { GarageDataService } from '../../services/garage-data.service';
+import { AuthService } from '../../services/auth.service';
+import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
 
 
 @Component({
   selector: 'app-vehicle-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FirestoreDatePipe],
   template: `
     <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
       <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
@@ -24,14 +26,16 @@ import { GarageDataService } from '../../services/garage-data.service';
             </h2>
             <p class="text-lg text-gray-600">{{ vehicle.licensePlate }}</p>
           </div>
-          <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
-            <button [routerLink]="['/vehicles', vehicle.id, 'edit']" class="btn-secondary">
-              Modifier le véhicule
-            </button>
-            <button [routerLink]="['/visits/new']" [queryParams]="{vehicleId: vehicle.id}" class="btn-primary">
-              Nouvelle visite
-            </button>
-          </div>
+          @if(this.authService.canAccessBtnEdit){
+            <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
+              <button [routerLink]="['/vehicles', vehicle.id, 'edit']" class="btn-secondary">
+                Modifier le véhicule
+              </button>
+              <button [routerLink]="['/visits/new']" [queryParams]="{vehicleId: vehicle.id}" class="btn-primary">
+                Nouvelle visite
+              </button>
+            </div>
+          }
         </div>
 
         <!-- Informations du véhicule -->
@@ -110,7 +114,7 @@ import { GarageDataService } from '../../services/garage-data.service';
                 [routerLink]="['/visits', visit.id]">
               <div class="flex items-center justify-between">
                 <div>
-                  <h4 class="font-medium text-gray-900">{{ visit.visitDate | date:'mediumDate' }}</h4>
+                  <h4 class="font-medium text-gray-900">{{ visit.visitDate | firestoreDate | date:'mediumDate' }}</h4>
                   <p class="text-sm text-gray-500">{{ visit.reportedIssues.join(', ') }}</p>
                 </div>
                 <span class="status-badge" [ngClass]="getStatusClass(visit.status)">
@@ -133,7 +137,8 @@ export class VehicleDetailComponent implements OnInit {
   constructor(
     private readonly garageDataService: GarageDataService,
     private readonly notificationService: NotificationService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    public authService: AuthService
   ) {}
 
   async ngOnInit(): Promise<void> {

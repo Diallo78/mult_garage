@@ -173,6 +173,18 @@ export const routes: Routes = [
         path: 'settings',
         loadComponent: () => import('./components/settings/garage-setup.component').then(m => m.GarageSetupComponent)
       },
+      {
+        path: 'checksDiagnostique',
+        loadComponent: () => import('./components/checks-giagnostique/checks-giagnostique').then(m => m.ChecksFiagnostique)
+      },
+      {
+        path: 'notifications',
+        loadComponent: () => import('./components/notification-message/notification-message').then(m => m.NotificationMessage)
+      },
+       {
+        path: 'stockDashboard',
+        loadComponent: () => import('./components/stocks/stock-dashboard.component').then(m => m.StockDashboardComponent)
+      },
     ]
   },
   {

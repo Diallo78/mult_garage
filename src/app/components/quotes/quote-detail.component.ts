@@ -7,11 +7,13 @@ import { PDFService } from '../../services/pdf.service';
 import { Quote } from '../../models/quote.model';
 import { Client, Vehicle } from '../../models/client.model';
 import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
+import { AuthService } from '../../services/auth.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-quote-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, FirestoreDatePipe],
+  imports: [CommonModule, RouterModule, FirestoreDatePipe, FormsModule],
   template: `
     <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
       <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
@@ -22,7 +24,7 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
           <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Quote {{ quote.quoteNumber }}
+            Devis N: {{ quote.quoteNumber }}
           </h2>
           <p class="text-lg text-gray-600">
             <span class="status-badge" [ngClass]="getStatusClass(quote.status)">
@@ -35,28 +37,30 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
             (click)="downloadPDF()"
             class="btn-secondary"
           >
-            Download PDF
+            Télécharger le PDF
           </button>
-          <button
+          @if(this.authService.isClient){
+            <button
             (click)="updateStatus('Accepted')"
             class="btn-primary"
             *ngIf="quote.status === 'Pending'"
-          >
-            Accept Quote
-          </button>
-          <button
-            (click)="updateStatus('Rejected')"
+            >
+              Accepter le devis
+            </button>
+           <button
+            (click)="openRejectionModal()"
             class="btn-outline"
             *ngIf="quote.status === 'Pending'"
-          >
-            Reject Quote
+            >
+            Rejeter le devis
           </button>
+          }
           <button
             [routerLink]="['/interventions/create', quote.id]"
             class="btn-primary"
-            *ngIf="quote.status === 'Accepted'"
+            *ngIf="this.authService.canBtnAccessInterventions && quote.status === 'Accepted'"
           >
-            Start Intervention
+            Démarrer l'intervention
           </button>
         </div>
       </div>
@@ -198,6 +202,26 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
         </div>
       </div>
     </div>
+
+    <!-- Modal de refus -->
+
+
+     <div *ngIf="showRejectionModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 animate-slide-in-right">
+        <h2 class="text-lg font-semibold mb-4">Motif du refu</h2>
+
+        <label class="form-label">Titre</label>
+        <input type="text" [(ngModel)]="rejectionTitle" class="form-input mb-4" />
+
+        <label class="form-label">Description</label>
+        <textarea [(ngModel)]="rejectionMessage" rows="4" class="form-input mb-4"></textarea>
+
+        <div class="flex justify-end space-x-2">
+          <button class="btn-secondary" (click)="cancelRejection()">Annuler</button>
+          <button class="btn-primary" (click)="submitRejection()">Enregistrer</button>
+        </div>
+      </div>
+    </div>
     </div>
   `
 })
@@ -207,11 +231,18 @@ export class QuoteDetailComponent implements OnInit {
   vehicle: Vehicle | null = null;
   quoteId: string | null = null;
   isLoading = true;
+
+  // =============MODAL==============
+  showRejectionModal = false;
+  rejectionTitle = '';
+  rejectionMessage = '';
+
   constructor(
     private garageDataService: GarageDataService,
     private notificationService: NotificationService,
     private pdfService: PDFService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    public authService: AuthService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -237,17 +268,78 @@ export class QuoteDetailComponent implements OnInit {
     }finally{this.isLoading = false}
   }
 
-  async updateStatus(status: 'Accepted' | 'Rejected'): Promise<void> {
+  async updateStatus(status: 'Accepted'): Promise<void> {
     if (!this.quote) return;
 
     try {
       await this.garageDataService.update('quotes', this.quoteId!, { status });
+
+       // Enregistrement d'une notification
+      await this.garageDataService.create('notifications', {
+        title: 'Devis accepté',
+        message: `Le client a accepté le devis n°${this.quote.quoteNumber}. Vous pouvez désormais démarrer l'intervention.`,
+        createdAt: new Date(),
+        read: false,
+        garageId: this.quote.garageId,
+        emailDesitnateur: null // ou undefined, car c'est le garage qui est notifié
+      });
+
       this.quote.status = status;
       this.notificationService.showSuccess(`Quote ${status.toLowerCase()} successfully`);
     } catch (error) {
       this.notificationService.showError(`Failed to ${status.toLowerCase()} quote`);
     }
   }
+
+  // =============== MODAL ===========
+  openRejectionModal() {
+    this.rejectionTitle = '';
+    this.rejectionMessage = '';
+    this.showRejectionModal = true;
+  }
+
+  cancelRejection() {
+    this.showRejectionModal = false;
+  }
+
+  async submitRejection(): Promise<void> {
+  if (!this.quoteId || !this.quote) return;
+  if (!this.rejectionTitle.trim() || !this.rejectionMessage.trim()) {
+    this.notificationService.showError('Veuillez remplir tous les champs.');
+    return;
+  }
+
+  try {
+    // Mise à jour du devis
+    await this.garageDataService.update('quotes', this.quoteId, {
+        status: 'Rejected',
+        rejectionReason: {
+          title: this.rejectionTitle,
+          message: this.rejectionMessage,
+          date: new Date()
+        }
+    });
+
+
+
+      // Enregistrement d'une notification
+    await this.garageDataService.create('notifications', {
+      title: 'Devis n°${this.quote.quoteNumber} rejeté',
+      message: `${this.rejectionTitle} – ${this.rejectionMessage}`,
+      read: false,
+      quoteId: this.quoteId,
+      emailDesitnateur: null
+    });
+
+    this.quote.status = 'Rejected'; // mise à jour locale
+    this.notificationService.showSuccess('Le devis a été rejeté.');
+    this.showRejectionModal = false;
+
+    } catch (error) {
+      this.notificationService.showError('Erreur lors du rejet du devis.');
+    }
+  }
+
 
   async downloadPDF(): Promise<void> {
     if (!this.quote || !this.client || !this.vehicle) return;
@@ -284,4 +376,5 @@ export class QuoteDetailComponent implements OnInit {
       default: return 'bg-gray-100 text-gray-800';
     }
   }
+
 }

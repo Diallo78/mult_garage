@@ -2,7 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Diagnostic } from '../../models/diagnostic.model';
+import { Diagnostic, DiagnosticCategory } from '../../models/diagnostic.model';
 import { Client, Vehicle, Visit } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
@@ -25,7 +25,7 @@ import { Personnel } from '../../models/garage.model';
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
           <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Diagnostics
+            Diagnostic
           </h2>
         </div>
       </div>
@@ -34,7 +34,7 @@ import { Personnel } from '../../models/garage.model';
       <div class="card">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label class="form-label">Search</label>
+            <label class="form-label">Recherche</label>
             <input
               type="text"
               [(ngModel)]="searchTerm"
@@ -44,19 +44,14 @@ import { Personnel } from '../../models/garage.model';
             />
           </div>
           <div>
-            <label class="form-label">Category</label>
+            <label class="form-label">Catégorie</label>
             <select
               [(ngModel)]="categoryFilter"
               (change)="filterDiagnostics()"
               class="form-input"
             >
-              <option value="">All Categories</option>
-              <option value="Brakes">Brakes</option>
-              <option value="Engine">Engine</option>
-              <option value="Electrical">Electrical</option>
-              <option value="Transmission">Transmission</option>
-              <option value="Suspension">Suspension</option>
-              <option value="Other">Other</option>
+              <option value="">Toutes les Catégories</option>
+              <option *ngFor="let ctg of diagnosticCategory" value="ctg.categorie">{{ctg.categorie}}</option>
             </select>
           </div>
           <div>
@@ -128,8 +123,12 @@ import { Personnel } from '../../models/garage.model';
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                    {{ diagnostic.title }}
+                    {{ diagnostic.title.slice(0, 25)  }}
                   </span>
+                  <span *ngIf="diagnostic.title.length > 25" class="text-gray-500">
+                    +{{ diagnostic.title.length - 25 }} autres
+                  </span>
+
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm text-gray-900">{{ getTechnicianName(diagnostic.technicianId) }}</div>
@@ -170,6 +169,7 @@ visits: Visit[] = [];
 clients: Client[] = [];
 vehicles: Vehicle[] = [];
 personnel: Personnel[] = [];
+diagnosticCategory: DiagnosticCategory[] = [];
 searchTerm = '';
 categoryFilter = '';
 decisionFilter = '';
@@ -186,12 +186,13 @@ async ngOnInit(): Promise<void> {
 
 private async loadData(): Promise<void> {
   try {
-    [this.diagnostics, this.visits, this.clients, this.vehicles, this.personnel] = await Promise.all([
+    [this.diagnostics, this.visits, this.clients, this.vehicles, this.personnel, this.diagnosticCategory] = await Promise.all([
       this.garageDataService.getAll<Diagnostic>('diagnostics'),
       this.garageDataService.getAll<Visit>('visits'),
       this.garageDataService.getAll<Client>('clients'),
       this.garageDataService.getAll<Vehicle>('vehicles'),
-      this.garageDataService.getAll<Personnel>('personnel')
+      this.garageDataService.getAll<Personnel>('personnel'),
+      this.garageDataService.getAll<DiagnosticCategory>('diagnosticCategory')
     ]);
     this.filteredDiagnostics = [...this.diagnostics];
   } catch (error) {

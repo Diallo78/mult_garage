@@ -6,6 +6,7 @@ import { Client } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+import { AuthService } from '../../services/auth.service';
 
 
 @Component({
@@ -26,7 +27,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
               Clients
             </h2>
           </div>
-          <div class="mt-4 flex md:mt-0 md:ml-4">
+          <div class="mt-4 flex md:mt-0 md:ml-4" *ngIf="this.authService.canBtnAccessInterventions">
             <button routerLink="/clients/new" class="btn-primary">
               Ajouter un nouveau client
             </button>
@@ -89,6 +90,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {{ client.createdAt | firestoreDate | date:'short' }}
                   </td>
+
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
                       [routerLink]="['/clients', client.id]"
@@ -96,18 +98,21 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                     >
                       Voir
                     </button>
-                    <button
+
+                    <button *ngIf="this.authService.canBtnAccessInterventions"
                       [routerLink]="['/clients', client.id, 'edit']"
                       class="text-secondary-600 hover:text-secondary-900 mr-3"
                     >
                       Modifier
                     </button>
-                    <button
+
+                    <button *ngIf="this.authService.canAccessBtnDelete"
                       (click)="deleteClient(client)"
                       class="text-red-600 hover:text-red-900"
                     >
                       Supprimer
                     </button>
+
                   </td>
                 </tr>
               </tbody>
@@ -126,7 +131,8 @@ export class ClientListComponent implements OnInit {
 
   constructor(
     private readonly garageDataService: GarageDataService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    public readonly authService: AuthService
   ) {}
 
   ngOnInit() {

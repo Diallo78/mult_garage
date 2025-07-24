@@ -16,6 +16,7 @@ export interface Quote {
     clientSignature?: string;
     createdAt: Date;
     updatedAt: Date;
+    rejectionReason?: RejectionReason
   }
 
   export interface QuoteItem {
@@ -33,4 +34,11 @@ export interface Quote {
     changes: string;
     createdAt: Date;
     createdBy: string;
+  }
+
+
+  export interface RejectionReason{
+    title: string;
+    message: string;
+    date:  Date
   }

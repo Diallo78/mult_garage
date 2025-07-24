@@ -7,6 +7,7 @@ import { Client, Vehicle } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+import { AuthService } from '../../services/auth.service';
 
 
 @Component({
@@ -135,13 +136,15 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                   >
                     View
                   </button>
-                  <button
-                    [routerLink]="['/interventions/create', quote.id]"
-                    class="text-secondary-600 hover:text-secondary-900"
-                    *ngIf="quote.status === 'Accepted'"
-                  >
-                    Start Work
-                  </button>
+                  @if(this.authService.canBtnAccessInterventions && quote.status === 'Accepted'){
+                    <button
+                      [routerLink]="['/interventions/create', quote.id]"
+                      class="text-secondary-600 hover:text-secondary-900"
+                    >
+                      Start Work
+                    </button>
+                  }
+
                 </td>
               </tr>
             </tbody>
@@ -164,7 +167,8 @@ export class QuoteListComponent implements OnInit {
   isLoading = true;
   constructor(
     private readonly garageDataService: GarageDataService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    public authService: AuthService
   ) {}
 
   async ngOnInit(): Promise<void> {

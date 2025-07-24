@@ -338,6 +338,7 @@ export class QuoteFormComponent implements OnInit {
 
     try {
       const formValue = this.quoteForm.value;
+
       this.calculateTotals();
 
       const quoteData: Omit<Quote, 'id'> = {
@@ -361,8 +362,26 @@ export class QuoteFormComponent implements OnInit {
         updatedAt: new Date()
       };
 
-      await this.garageDataService.create('quotes', quoteData);
-      this.notificationService.showSuccess('Quote created successfully');
+      // await this.garageDataService.create('quotes', quoteData);
+      // this.notificationService.showSuccess('Quote created successfully');
+
+      // 1. Créer le devis et récupérer l'ID généré
+      const quoteRef = await this.garageDataService.create('quotes', quoteData);
+      const quoteId = quoteRef;
+
+      // 2. Créer une notification associée au devis
+      const notification = {
+        title: 'Nouveau devis disponible',
+        message: `Un nouveau devis (N° ${formValue.quoteNumber}) est disponible.`,
+        read: false,
+        quoteId: quoteId,
+        emailDesitnateur: this.client.email,
+      };
+
+      await this.garageDataService.create('notifications', notification);
+
+      this.notificationService.showSuccess('Devis créé avec succès');
+
       this.router.navigate(['/quotes']);
     } catch (error) {
       this.notificationService.showError('Failed to create quote');

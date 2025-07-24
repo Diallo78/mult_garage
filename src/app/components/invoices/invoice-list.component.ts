@@ -7,6 +7,7 @@ import { NotificationService } from '../../services/notification.service';
 import { Invoice } from '../../models/invoice.model';
 import { Client, Vehicle } from '../../models/client.model';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-invoice-list',
@@ -76,7 +77,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
       </div>
 
       <!-- Summary Cards -->
-      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div *ngIf="this.authService.canBtnAccessInov" class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4" >
         <div class="card">
           <div class="flex items-center">
             <div class="flex-shrink-0">
@@ -229,7 +230,8 @@ export class InvoiceListComponent implements OnInit {
 
   constructor(
     private garageDataService: GarageDataService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    public authService: AuthService
   ) {}
 
   async ngOnInit(): Promise<void> {

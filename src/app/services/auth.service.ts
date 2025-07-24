@@ -154,4 +154,53 @@ export class AuthService {
     const user = this.currentUserSubject.value;
     return user ? roles.includes(user.role) : false;
   }
+
+  public getCurrentUser(): User | null {
+    return this.currentUserSubject.value;
+  }
+
+
+  public get canAccessDiagnostics(): boolean {
+    return this.hasAnyRole(['AdminGarage', 'Technician', 'SuperAdmin']);
+  }
+
+  public get canAccessInterventions(): boolean {
+    return this.hasAnyRole(['AdminGarage', 'Technician', 'SuperAdmin']);
+  }
+
+  public get canAccessPayments(): boolean {
+    return this.hasAnyRole(['AdminGarage', 'Accountant', 'Receptionist', 'SuperAdmin']);
+  }
+
+  public get canAccessReports(): boolean {
+    return this.hasAnyRole(['AdminGarage', 'Accountant', 'SuperAdmin']);
+  }
+
+  public get canAccessPersonnel(): boolean {
+    return this.hasAnyRole(['AdminGarage', 'Manager', 'SuperAdmin']);
+  }
+
+  public get canAccessSuperAdmin(): boolean {
+    return this.hasAnyRole(['SuperAdmin']);
+  }
+
+  public get isClient(): boolean {
+    return this.hasRole('Client');
+  }
+
+  public get canBtnAccessInterventions(): boolean {
+    return this.hasAnyRole(['AdminGarage', 'Technician', 'SuperAdmin', 'Manager', 'Receptionist']);
+  }
+
+  public get canAccessBtnDelete(): boolean {
+    return this.hasAnyRole(['SuperAdmin', 'AdminGarage','Manager']);
+  }
+
+   public get canAccessBtnEdit(): boolean {
+    return this.hasAnyRole(['SuperAdmin', 'AdminGarage','Manager', 'Receptionist']);
+  }
+
+  public get canBtnAccessInov(): boolean {
+    return this.hasAnyRole(['AdminGarage', 'SuperAdmin', 'Manager', 'Accountant']);
+  }
 }

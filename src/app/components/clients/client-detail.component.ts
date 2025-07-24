@@ -5,6 +5,7 @@ import { Client, Vehicle, Visit } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+import { AuthService } from '../../services/auth.service';
 ;
 
 @Component({
@@ -25,7 +26,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
             {{ client.firstName }} {{ client.lastName }}
           </h2>
         </div>
-        <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
+        <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3" *ngIf="this.authService.canAccessBtnEdit">
           <button [routerLink]="['/clients', client.id, 'edit']" class="btn-secondary">
             Modifier le client
           </button>
@@ -128,7 +129,8 @@ export class ClientDetailComponent implements OnInit {
   constructor(
     private readonly garageDataService: GarageDataService,
     private readonly notificationService: NotificationService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    public authService: AuthService
   ) {}
 
   async ngOnInit(): Promise<void> {

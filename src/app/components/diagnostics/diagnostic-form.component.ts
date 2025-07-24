@@ -6,7 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { Client, Vehicle, Visit } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
-import { Diagnostic } from '../../models/diagnostic.model';
+import { Diagnostic, DiagnosticCategory } from '../../models/diagnostic.model';
 import { User } from '../../models/user.model';
 import { firstValueFrom } from 'rxjs';
 import { Personnel } from '../../models/garage.model';
@@ -114,16 +114,7 @@ import { Personnel } from '../../models/garage.model';
                     <label class="form-label">Catégorie *</label>
                     <select formControlName="category" class="form-input">
                       <option value="">Sélectionner une catégorie</option>
-                      <option value="Freinage">Freinage</option>
-                      <option value="Moteur">Moteur</option>
-                      <option value="Électricité">Électricité</option>
-                      <option value="Transmission">Transmission</option>
-                      <option value="Suspension">Suspension</option>
-                      <option value="Refroidissement">Refroidissement</option>
-                      <option value="Échappement">Échappement</option>
-                      <option value="Carburant">Carburant</option>
-                      <option value="Direction">Direction</option>
-                      <option value="Autre">Autre</option>
+                      <option *ngFor="let ctg of diagnosticCategory" value="ctg.categorie">{{ctg.categorie}}</option>
                     </select>
                   </div>
                   <div class="md:col-span-2">
@@ -259,6 +250,7 @@ export class DiagnosticFormComponent implements OnInit {
   vehicle: Vehicle | null = null;
   client: Client | null = null;
   personnel: Personnel[] = [];
+  diagnosticCategory: DiagnosticCategory[] = [];
   currentTechnician: Personnel | null = null;
   visitId: string | null = null;
   isLoading = false;
@@ -330,9 +322,10 @@ export class DiagnosticFormComponent implements OnInit {
 
       if (this.visit) {
         // Charger le véhicule et le client en parallèle
-        [this.vehicle, this.client] = await Promise.all([
+        [this.vehicle, this.client, this.diagnosticCategory] = await Promise.all([
           this.garageDataService.getById<Vehicle>('vehicles', this.visit.vehicleId),
-          this.garageDataService.getById<Client>('clients', this.visit.clientId)
+          this.garageDataService.getById<Client>('clients', this.visit.clientId),
+          this.garageDataService.getAll<DiagnosticCategory>('diagnosticCategory')
         ]);
       }
 
