@@ -5,6 +5,9 @@ export interface Intervention {
     diagnosticId: string;
     vehicleId: string;
     assignedTechnicianId: string;
+      // 👇 NOUVEAU : Liste des techniciens
+    technicians: string[]; // Tableau d’UIDs des techniciens
+    groupLeader: string;   // UID du chef de groupe sélectionné
     tasks: InterventionTask[];
     estimatedDuration: number; // in hours
     actualDuration?: number;
@@ -25,6 +28,10 @@ export interface Intervention {
     estimatedTime: number;
     actualTime?: number;
     notes?: string;
+
+      // 👇 Ajouts nécessaires
+    status?: 'Pending' | 'InProgress' | 'Suspended' | 'Completed';
+    suspendReason?: string;
   }
 
   export interface UsedPart {

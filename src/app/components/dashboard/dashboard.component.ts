@@ -10,16 +10,20 @@ import { NotificationService } from '../../services/notification.service';
 import { NgChartsModule } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
+import { ClientDashboardComponent } from '../client-portal/client-dashboard.component';
 
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FirestoreDatePipe, NgChartsModule, FormsModule],
+  imports: [CommonModule, FirestoreDatePipe, NgChartsModule, FormsModule, ClientDashboardComponent],
   template: `
+  @if(this.authService.canccessDashboard){
     <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
       <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
     </div>
+
     <div *ngIf="!isLoading">
       <div class="space-y-6">
         <div class="md:flex md:items-center md:justify-between">
@@ -159,6 +163,9 @@ import { FormsModule } from '@angular/forms';
         </div>
       </div>
     </div>
+  }@else{
+    <app-client-dashboard></app-client-dashboard>
+  }
   `
 })
 export class DashboardComponent implements OnInit {
@@ -199,7 +206,9 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private readonly garageDataService: GarageDataService,
-    private readonly notificationService: NotificationService) {}
+    private readonly notificationService: NotificationService,
+    public readonly authService: AuthService
+  ) {}
 
   ngOnInit() {
     (async() => {

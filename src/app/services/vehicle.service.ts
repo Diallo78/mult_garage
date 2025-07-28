@@ -5,19 +5,20 @@ import { Vehicle } from '../models/client.model';
 import { GarageDataService } from './garage-data.service';
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root',
 })
 export class VehicleService {
-    private readonly collectionName = 'vehicles';
+  private readonly collectionName = 'vehicles';
 
-    constructor(private readonly firestoreService: FirestoreService, private readonly garageService: GarageDataService) { }
+  constructor(
+    private readonly garageService: GarageDataService
+  ) {}
 
-    // Obtenir tous les achats
-    async getAllVehicles(): Promise<Vehicle[]> {
-        return await this.garageService.getAll<Vehicle>(
-            this.collectionName,
-            [orderBy('createdAt', 'desc')]
-        );
-    }
+  // Obtenir tous les achats
+  async getAllVehicles(): Promise<Vehicle[]> {
+    return await this.garageService.getAll<Vehicle>(this.collectionName, [
+      orderBy('createdAt', 'desc'),
+    ]);
+  }
 
 }

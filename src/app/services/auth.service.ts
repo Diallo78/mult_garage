@@ -203,4 +203,8 @@ export class AuthService {
   public get canBtnAccessInov(): boolean {
     return this.hasAnyRole(['AdminGarage', 'SuperAdmin', 'Manager', 'Accountant']);
   }
+
+  public get canccessDashboard(): boolean {
+    return this.hasAnyRole(['AdminGarage', 'Accountant', 'SuperAdmin', 'Manager', 'Receptionist']);
+  }
 }

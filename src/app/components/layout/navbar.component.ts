@@ -93,8 +93,9 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                 *ngIf="showDropdown"
                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
               >
-                <a routerLink="/garage-setup" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
-                <a routerLink="/checksDiagnostique" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Categorie</a>
+                <a routerLink="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                <a *ngIf="this.authService.canAccessBtnEdit" routerLink="/checksDiagnostique" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Categorie</a>
+                <a routerLink="/dictionnaire" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dictionnaire</a>
                 <a routerLink="/notifications" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Notifications</a>
                 <button
                   (click)="signOut()"
@@ -118,7 +119,7 @@ export class NavbarComponent {
   notifications: NotificationModel[] = []
 
   constructor(
-    private readonly authService: AuthService,
+    public readonly authService: AuthService,
     private readonly notifcationService: NotificationMessageService
   ) {
     this.currentUser$ = this.authService.currentUser$;

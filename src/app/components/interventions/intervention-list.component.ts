@@ -14,11 +14,14 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, FirestoreDatePipe],
   template: `
-  <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
-    <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
-  </div>
+    <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
+      <div class="animate-pulse flex flex-col items-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-500"></div>
+        <p class="mt-4 text-gray-600">Chargement de votre espace...</p>
+      </div>
+    </div>
 
-  <div *ngIf="!isLoading">
+    <div *ngIf="!isLoading" class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
     <div class="space-y-6">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">

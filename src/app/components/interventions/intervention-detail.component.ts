@@ -1,18 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
-import { Intervention } from '../../models/intervention.model';
+import { Intervention, InterventionTask } from '../../models/intervention.model';
 import { Quote } from '../../models/quote.model';
 import { Client, Vehicle } from '../../models/client.model';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+import { Personnel } from '../../models/garage.model';
 
 @Component({
   selector: 'app-intervention-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, FirestoreDatePipe],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, FirestoreDatePipe, FormsModule],
   template: `
     <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
     <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
@@ -161,6 +162,18 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                       [ngClass]="task.completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'">
                   {{ task.completed ? '✓' : i + 1 }}
                 </span>
+<button
+  *ngIf="intervention.status !== 'Completed' && !task.completed"
+  class="text-xs underline ml-4"
+  [ngClass]="{
+    'text-yellow-600': task.status !== 'Suspended',
+    'text-blue-600': task.status === 'Suspended'
+  }"
+  (click)="task.status === 'Suspended' ? resumeTask(task) : openSuspendModal(task)"
+>
+  {{ task.status === 'Suspended' ? 'Resume' : 'Suspend' }}
+</button>
+
               </div>
             </div>
           </div>
@@ -213,8 +226,38 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
         <h3 class="text-lg font-medium text-gray-900 mb-4">Final Report</h3>
         <p class="text-gray-900 whitespace-pre-wrap">{{ intervention.finalReport }}</p>
       </div>
+
+       <!-- Technic interve -->
+
+      <div class="card" *ngIf="technicianUsers.length > 0">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Technicians Involved</h3>
+        <ul class="space-y-2">
+          <li *ngFor="let tech of technicianUsers" class="text-sm text-gray-800 flex items-center gap-2">
+            <span>{{ tech.firstName }}. {{ tech.lastName }}</span>
+            <span *ngIf="tech.id === intervention?.groupLeader" class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Group Leader</span>
+          </li>
+        </ul>
+      </div>
     </div>
+
+
+
+    <!-- Modal de suspension -->
+<div *ngIf="showSuspendModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md">
+    <h3 class="text-lg font-bold mb-4">Suspend Task</h3>
+    <p class="text-sm text-gray-600 mb-2">Provide the reason for suspending the task:</p>
+    <textarea [(ngModel)]="suspendReason" rows="3" class="w-full border border-gray-300 rounded p-2 mb-4"></textarea>
+
+    <div class="flex justify-end space-x-3">
+      <button (click)="cancelSuspend()" class="btn-secondary">Cancel</button>
+      <button (click)="confirmSuspend()" class="btn-primary">Confirm</button>
     </div>
+  </div>
+</div>
+    </div>
+
+
   `
 })
 export class InterventionDetailComponent implements OnInit {
@@ -224,6 +267,10 @@ export class InterventionDetailComponent implements OnInit {
   vehicle: Vehicle | null = null;
   interventionId: string | null = null;
   isLoading = true;
+
+  technicianUsers: Personnel[] = [];
+  groupLeaderName: string = '';
+
   constructor(
     private readonly garageDataService: GarageDataService,
     private readonly notificationService: NotificationService,
@@ -238,26 +285,82 @@ export class InterventionDetailComponent implements OnInit {
   }
 
   private async loadInterventionData(): Promise<void> {
-    this.isLoading = true
+    this.isLoading = true;
     try {
       this.intervention = await this.garageDataService.getById<Intervention>('interventions', this.interventionId!);
+      if (!this.intervention) throw new Error('Intervention not found');
 
-      if (this.intervention) {
-        [this.quote, this.vehicle] = await Promise.all([
-          this.garageDataService.getById<Quote>('quotes', this.intervention.quoteId),
-          this.garageDataService.getById<Vehicle>('vehicles', this.intervention.vehicleId)
-        ]);
+      const [quote, vehicle] = await Promise.all([
+        this.garageDataService.getById<Quote>('quotes', this.intervention.quoteId),
+        this.garageDataService.getById<Vehicle>('vehicles', this.intervention.vehicleId)
+      ]);
+      this.quote = quote;
+      this.vehicle = vehicle;
 
-        if (this.quote) {
-          this.client = await this.garageDataService.getById<Client>('clients', this.quote.clientId);
-        }
+      if (quote) {
+        this.client = await this.garageDataService.getById<Client>('clients', quote.clientId);
       }
+
+      // Charger les techniciens
+      const technicianPromises = this.intervention.technicians.map(id =>
+        this.garageDataService.getById<Personnel>('personnel', id)
+      );
+      const techResults = await Promise.all(technicianPromises);
+      this.technicianUsers = techResults.filter((user): user is Personnel => user !== null);
+
+      // Trouver le chef de groupe
+      const leader = this.technicianUsers.find(u => u.id === this.intervention!.groupLeader);
+      this.groupLeaderName = leader ? leader.firstName : 'Not Found';
+
     } catch (error) {
       this.notificationService.showError('Failed to load intervention data');
-    }finally{
-      this.isLoading = false
+    } finally {
+      this.isLoading = false;
     }
   }
+
+
+//   private async loadInterventionData(): Promise<void> {
+//     this.isLoading = true
+//     try {
+//       this.intervention = await this.garageDataService.getById<Intervention>('interventions', this.interventionId!);
+
+//       if (this.intervention) {
+//         [this.quote, this.vehicle] = await Promise.all([
+//           this.garageDataService.getById<Quote>('quotes', this.intervention.quoteId),
+//           this.garageDataService.getById<Vehicle>('vehicles', this.intervention.vehicleId)
+//         ]);
+//         // Charger les techniciens de l'intervention
+//         await this.loadTechnicians(this.intervention.technicians, this.intervention.groupLeader);
+
+//         if (this.quote) {
+//           this.client = await this.garageDataService.getById<Client>('clients', this.quote.clientId);
+//         }
+//       }
+//     } catch (error) {
+//       this.notificationService.showError('Failed to load intervention data');
+//     }finally{
+//       this.isLoading = false
+//     }
+//   }
+
+//  private async loadTechnicians(technicianIds: string[], groupLeaderId: string): Promise<void> {
+//   try {
+//     const userFetches = technicianIds.map(id => this.garageDataService.getById<Personnel>('personnel', id));
+//     const results = await Promise.all(userFetches);
+
+//     // Filtrer les `null`
+//     this.technicianUsers = results.filter((user): user is Personnel => user !== null);
+
+//     const leader = this.technicianUsers.find(u => u.id === groupLeaderId);
+//     this.groupLeaderName = leader ? leader.firstName : 'Not Found';
+
+//   } catch (error) {
+//     this.notificationService.showError('Failed to load technician information');
+//   }
+// }
+
+
 
   async toggleTask(index: number, event: any): Promise<void> {
     if (!this.intervention || this.intervention.status === 'Completed') return;
@@ -335,4 +438,54 @@ export class InterventionDetailComponent implements OnInit {
     if (!this.intervention) return false;
     return this.intervention.tasks.every(task => task.completed);
   }
+
+  // 🔧 Variables pour la suspension
+showSuspendModal = false;
+suspendReason: string = '';
+taskToSuspend: InterventionTask | null = null;
+
+openSuspendModal(task: InterventionTask): void {
+  this.taskToSuspend = task;
+  this.suspendReason = task.suspendReason || '';
+  this.showSuspendModal = true;
+}
+
+cancelSuspend(): void {
+  this.showSuspendModal = false;
+  this.taskToSuspend = null;
+  this.suspendReason = '';
+}
+
+async confirmSuspend(): Promise<void> {
+  if (!this.intervention || !this.taskToSuspend) return;
+
+  this.taskToSuspend.status = 'Suspended';
+  this.taskToSuspend.suspendReason = this.suspendReason;
+
+  try {
+    await this.garageDataService.update('interventions', this.interventionId!, {
+      tasks: this.intervention.tasks
+    });
+
+    this.notificationService.showSuccess('Task suspended successfully');
+  } catch (error) {
+    this.notificationService.showError('Failed to suspend task');
+  } finally {
+    this.cancelSuspend();
+  }
+}
+
+resumeTask(task: InterventionTask): void {
+  task.status = 'Pending';
+  task.suspendReason = '';
+
+  this.garageDataService.update('interventions', this.interventionId!, {
+    tasks: this.intervention?.tasks
+  }).then(() => {
+    this.notificationService.showSuccess('Task resumed');
+  }).catch(() => {
+    this.notificationService.showError('Failed to resume task');
+  });
+}
+
 }

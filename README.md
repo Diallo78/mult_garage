@@ -122,3 +122,40 @@ Ce projet est sous licence MIT.
 ## 🤝 Support
 
 Pour toute question ou support, contactez l'équipe de développement.
+
+
+<div class="card mt-6" *ngFor="let vehicle of vehicles">
+  <h3 class="text-lg font-medium text-gray-900 mb-4">État des interventions pour {{ vehicle.brand }} {{ vehicle.model }}</h3>
+
+  <div *ngFor="let intervention of getInterventionsByVehicle(vehicle.id)" class="mb-4 border p-4 rounded-md bg-gray-50">
+    <p class="text-sm text-gray-600 mb-2">
+      Intervention #{{ intervention.id }} -
+      <strong>Status:</strong> {{ intervention.status }} -
+      <strong>Date:</strong> {{ intervention.startDate | firestoreDate | date:'short' }}
+    </p>
+
+    <div class="space-y-2">
+      <div *ngFor="let task of intervention.tasks">
+        <div class="flex justify-between items-start text-sm">
+          <div>
+            <strong [ngClass]="{
+              'text-green-600': task.completed,
+              'text-yellow-600': task.status === 'Suspended',
+              'text-gray-700': !task.completed && task.status !== 'Suspended'
+            }">
+              • {{ task.description }}
+            </strong>
+            <span *ngIf="task.status === 'Suspended'" class="text-xs text-red-500 block mt-1 ml-2">
+              ❗Suspendue : {{ task.suspendReason || 'Aucune raison fournie' }}
+            </span>
+          </div>
+          <div class="text-xs text-gray-500">
+            {{ task.completed ? '✔️ Terminé' : task.status || 'En attente' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

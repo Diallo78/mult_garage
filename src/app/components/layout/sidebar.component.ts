@@ -27,9 +27,20 @@ import { Observable } from 'rxjs';
             routerLink="/clients"
             routerLinkActive="bg-primary-600"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
+            *ngIf="this.authService.canccessDashboard"
           >
             <span class="mr-3">👥</span>
             Clients
+          </a>
+
+          <a
+            routerLink="/suivi"
+            routerLinkActive="bg-primary-600"
+            class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
+            *ngIf="this.authService.isClient"
+          >
+            <span class="mr-3">👨🏻‍💻</span>
+            Status Vehicul
           </a>
 
           <a

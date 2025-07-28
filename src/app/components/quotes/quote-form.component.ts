@@ -73,15 +73,6 @@ import { firstValueFrom } from 'rxjs';
                    [formGroupName]="i"
                    class="border rounded-lg p-4 bg-gray-50">
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                  <div class="md:col-span-2">
-                    <label class="form-label">Description *</label>
-                    <input
-                      type="text"
-                      formControlName="designation"
-                      class="form-input"
-                      placeholder="Part or service description"
-                    />
-                  </div>
 
                   <div>
                     <label class="form-label">Type</label>
@@ -91,6 +82,36 @@ import { firstValueFrom } from 'rxjs';
                       <option value="Service">Service</option>
                     </select>
                   </div>
+
+
+                  <div class="md:col-span-2">
+                    <label class="form-label">Description *</label>
+
+                    <ng-container [ngSwitch]="itemsArray.at(i).get('type')?.value">
+                      <!-- Si Part => liste déroulante -->
+                      <select
+                        *ngSwitchCase="'Part'"
+                        formControlName="designation"
+                        class="form-input"
+                        (change)="onSelectPart(i)"
+                      >
+                        <option value="">-- Sélectionnez une pièce --</option>
+                        <option *ngFor="let part of stockParts" [value]="part.designation">
+                          {{ part.designation }}
+                        </option>
+                      </select>
+
+                      <!-- Sinon champ libre -->
+                      <input
+                        *ngSwitchDefault
+                        type="text"
+                        formControlName="designation"
+                        class="form-input"
+                        placeholder="Description manuelle"
+                      />
+                    </ng-container>
+                  </div>
+
 
                   <div>
                     <label class="form-label">Quantity *</label>
@@ -207,6 +228,8 @@ export class QuoteFormComponent implements OnInit {
   vatAmount = 0;
   total = 0;
 
+  stockParts: { designation: string, prixUnitaire: number }[] = [];
+
   constructor(
     private readonly fb: FormBuilder,
     private readonly garageDataService: GarageDataService,
@@ -233,6 +256,7 @@ export class QuoteFormComponent implements OnInit {
       this.diagnosticId = this.route.snapshot.paramMap.get('diagnosticId');
     if (this.diagnosticId) {
       await this.loadDiagnosticData();
+      await this.loadStockParts(); //
       this.generateQuoteNumber();
       this.setDefaultValidUntil();
       await this.checkEditPermissions();
@@ -266,6 +290,17 @@ export class QuoteFormComponent implements OnInit {
       this.notificationService.showError('Failed to load diagnostic data');
     }
   }
+
+  private async loadStockParts(): Promise<void> {
+    const stockItems = await this.garageDataService.getAll<any>('stock');
+    this.stockParts = stockItems
+      .filter(item => item.status === 'entre')
+      .map(item => ({
+        designation: item.designation,
+        prixUnitaire: item.prixUnitaire
+      }));
+  }
+
 
   private generateQuoteNumber(): void {
     const quoteNumber = this.garageDataService.generateUniqueNumber('QT');
@@ -329,6 +364,19 @@ export class QuoteFormComponent implements OnInit {
     const vatRate = this.quoteForm.get('vatRate')?.value || 0;
     this.vatAmount = this.subtotal * (vatRate / 100);
     this.total = this.subtotal + this.vatAmount;
+  }
+
+  onSelectPart(index: number): void {
+    const item = this.itemsArray.at(index);
+    const selectedDesignation = item.get('designation')?.value;
+    const part = this.stockParts.find(p => p.designation === selectedDesignation);
+
+    if (part) {
+      item.patchValue({
+        unitPrice: part.prixUnitaire
+      });
+      this.calculateItemSubtotal(index);
+    }
   }
 
   async onSubmit(): Promise<void> {

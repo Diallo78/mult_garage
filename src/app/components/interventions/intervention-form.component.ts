@@ -9,6 +9,7 @@ import { Intervention } from '../../models/intervention.model';
 import { Quote } from '../../models/quote.model';
 import { Client, Vehicle } from '../../models/client.model';
 import { firstValueFrom } from 'rxjs';
+import { Personnel } from '../../models/garage.model';
 
 @Component({
   selector: 'app-intervention-form',
@@ -58,6 +59,42 @@ import { firstValueFrom } from 'rxjs';
               </div>
             </div>
           </div>
+
+          <!-- Intervenants -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="form-label">Technicians *</label>
+              <select
+                formControlName="technicians"
+                class="form-input"
+                multiple
+              >
+                <option *ngFor="let tech of technicianList" [value]="tech.id">
+                  {{ tech.name }}
+                </option>
+              </select>
+              <div *ngIf="interventionForm.get('technicians')?.invalid && interventionForm.get('technicians')?.touched" class="text-red-500 text-sm">
+                At least one technician is required
+              </div>
+            </div>
+
+            <div>
+              <label class="form-label">Group Leader *</label>
+              <select
+                formControlName="groupLeader"
+                class="form-input"
+              >
+                <option value="">-- Select Group Leader --</option>
+                <option *ngFor="let tech of technicianList" [value]="tech.id">
+                  {{ tech.name }}
+                </option>
+              </select>
+              <div *ngIf="interventionForm.get('groupLeader')?.invalid && interventionForm.get('groupLeader')?.touched" class="text-red-500 text-sm">
+                Group leader is required
+              </div>
+            </div>
+          </div>
+
 
           <!-- Tasks -->
           <div>
@@ -239,6 +276,8 @@ export class InterventionFormComponent implements OnInit {
   quoteId: string | null = null;
   isLoading = false;
 
+  technicianList: { id: string; name: string }[] = [];
+
   constructor(
     private readonly fb: FormBuilder,
     private readonly garageDataService: GarageDataService,
@@ -252,7 +291,11 @@ export class InterventionFormComponent implements OnInit {
       estimatedDuration: ['', [Validators.required, Validators.min(0.5)]],
       tasks: this.fb.array([this.createTaskGroup()]),
       usedParts: this.fb.array([]),
-      status: ['Scheduled']
+      status: ['Scheduled'],
+
+       // 👇 Ajout pour les techniciens
+      technicians: [[], Validators.required],
+      groupLeader: ['', Validators.required]
     });
   }
 
@@ -268,6 +311,7 @@ export class InterventionFormComponent implements OnInit {
     this.quoteId = this.route.snapshot.paramMap.get('quoteId');
     if (this.quoteId) {
       await this.loadQuoteData();
+      await this.loadTechnicians();
       this.setDefaultStartDate();
     }
   }
@@ -288,6 +332,16 @@ export class InterventionFormComponent implements OnInit {
     } catch (error) {
       this.notificationService.showError('Failed to load quote data');
     }
+  }
+
+  private async loadTechnicians(): Promise<void> {
+  const pers = await this.garageDataService.getAll<Personnel>('personnel');
+    this.technicianList = pers
+      .filter(p => p.role === 'Technician')
+      .map(p => ({
+        id: p.id,
+        name: `${p.firstName} ${p.lastName}`
+      }));
   }
 
   private populateTasksFromQuote(): void {
@@ -378,12 +432,17 @@ export class InterventionFormComponent implements OnInit {
       if (!currentUser) throw new Error('No user logged in');
 
       const formValue = this.interventionForm.value;
+
       const interventionData: Omit<Intervention, 'id'> = {
         garageId: currentUser.garageId,
         quoteId: this.quoteId!,
         diagnosticId: this.quote.diagnosticId,
         vehicleId: this.quote.vehicleId,
         assignedTechnicianId: currentUser.uid,
+
+        technicians: formValue.technicians,
+        groupLeader: formValue.groupLeader,
+
         tasks: formValue.tasks,
         estimatedDuration: formValue.estimatedDuration,
         usedParts: formValue.usedParts,
@@ -393,12 +452,15 @@ export class InterventionFormComponent implements OnInit {
         createdAt: new Date(),
         updatedAt: new Date()
       };
+      console.log(interventionData);
 
       await this.garageDataService.create('interventions', interventionData);
       this.notificationService.showSuccess('Intervention created successfully');
       this.router.navigate(['/interventions']);
     } catch (error) {
       this.notificationService.showError('Failed to create intervention');
+      console.log('Failed to create intervention ' + error);
+
     } finally {
       this.isLoading = false;
     }

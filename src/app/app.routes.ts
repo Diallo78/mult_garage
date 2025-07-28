@@ -22,10 +22,6 @@ export const routes: Routes = [
         loadComponent: () => import('./components/client-portal/client-dashboard.component').then(m => m.ClientDashboardComponent)
       },
       {
-        path: 'quotes',
-        loadComponent: () => import('./components/client-portal/client-quotes.component').then(m => m.ClientQuotesComponent)
-      },
-      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'
@@ -56,6 +52,10 @@ export const routes: Routes = [
       {
         path: 'clients/:id/edit',
         loadComponent: () => import('./components/clients/client-form.component').then(m => m.ClientFormComponent)
+      },
+      {
+        path: 'suivi',
+        loadComponent: () => import('./components/client-portal/suivi-vehicule.component').then(m => m.SuiviVehicule)
       },
       {
         path: 'vehicles',
@@ -174,8 +174,16 @@ export const routes: Routes = [
         loadComponent: () => import('./components/settings/garage-setup.component').then(m => m.GarageSetupComponent)
       },
       {
+        path: 'profile',
+        loadComponent: () => import('./components/auth/profile.component').then(m => m.ProfileComponent)
+      },
+      {
         path: 'checksDiagnostique',
         loadComponent: () => import('./components/checks-giagnostique/checks-giagnostique').then(m => m.ChecksFiagnostique)
+      },
+      {
+        path: 'dictionnaire',
+        loadComponent: () => import('./components/settings/dictionnaire.component').then(m => m.DictionnaireComponent)
       },
       {
         path: 'notifications',
