@@ -16,9 +16,12 @@ import { UserManagementService } from '../../services/user-management.service';
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
-      <div
-        class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"
-      ></div>
+      <div class="animate-pulse flex flex-col items-center">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-500"
+        ></div>
+        <p class="mt-4 text-gray-600">Chargement de votre espace...</p>
+      </div>
     </div>
 
     <div *ngIf="!isLoading">
@@ -168,14 +171,12 @@ export class VehicleListComponent implements OnInit {
   vehicles: Vehicle[] = [];
   filteredVehicles: Vehicle[] = [];
   clients: Client[] = [];
-  client: Client | null = null;
   searchTerm = '';
   isLoading = true;
 
   constructor(
     private readonly garageDataService: GarageDataService,
     private readonly notificationService: NotificationService,
-    private readonly vehicleService: VehicleService,
     public authService: AuthService,
     private readonly userManagementService: UserManagementService
   ) {}
@@ -193,22 +194,24 @@ export class VehicleListComponent implements OnInit {
       const currentUser = this.authService.getCurrentUser();
       if (currentUser) {
         // Utiliser le service de gestion des utilisateurs
-        this.client = await this.userManagementService.getClientByUserId(
+        const client = (await this.userManagementService.getClientByUserId(
           currentUser.uid
-        );
+        )) as Client;
 
-        if(this.client){
+        if (client) {
           // Étape 1 : récupérer les véhicules du client
           this.vehicles = await this.garageDataService.getWithFilter<Vehicle>(
             'vehicles',
-            [{ field: 'clientId', operator: '==', value: this.client.id }]
+            [{ field: 'clientId', operator: '==', value: client.id }]
           );
-          this.clients.push(this.client)
+          this.clients.push(client);
           this.filteredVehicles = [...this.vehicles];
         }
       }
     } catch (error) {
       this.notificationService.showError('Failed to load vehicles');
+      console.log('Failed to load vehicles ' +error);
+
     } finally {
       this.isLoading = false;
     }
@@ -218,12 +221,14 @@ export class VehicleListComponent implements OnInit {
     this.isLoading = true;
     try {
       [this.vehicles, this.clients] = await Promise.all([
-        this.vehicleService.getAllVehicles(),
+        this.garageDataService.getAll<Vehicle>('vehicles'),
         this.garageDataService.getAll<Client>('clients'),
       ]);
       this.filteredVehicles = [...this.vehicles];
     } catch (error) {
       this.notificationService.showError('Failed to load vehicles');
+      console.log('Failed to load vehicles ' +error);
+
     } finally {
       this.isLoading = false;
     }

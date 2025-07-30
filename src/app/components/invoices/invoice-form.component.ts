@@ -84,8 +84,8 @@ import { Client, Vehicle } from '../../models/client.model';
                   <div>
                     <label class="form-label">Type</label>
                     <select formControlName="type" class="form-input">
-                      <option value="Part">Part</option>
-                      <option value="Labor">Labor</option>
+                      <option value="Part">Part(Piéce)</option>
+                      <option value="Labor">Labor(M.O)</option>
                       <option value="Service">Service</option>
                     </select>
                   </div>

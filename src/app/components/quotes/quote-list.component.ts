@@ -208,6 +208,7 @@ export class QuoteListComponent implements OnInit {
   fromDate = '';
   toDate = '';
   isLoading = true;
+
   constructor(
     private readonly garageDataService: GarageDataService,
     private readonly notificationService: NotificationService,
@@ -215,10 +216,46 @@ export class QuoteListComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    await this.loadData();
+    if (this.authService.isClient) await this.loadDataClient();
+    else await this.loadDataGarage();
   }
 
-  private async loadData(): Promise<void> {
+  private async loadDataClient(): Promise<void> {
+    this.isLoading = true;
+    try {
+       const currentUser = this.authService.getCurrentUser();
+      if (currentUser) {
+        // Utiliser le service de gestion des utilisateurs
+        const client = await this.garageDataService.getWithFilter<Client>(
+          'clients',
+          [{ field: 'userId', operator: '==', value: currentUser.uid }]
+        ) as Client[];
+
+        if(client[0]){
+
+          [this.vehicles, this.quotes] = await Promise.all([
+            // Étape 1 : récupérer les véhicules du client
+            await this.garageDataService.getWithFilter<Vehicle>('vehicles', [
+              { field: 'clientId', operator: '==', value: client[0].id },
+            ]),
+            // Étape 1 : récupérer les devis du client
+            await this.garageDataService.getWithFilter<Quote>('quotes', [
+              { field: 'clientId', operator: '==', value: client[0].id },
+            ]),
+          ]);
+
+          this.clients.push(client[0]);
+          this.filteredQuotes = [...this.quotes];
+        }
+      }
+    } catch (error) {
+      this.notificationService.showError('Failed to load quotes');
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  private async loadDataGarage(): Promise<void> {
     this.isLoading = true;
     try {
       [this.quotes, this.clients, this.vehicles] = await Promise.all([

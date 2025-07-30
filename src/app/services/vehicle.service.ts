@@ -11,6 +11,7 @@ export class VehicleService {
   private readonly collectionName = 'vehicles';
 
   constructor(
+    private readonly firestoreService: FirestoreService,
     private readonly garageService: GarageDataService
   ) {}
 
@@ -20,5 +21,5 @@ export class VehicleService {
       orderBy('createdAt', 'desc'),
     ]);
   }
-
 }
+

@@ -130,7 +130,7 @@ export class NavbarComponent {
 }
 
 private async loadNotificationsOnInit(): Promise<void> {
-  const user: User | null = await this.authService.getCurrentUser();
+  const user =  this.authService.getCurrentUser();
   if (!user) return;
 
   const garageId = user.garageId;
