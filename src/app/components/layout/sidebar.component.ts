@@ -10,7 +10,20 @@ import { Observable } from 'rxjs';
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="bg-gray-800 text-white w-64 min-h-screen">
+    <!-- Toggle button visible uniquement sur mobile -->
+    <button
+      class="md:hidden fixed top-3 left-2 z-50 bg-transparent text-gray-800 hover:bg-gray-200 p-2 rounded transition"
+      (click)="toggleSidebar()"
+    >
+      ☰
+    </button>
+
+    <!-- Sidebar -->
+    <div
+      class="fixed inset-y-0 left-0 z-40 w-64 bg-gray-800 text-white transform transition-transform duration-300 ease-in-out
+             md:relative md:translate-x-0 md:flex md:min-h-screen"
+      [class.-translate-x-full]="!isSidebarOpen"
+    >
       <div class="p-4">
         <h2 class="text-xl font-semibold mb-6">Navigation</h2>
         <nav class="space-y-2">
@@ -25,9 +38,9 @@ import { Observable } from 'rxjs';
 
           <a
             routerLink="/clients"
-            routerLinkActive="bg-primary-600"
+            routerLinkActive="bg-primary-600"  (click)="toggleSidebar()"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="this.authService.canccessDashboard"
+            *ngIf="authService.canccessDashboard"
           >
             <span class="mr-3">👥</span>
             Clients
@@ -35,17 +48,17 @@ import { Observable } from 'rxjs';
 
           <a
             routerLink="/suivi"
-            routerLinkActive="bg-primary-600"
+            routerLinkActive="bg-primary-600"  (click)="toggleSidebar()"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="this.authService.isClient"
+            *ngIf="authService.isClient"
           >
             <span class="mr-3">👨🏻‍💻</span>
-            Status Vehicul
+            Status Véhicule
           </a>
 
           <a
             routerLink="/vehicles"
-            routerLinkActive="bg-primary-600"
+            routerLinkActive="bg-primary-600"  (click)="toggleSidebar()"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
           >
             <span class="mr-3">🚗</span>
@@ -54,7 +67,7 @@ import { Observable } from 'rxjs';
 
           <a
             routerLink="/visits"
-            routerLinkActive="bg-primary-600"
+            routerLinkActive="bg-primary-600"  (click)="toggleSidebar()"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
           >
             <span class="mr-3">🏥</span>
@@ -63,9 +76,9 @@ import { Observable } from 'rxjs';
 
           <a
             routerLink="/diagnostics"
-            routerLinkActive="bg-primary-600"
+            routerLinkActive="bg-primary-600"  (click)="toggleSidebar()"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="this.authService.canAccessDiagnostics"
+            *ngIf="authService.canAccessDiagnostics"
           >
             <span class="mr-3">🔍</span>
             Diagnostics
@@ -73,7 +86,7 @@ import { Observable } from 'rxjs';
 
           <a
             routerLink="/quotes"
-            routerLinkActive="bg-primary-600"
+            routerLinkActive="bg-primary-600"  (click)="toggleSidebar()"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
           >
             <span class="mr-3">💰</span>
@@ -82,9 +95,9 @@ import { Observable } from 'rxjs';
 
           <a
             routerLink="/interventions"
-            routerLinkActive="bg-primary-600"
+            routerLinkActive="bg-primary-600"  (click)="toggleSidebar()"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="this.authService.canAccessInterventions"
+            *ngIf="authService.canAccessInterventions"
           >
             <span class="mr-3">🔧</span>
             Interventions
@@ -92,7 +105,7 @@ import { Observable } from 'rxjs';
 
           <a
             routerLink="/invoices"
-            routerLinkActive="bg-primary-600"
+            routerLinkActive="bg-primary-600"  (click)="toggleSidebar()"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
           >
             <span class="mr-3">🧾</span>
@@ -101,9 +114,9 @@ import { Observable } from 'rxjs';
 
           <a
             routerLink="/payments"
-            routerLinkActive="bg-primary-600"
+            routerLinkActive="bg-primary-600"  (click)="toggleSidebar()"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="this.authService.canAccessPayments"
+            *ngIf="authService.canAccessPayments"
           >
             <span class="mr-3">💳</span>
             Payments
@@ -111,9 +124,9 @@ import { Observable } from 'rxjs';
 
           <a
             routerLink="/reports"
-            routerLinkActive="bg-primary-600"
+            routerLinkActive="bg-primary-600"  (click)="toggleSidebar()"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="this.authService.canAccessReports"
+            *ngIf="authService.canAccessReports"
           >
             <span class="mr-3">📈</span>
             Reports
@@ -121,44 +134,45 @@ import { Observable } from 'rxjs';
 
           <a
             routerLink="/stockDashboard"
-            routerLinkActive="bg-primary-600"
+            routerLinkActive="bg-primary-600"  (click)="toggleSidebar()"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="this.authService.canAccessPersonnel"
+            *ngIf="authService.canAccessPersonnel"
           >
-            <span class="mr-3"> 🗄️ </span>
+            <span class="mr-3">🗄️</span>
             Stocks
           </a>
 
           <a
             routerLink="/personnel"
-            routerLinkActive="bg-primary-600"
+            routerLinkActive="bg-primary-600"  (click)="toggleSidebar()"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="this.authService.canAccessPersonnel"
+            *ngIf="authService.canAccessPersonnel"
           >
-            <span class="mr-3"> 👨🏻‍🔧 </span>
+            <span class="mr-3">👨🏻‍🔧</span>
             Personnel
           </a>
 
           <a
             routerLink="/garage-setup"
-            routerLinkActive="bg-primary-600"
+            routerLinkActive="bg-primary-600"  (click)="toggleSidebar()"
             class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-            *ngIf="this.authService.canAccessSuperAdmin"
+            *ngIf="authService.canAccessSuperAdmin"
           >
-            <span class="mr-3"> 🛠️ </span>
+            <span class="mr-3">🛠️</span>
             Garage
           </a>
         </nav>
       </div>
     </div>
-  `
+  `,
 })
 export class SidebarComponent {
   currentUser$: Observable<User | null>;
-
+  isSidebarOpen = false;
   constructor(public authService: AuthService) {
     this.currentUser$ = this.authService.currentUser$;
   }
-
-
+  toggleSidebar(): void {
+    this.isSidebarOpen = !this.isSidebarOpen;
+  }
 }
