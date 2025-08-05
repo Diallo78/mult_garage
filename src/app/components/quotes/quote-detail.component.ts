@@ -537,13 +537,13 @@ import { FormsModule } from '@angular/forms';
                           <div>
                             <div class="text-xs text-gray-500">Prix unit.</div>
                             <div class="text-xs text-gray-900">
-                              \${{ item.unitPrice.toFixed(2) }}
+                              \GNF {{ item.unitPrice.toFixed(2) }}
                             </div>
                           </div>
                           <div>
                             <div class="text-xs text-gray-500">Total</div>
                             <div class="text-xs font-medium text-gray-900">
-                              \${{ item.subtotal.toFixed(2) }}
+                              \GNF {{ item.subtotal.toFixed(2) }}
                             </div>
                           </div>
                         </div>
@@ -570,12 +570,12 @@ import { FormsModule } from '@angular/forms';
                   <td
                     class="px-3 py-3 sm:px-4 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell"
                   >
-                    \${{ item.unitPrice.toFixed(2) }}
+                    \GNF {{ item.unitPrice.toFixed(2) }}
                   </td>
                   <td
                     class="px-3 py-3 sm:px-4 whitespace-nowrap text-sm font-medium text-gray-900 hidden sm:table-cell"
                   >
-                    \${{ item.subtotal.toFixed(2) }}
+                    \GNF {{ item.subtotal.toFixed(2) }}
                   </td>
                 </tr>
               </tbody>
@@ -592,7 +592,7 @@ import { FormsModule } from '@angular/forms';
                   >Sous-total:</span
                 >
                 <span class="text-xs sm:text-sm font-medium"
-                  >\${{ quote.subtotal.toFixed(2) }}</span
+                  >\GNF {{ quote.subtotal.toFixed(2) }}</span
                 >
               </div>
               <div class="flex justify-between">
@@ -600,13 +600,13 @@ import { FormsModule } from '@angular/forms';
                   >TVA ({{ quote.vatRate }}%):</span
                 >
                 <span class="text-xs sm:text-sm font-medium"
-                  >\${{ quote.vatAmount.toFixed(2) }}</span
+                  >\GNF {{ quote.vatAmount.toFixed(2) }}</span
                 >
               </div>
               <div class="border-t pt-2">
                 <div class="flex justify-between text-sm sm:text-lg font-bold">
                   <span>Total:</span>
-                  <span>\${{ quote.total.toFixed(2) }}</span>
+                  <span>\GNF {{ quote.total.toFixed(2) }}</span>
                 </div>
               </div>
             </div>

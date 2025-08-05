@@ -1,6 +1,6 @@
 import { Component} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { User } from '../../models/user.model';
 import { AuthService } from '../../services/auth.service';
@@ -152,8 +152,8 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
               >
                 <a
-                  routerLink="/profile"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  (click)="routerProfile()"
+                  class="cursor-pointer block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >Profil</a
                 >
                 <a
@@ -194,7 +194,9 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
           <div class="text-sm text-gray-600">{{ user.role }}</div>
         </div>
 
-        <a routerLink="/profile" class="block text-sm text-gray-700">Profil</a>
+        <a (click)="routerProfile()" class="block text-sm text-gray-700"
+          >Profil</a
+        >
         <a
           *ngIf="authService.canAccessBtnEdit"
           routerLink="/checksDiagnostique"
@@ -226,7 +228,8 @@ export class NavbarComponent {
 
   constructor(
     public readonly authService: AuthService,
-    private readonly notifcationService: NotificationMessageService
+    private readonly notifcationService: NotificationMessageService,
+    private readonly router: Router
   ) {
     this.currentUser$ = this.authService.currentUser$;
   }
@@ -252,7 +255,16 @@ export class NavbarComponent {
         5
       );
   }
-  
+
+  routerProfile() {
+    //  [routerLink]="['/payments/create', invoice.id]"
+    // ['/clients', client.id, 'edit']
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser?.email) {
+      const encodedEmail = encodeURIComponent(currentUser.email);
+      this.router.navigate(['/profile', encodedEmail, 'edit']);
+    }
+  }
 
   toggleDropdown(): void {
     this.showDropdown = !this.showDropdown;

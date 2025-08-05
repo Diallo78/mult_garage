@@ -14,191 +14,7 @@ import { AuthService } from '../../services/auth.service';
   selector: 'app-quote-list',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, FirestoreDatePipe],
-  // template: `
-  //   <!-- <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
-  //     <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
-  //   </div> -->
-  //   <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
-  //     <div class="animate-pulse flex flex-col items-center">
-  //       <div
-  //         class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-500"
-  //       ></div>
-  //       <p class="mt-4 text-gray-600">Chargement de votre espace...</p>
-  //     </div>
-  //   </div>
-
-  //   <div
-  //     *ngIf="!isLoading"
-  //     class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100"
-  //   >
-  //     <div class="space-y-6">
-  //       <div class="md:flex md:items-center md:justify-between">
-  //         <div class="flex-1 min-w-0">
-  //           <h2
-  //             class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate"
-  //           >
-  //             Quotes
-  //           </h2>
-  //         </div>
-  //       </div>
-
-  //       <!-- Search and Filter -->
-  //       <div class="card">
-  //         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-  //           <div>
-  //             <label class="form-label">Search</label>
-  //             <input
-  //               type="text"
-  //               [(ngModel)]="searchTerm"
-  //               (input)="filterQuotes()"
-  //               class="form-input"
-  //               placeholder="Search by quote number or client"
-  //             />
-  //           </div>
-  //           <div>
-  //             <label class="form-label">Status</label>
-  //             <select
-  //               [(ngModel)]="statusFilter"
-  //               (change)="filterQuotes()"
-  //               class="form-input"
-  //             >
-  //               <option value="">All Statuses</option>
-  //               <option value="Pending">Pending</option>
-  //               <option value="Accepted">Accepted</option>
-  //               <option value="Rejected">Rejected</option>
-  //               <option value="Expired">Expired</option>
-  //             </select>
-  //           </div>
-  //           <div>
-  //             <label class="form-label">From Date</label>
-  //             <input
-  //               type="date"
-  //               [(ngModel)]="fromDate"
-  //               (change)="filterQuotes()"
-  //               class="form-input"
-  //             />
-  //           </div>
-  //           <div>
-  //             <label class="form-label">To Date</label>
-  //             <input
-  //               type="date"
-  //               [(ngModel)]="toDate"
-  //               (change)="filterQuotes()"
-  //               class="form-input"
-  //             />
-  //           </div>
-  //         </div>
-  //       </div>
-
-  //       <!-- Quotes Table -->
-  //       <div class="card">
-  //         <div class="overflow-x-auto">
-  //           <table class="min-w-full divide-y divide-gray-200">
-  //             <thead class="bg-gray-50">
-  //               <tr>
-  //                 <th
-  //                   class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-  //                 >
-  //                   Quote #
-  //                 </th>
-  //                 <th
-  //                   class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-  //                 >
-  //                   Client
-  //                 </th>
-  //                 <th
-  //                   class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-  //                 >
-  //                   Vehicle
-  //                 </th>
-  //                 <th
-  //                   class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-  //                 >
-  //                   Total
-  //                 </th>
-  //                 <th
-  //                   class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-  //                 >
-  //                   Status
-  //                 </th>
-  //                 <th
-  //                   class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-  //                 >
-  //                   Valid Until
-  //                 </th>
-  //                 <th
-  //                   class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-  //                 >
-  //                   Actions
-  //                 </th>
-  //               </tr>
-  //             </thead>
-  //             <tbody class="bg-white divide-y divide-gray-200">
-  //               <tr
-  //                 *ngFor="let quote of filteredQuotes"
-  //                 class="hover:bg-gray-50"
-  //               >
-  //                 <td class="px-6 py-4 whitespace-nowrap">
-  //                   <div class="text-sm font-medium text-gray-900">
-  //                     {{ quote.quoteNumber }}
-  //                   </div>
-  //                   <div class="text-sm text-gray-500">
-  //                     {{ quote.createdAt | firestoreDate | date : 'short' }}
-  //                   </div>
-  //                 </td>
-  //                 <td class="px-6 py-4 whitespace-nowrap">
-  //                   <div class="text-sm text-gray-900">
-  //                     {{ getClientName(quote.clientId) }}
-  //                   </div>
-  //                 </td>
-  //                 <td class="px-6 py-4 whitespace-nowrap">
-  //                   <div class="text-sm text-gray-900">
-  //                     {{ getVehicleInfo(quote.vehicleId) }}
-  //                   </div>
-  //                 </td>
-  //                 <td class="px-6 py-4 whitespace-nowrap">
-  //                   <div class="text-sm font-medium text-gray-900">
-  //                     \${{ quote.total.toFixed(2) }}
-  //                   </div>
-  //                 </td>
-  //                 <td class="px-6 py-4 whitespace-nowrap">
-  //                   <span
-  //                     class="status-badge"
-  //                     [ngClass]="getStatusClass(quote.status)"
-  //                   >
-  //                     {{ quote.status }}
-  //                   </span>
-  //                 </td>
-  //                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-  //                   {{ quote.validUntil | firestoreDate | date : 'short' }}
-  //                 </td>
-  //                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-  //                   <button
-  //                     [routerLink]="['/quotes', quote.id]"
-  //                     class="text-primary-600 hover:text-primary-900 mr-3"
-  //                   >
-  //                     View
-  //                   </button>
-  //                   @if(this.authService.canBtnAccessInterventions &&
-  //                   quote.status === 'Accepted'){
-  //                   <button
-  //                     [routerLink]="['/interventions/create', quote.id]"
-  //                     class="text-secondary-600 hover:text-secondary-900"
-  //                   >
-  //                     Start Work
-  //                   </button>
-  //                   }
-  //                 </td>
-  //               </tr>
-  //             </tbody>
-  //           </table>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </div>
-  // `,
   template: `
-    <!-- Loading State -->
     <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
       <div class="animate-pulse flex flex-col items-center">
         <div
@@ -212,47 +28,46 @@ import { AuthService } from '../../services/auth.service';
       *ngIf="!isLoading"
       class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100"
     >
-      <div class="space-y-4 md:space-y-6 p-2 sm:p-4">
-        <!-- Header -->
-        <div
-          class="flex flex-col md:flex-row md:items-center md:justify-between gap-2"
-        >
-          <div class="min-w-0">
-            <h2 class="text-xl sm:text-2xl font-bold leading-7 text-gray-900">
-              Quotes
+      <div class="space-y-6">
+        <div class="md:flex md:items-center md:justify-between">
+          <div class="flex-1 min-w-0">
+            <h2
+              class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate"
+            >
+              Devis
             </h2>
           </div>
         </div>
 
         <!-- Search and Filter -->
-        <div class="card p-3 sm:p-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div class="col-span-1 sm:col-span-2 lg:col-span-1">
-              <label class="form-label">Search</label>
+        <div class="card">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label class="form-label">Rechercher</label>
               <input
                 type="text"
                 [(ngModel)]="searchTerm"
                 (input)="filterQuotes()"
                 class="form-input"
-                placeholder="Search by quote number or client"
+                placeholder="Rechercher par numéro de devis ou client"
               />
             </div>
             <div>
-              <label class="form-label">Status</label>
+              <label class="form-label">Statut</label>
               <select
                 [(ngModel)]="statusFilter"
                 (change)="filterQuotes()"
                 class="form-input"
               >
-                <option value="">All Statuses</option>
-                <option value="Pending">Pending</option>
-                <option value="Accepted">Accepted</option>
-                <option value="Rejected">Rejected</option>
-                <option value="Expired">Expired</option>
+                <option value="">Tous les statuts</option>
+                <option value="Pending">En attente</option>
+                <option value="Accepted">Accepté</option>
+                <option value="Rejected">Rejeté</option>
+                <option value="Expired">Expiré</option>
               </select>
             </div>
             <div>
-              <label class="form-label">From Date</label>
+              <label class="form-label">Date de début</label>
               <input
                 type="date"
                 [(ngModel)]="fromDate"
@@ -261,7 +76,7 @@ import { AuthService } from '../../services/auth.service';
               />
             </div>
             <div>
-              <label class="form-label">To Date</label>
+              <label class="form-label">Date de fin</label>
               <input
                 type="date"
                 [(ngModel)]="toDate"
@@ -273,43 +88,43 @@ import { AuthService } from '../../services/auth.service';
         </div>
 
         <!-- Quotes Table -->
-        <div class="card overflow-hidden">
+        <div class="card">
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50 hidden sm:table-header-group">
+              <thead class="bg-gray-50">
                 <tr>
                   <th
-                    class="px-3 py-3 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Quote #
+                    Devis #
                   </th>
                   <th
-                    class="px-3 py-3 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Client
+                    Client(e)
                   </th>
                   <th
-                    class="px-3 py-3 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell"
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Vehicle
+                    Véhicule
                   </th>
                   <th
-                    class="px-3 py-3 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Total
+                    Total (GNF)
                   </th>
                   <th
-                    class="px-3 py-3 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Status
+                    Statut
                   </th>
                   <th
-                    class="px-3 py-3 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell"
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Valid Until
+                    Valide jusqu'à
                   </th>
                   <th
-                    class="px-3 py-3 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Actions
                   </th>
@@ -320,119 +135,56 @@ import { AuthService } from '../../services/auth.service';
                   *ngFor="let quote of filteredQuotes"
                   class="hover:bg-gray-50"
                 >
-                  <!-- Mobile View -->
-                  <td class="px-3 py-4 sm:px-4 block sm:table-cell">
-                    <div class="flex items-start">
-                      <div class="flex-1">
-                        <div class="text-sm font-medium text-gray-900">
-                          {{ quote.quoteNumber }}
-                        </div>
-                        <div class="text-xs text-gray-500 sm:hidden">
-                          {{ quote.createdAt | firestoreDate | date : 'short' }}
-                        </div>
-                        <div class="sm:hidden mt-1">
-                          <div class="text-xs text-gray-900">
-                            Client: {{ getClientName(quote.clientId) }}
-                          </div>
-                          <div class="text-xs text-gray-900 mt-1">
-                            Vehicle: {{ getVehicleInfo(quote.vehicleId) }}
-                          </div>
-                          <div class="flex items-center mt-1">
-                            <span
-                              class="status-badge text-xs"
-                              [ngClass]="getStatusClass(quote.status)"
-                            >
-                              {{ quote.status }}
-                            </span>
-                            <span class="text-xs font-medium ml-2">
-                              \${{ quote.total.toFixed(2) }}
-                            </span>
-                          </div>
-                          <div class="text-xs text-gray-500 mt-1">
-                            Valid:
-                            {{
-                              quote.validUntil | firestoreDate | date : 'short'
-                            }}
-                          </div>
-                        </div>
-                      </div>
-                      <div class="sm:hidden ml-auto flex flex-col space-y-2">
-                        <button
-                          [routerLink]="['/quotes', quote.id]"
-                          class="text-primary-600 hover:text-primary-900 text-xs"
-                        >
-                          View
-                        </button>
-                        @if(this.authService.canBtnAccessInterventions &&
-                        quote.status === 'Accepted'){
-                        <button
-                          [routerLink]="['/interventions/create', quote.id]"
-                          class="text-secondary-600 hover:text-secondary-900 text-xs"
-                        >
-                          Start Work
-                        </button>
-                        }
-                      </div>
-                    </div>
-                  </td>
-
-                  <!-- Desktop View -->
-                  <td class="px-3 py-4 whitespace-nowrap hidden sm:table-cell">
+                  <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm font-medium text-gray-900">
                       {{ quote.quoteNumber }}
                     </div>
-                    <div class="text-xs text-gray-500">
+                    <div class="text-sm text-gray-500">
                       {{ quote.createdAt | firestoreDate | date : 'short' }}
                     </div>
                   </td>
-                  <td class="px-3 py-4 whitespace-nowrap hidden sm:table-cell">
+                  <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-900">
                       {{ getClientName(quote.clientId) }}
                     </div>
                   </td>
-                  <td class="px-3 py-4 whitespace-nowrap hidden lg:table-cell">
+                  <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-900">
                       {{ getVehicleInfo(quote.vehicleId) }}
                     </div>
                   </td>
-                  <td class="px-3 py-4 whitespace-nowrap hidden sm:table-cell">
+                  <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm font-medium text-gray-900">
-                      \${{ quote.total.toFixed(2) }}
+                      \GNF {{ quote.total.toFixed(2) }}
                     </div>
                   </td>
-                  <td class="px-3 py-4 whitespace-nowrap hidden sm:table-cell">
+                  <td class="px-6 py-4 whitespace-nowrap">
                     <span
-                      class="status-badge text-xs sm:text-sm"
+                      class="status-badge"
                       [ngClass]="getStatusClass(quote.status)"
                     >
                       {{ quote.status }}
                     </span>
                   </td>
-                  <td
-                    class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 hidden xl:table-cell"
-                  >
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {{ quote.validUntil | firestoreDate | date : 'short' }}
                   </td>
-                  <td
-                    class="px-3 py-4 whitespace-nowrap text-sm font-medium hidden sm:table-cell"
-                  >
-                    <div class="flex flex-wrap gap-2">
-                      <button
-                        [routerLink]="['/quotes', quote.id]"
-                        class="text-primary-600 hover:text-primary-900"
-                      >
-                        View
-                      </button>
-                      @if(this.authService.canBtnAccessInterventions &&
-                      quote.status === 'Accepted'){
-                      <button
-                        [routerLink]="['/interventions/create', quote.id]"
-                        class="text-secondary-600 hover:text-secondary-900"
-                      >
-                        Start Work
-                      </button>
-                      }
-                    </div>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      [routerLink]="['/quotes', quote.id]"
+                      class="text-primary-600 hover:text-primary-900 mr-3"
+                    >
+                      Voir
+                    </button>
+                    @if(this.authService.canBtnAccessInterventions &&
+                    quote.status === 'Accepted'){
+                    <button
+                      [routerLink]="['/interventions/create', quote.id]"
+                      class="text-secondary-600 hover:text-secondary-900"
+                    >
+                      Démarrer le travail
+                    </button>
+                    }
                   </td>
                 </tr>
               </tbody>
@@ -461,10 +213,10 @@ export class QuoteListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-   (async() => {
-     if (this.authService.isClient) await this.loadDataClient();
-     else await this.loadDataGarage();
-   })()
+    (async () => {
+      if (this.authService.isClient) await this.loadDataClient();
+      else await this.loadDataGarage();
+    })();
   }
 
   private async loadDataClient(): Promise<void> {

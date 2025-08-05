@@ -4,7 +4,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  User as FirebaseUser
+  User as FirebaseUser,
+  updatePassword
 } from 'firebase/auth';
 import {
   doc,
@@ -18,7 +19,7 @@ import { auth, db } from '../../../firebase.config';
 import { Router } from '@angular/router';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private readonly currentUserSubject = new BehaviorSubject<User | null>(null);
@@ -43,9 +44,13 @@ export class AuthService {
     });
   }
 
-  async signIn(email: string, password: string): Promise<void> {
+  async signInv1(email: string, password: string): Promise<void> {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const userData = await this.getUserData(userCredential.user.uid);
 
       if (userData?.garageId) {
@@ -58,7 +63,7 @@ export class AuthService {
 
       switch (error.code) {
         case 'auth/invalid-email':
-          errorMessage = 'L\'adresse email est invalide';
+          errorMessage = "L'adresse email est invalide";
           break;
         case 'auth/user-disabled':
           errorMessage = 'Ce compte utilisateur a été désactivé';
@@ -70,10 +75,12 @@ export class AuthService {
           errorMessage = 'Mot de passe incorrect';
           break;
         case 'auth/too-many-requests':
-          errorMessage = 'Trop de tentatives de connexion. Veuillez réessayer plus tard';
+          errorMessage =
+            'Trop de tentatives de connexion. Veuillez réessayer plus tard';
           break;
         case 'auth/network-request-failed':
-          errorMessage = 'Erreur de connexion réseau. Vérifiez votre connexion internet';
+          errorMessage =
+            'Erreur de connexion réseau. Vérifiez votre connexion internet';
           break;
       }
 
@@ -81,9 +88,39 @@ export class AuthService {
     }
   }
 
-  async signUp(email: string, password: string, displayName: string, garageId: string, role: UserRole): Promise<void> {
+  async signIn(email: string, password: string): Promise<void> {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const userData = await this.getUserData(userCredential.user.uid);
+
+      if (userData?.garageId) {
+        localStorage.setItem('garageId', userData.garageId);
+      }
+
+      this.currentUserSubject.next(userData);
+    } catch (error: any) {
+      // Ne pas gérer les messages ici, juste transmettre l'erreur
+      throw error;
+    }
+  }
+
+  async signUp(
+    email: string,
+    password: string,
+    displayName: string,
+    garageId: string,
+    role: UserRole
+  ): Promise<void> {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
 
       const userData: User = {
@@ -93,7 +130,7 @@ export class AuthService {
         garageId,
         role,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       await setDoc(doc(db, 'users', user.uid), userData);
@@ -136,7 +173,7 @@ export class AuthService {
     try {
       await updateDoc(doc(db, 'users', currentUser.uid), {
         ...updates,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
 
       this.currentUserSubject.next({ ...currentUser, ...updates });
@@ -159,6 +196,44 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  // UPD
+  async updateUserPassword(newPassword: string): Promise<void> {
+    const _user = auth.currentUser;
+
+    if (!_user) {
+      throw new Error('Utilisateur non connecté');
+    }
+
+    try {
+      // 2. Mise à jour du mot de passe dans Firebase Auth
+      await updatePassword(_user, newPassword);
+
+      // 3. Mise à jour de la date dans Firestore (/users/:uid)
+      const userRef = doc(db, 'users', _user.uid);
+      await updateDoc(userRef, {
+        updatedAt: new Date(),
+      });
+
+      console.log('✅ Mot de passe et données utilisateur mis à jour');
+    } catch (error: any) {
+      let message = 'Erreur lors de la mise à jour du mot de passe ' + error;
+
+      switch (error.code) {
+        case 'auth/wrong-password':
+          message = 'Mot de passe actuel incorrect';
+          break;
+        case 'auth/weak-password':
+          message = 'Le nouveau mot de passe est trop faible';
+          break;
+        case 'auth/requires-recent-login':
+          message =
+            'Veuillez vous reconnecter pour modifier votre mot de passe';
+          break;
+      }
+
+      throw new Error(message);
+    }
+  }
 
   public get canAccessDiagnostics(): boolean {
     return this.hasAnyRole(['AdminGarage', 'Technician', 'SuperAdmin']);
@@ -169,7 +244,12 @@ export class AuthService {
   }
 
   public get canAccessPayments(): boolean {
-    return this.hasAnyRole(['AdminGarage', 'Accountant', 'Receptionist', 'SuperAdmin']);
+    return this.hasAnyRole([
+      'AdminGarage',
+      'Accountant',
+      'Receptionist',
+      'SuperAdmin',
+    ]);
   }
 
   public get canAccessReports(): boolean {
@@ -189,22 +269,44 @@ export class AuthService {
   }
 
   public get canBtnAccessInterventions(): boolean {
-    return this.hasAnyRole(['AdminGarage', 'Technician', 'SuperAdmin', 'Manager', 'Receptionist']);
+    return this.hasAnyRole([
+      'AdminGarage',
+      'Technician',
+      'SuperAdmin',
+      'Manager',
+      'Receptionist',
+    ]);
   }
 
   public get canAccessBtnDelete(): boolean {
-    return this.hasAnyRole(['SuperAdmin', 'AdminGarage','Manager']);
+    return this.hasAnyRole(['SuperAdmin', 'AdminGarage', 'Manager']);
   }
 
-   public get canAccessBtnEdit(): boolean {
-    return this.hasAnyRole(['SuperAdmin', 'AdminGarage','Manager', 'Receptionist']);
+  public get canAccessBtnEdit(): boolean {
+    return this.hasAnyRole([
+      'SuperAdmin',
+      'AdminGarage',
+      'Manager',
+      'Receptionist',
+    ]);
   }
 
   public get canBtnAccessInov(): boolean {
-    return this.hasAnyRole(['AdminGarage', 'SuperAdmin', 'Manager', 'Accountant']);
+    return this.hasAnyRole([
+      'AdminGarage',
+      'SuperAdmin',
+      'Manager',
+      'Accountant',
+    ]);
   }
 
   public get canccessDashboard(): boolean {
-    return this.hasAnyRole(['AdminGarage', 'Accountant', 'SuperAdmin', 'Manager', 'Receptionist']);
+    return this.hasAnyRole([
+      'AdminGarage',
+      'Accountant',
+      'SuperAdmin',
+      'Manager',
+      'Receptionist',
+    ]);
   }
 }
