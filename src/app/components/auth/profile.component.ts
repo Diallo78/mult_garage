@@ -1,6 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -44,7 +49,7 @@ import { NotificationService } from '../../services/notification.service';
 
         <!-- Mot de passe (modifiable) -->
         <div>
-          <label class="form-label">Mot de passe</label>
+          <label class="form-label">Mot de passe(Changer / modifier)</label>
           <input
             formControlName="password"
             type="password"

@@ -1,12 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+  FormsModule,
+} from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { UserManagementService } from '../../services/user-management.service';
 import { Permission, UserRole } from '../../models/user.model';
 import { Personnel } from '../../models/garage.model';
+import { Timestamp } from 'firebase/firestore';
 
 @Component({
   selector: 'app-personnel-form',
@@ -16,20 +23,30 @@ import { Personnel } from '../../models/garage.model';
     <div class="space-y-6">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
-          <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            {{ isEditMode ? 'Edit Employee' : 'Add New Employee' }}
+          <h2
+            class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate"
+          >
+            {{
+              isEditMode ? "Modifier l'employé" : 'Ajouter un nouvel employé'
+            }}
           </h2>
         </div>
       </div>
 
       <div class="card">
-        <form [formGroup]="personnelForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <form
+          [formGroup]="personnelForm"
+          (ngSubmit)="onSubmit()"
+          class="space-y-6"
+        >
           <!-- Personal Information -->
           <div>
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+              Informations personnelles
+            </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label class="form-label">First Name *</label>
+                <label class="form-label">Prénom *</label>
                 <input
                   type="text"
                   formControlName="firstName"
@@ -38,7 +55,7 @@ import { Personnel } from '../../models/garage.model';
                 />
               </div>
               <div>
-                <label class="form-label">Last Name *</label>
+                <label class="form-label">Nom de famille *</label>
                 <input
                   type="text"
                   formControlName="lastName"
@@ -47,7 +64,7 @@ import { Personnel } from '../../models/garage.model';
                 />
               </div>
               <div>
-                <label class="form-label">Email *</label>
+                <label class="form-label">E-mail *</label>
                 <input
                   type="email"
                   formControlName="email"
@@ -56,7 +73,7 @@ import { Personnel } from '../../models/garage.model';
                 />
               </div>
               <div>
-                <label class="form-label">Phone *</label>
+                <label class="form-label">Téléphone *</label>
                 <input
                   type="tel"
                   formControlName="phone"
@@ -69,14 +86,13 @@ import { Personnel } from '../../models/garage.model';
 
           <!-- Job Information -->
           <div>
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Job Information</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+              Informations sur l'emploi
+            </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label class="form-label">Role *</label>
-                <select
-                  formControlName="role"
-                  class="form-input"
-                >
+                <label class="form-label">Rôle *</label>
+                <select formControlName="role" class="form-input">
                   <option value="">Select role</option>
                   <option value="AdminGarage">Admin Garage</option>
                   <option value="Manager">Manager</option>
@@ -86,7 +102,7 @@ import { Personnel } from '../../models/garage.model';
                 </select>
               </div>
               <div>
-                <label class="form-label">Hire Date *</label>
+                <label class="form-label">Date d'embauche *</label>
                 <input
                   type="date"
                   formControlName="hireDate"
@@ -94,7 +110,7 @@ import { Personnel } from '../../models/garage.model';
                 />
               </div>
               <div>
-                <label class="form-label">Monthly Salary</label>
+                <label class="form-label">Salaire mensuel</label>
                 <input
                   type="number"
                   formControlName="salary"
@@ -112,25 +128,31 @@ import { Personnel } from '../../models/garage.model';
               <input
                 type="checkbox"
                 [(ngModel)]="createAccount"
-                [ngModelOptions]="{standalone: true}"
+                [ngModelOptions]="{ standalone: true }"
                 id="createAccount"
                 class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
               <label for="createAccount" class="ml-2 text-sm text-gray-700">
-                Create user account for employee (recommended)
+                Créer un compte utilisateur pour l'employé (recommandé)
               </label>
             </div>
             <p class="mt-2 text-xs text-gray-600">
-              This will create a user account allowing the employee to access the system based on their role and permissions.
-              A password reset email will be sent to the employee.
+              Cela créera un compte utilisateur permettant à l'employé d'accéder
+              au système en fonction de son rôle et de ses autorisations. Un
+              e-mail de réinitialisation du mot de passe lui sera envoyé.
             </p>
           </div>
 
           <!-- Specializations -->
           <div>
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Specializations</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+              Spécialisations
+            </h3>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div *ngFor="let spec of availableSpecializations" class="flex items-center">
+              <div
+                *ngFor="let spec of availableSpecializations"
+                class="flex items-center"
+              >
                 <input
                   type="checkbox"
                   [id]="spec.key"
@@ -138,27 +160,41 @@ import { Personnel } from '../../models/garage.model';
                   (change)="onSpecializationChange($event)"
                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                 />
-                <label [for]="spec.key" class="ml-2 text-sm text-gray-700">{{ spec.label }}</label>
+                <label [for]="spec.key" class="ml-2 text-sm text-gray-700">{{
+                  spec.label
+                }}</label>
               </div>
             </div>
           </div>
 
           <!-- Permissions -->
           <div>
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Permissions</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+              Autorisations
+            </h3>
             <div class="space-y-4">
               <div *ngFor="let module of modules" class="border rounded-lg p-4">
-                <h4 class="font-medium text-gray-900 mb-3">{{ module.name }}</h4>
+                <h4 class="font-medium text-gray-900 mb-3">
+                  {{ module.name }}
+                </h4>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div *ngFor="let action of module.actions" class="flex items-center">
+                  <div
+                    *ngFor="let action of module.actions"
+                    class="flex items-center"
+                  >
                     <input
                       type="checkbox"
                       [id]="module.key + '_' + action.key"
                       [checked]="hasPermission(module.key, action.key)"
-                      (change)="onPermissionChange(module.key, action.key, $event)"
+                      (change)="
+                        onPermissionChange(module.key, action.key, $event)
+                      "
                       class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                     />
-                    <label [for]="module.key + '_' + action.key" class="ml-2 text-sm text-gray-700">
+                    <label
+                      [for]="module.key + '_' + action.key"
+                      class="ml-2 text-sm text-gray-700"
+                    >
                       {{ action.label }}
                     </label>
                   </div>
@@ -177,18 +213,14 @@ import { Personnel } from '../../models/garage.model';
                 class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
               <label for="isActive" class="ml-2 text-sm text-gray-700">
-                Active Employee
+                Employé actif
               </label>
             </div>
           </div>
 
           <div class="flex justify-end space-x-4">
-            <button
-              type="button"
-              (click)="goBack()"
-              class="btn-outline"
-            >
-              Cancel
+            <button type="button" (click)="goBack()" class="btn-outline">
+              Annuler
             </button>
             <button
               type="submit"
@@ -196,13 +228,15 @@ import { Personnel } from '../../models/garage.model';
               class="btn-primary"
             >
               <span *ngIf="isLoading" class="mr-2">Saving...</span>
-              {{ isEditMode ? 'Update Employee' : 'Add Employee' }}
+              {{
+                isEditMode ? "Mise à jour de l'employé" : 'Ajouter un employé'
+              }}
             </button>
           </div>
         </form>
       </div>
     </div>
-  `
+  `,
 })
 export class PersonnelFormComponent implements OnInit {
   personnelForm: FormGroup;
@@ -221,7 +255,7 @@ export class PersonnelFormComponent implements OnInit {
     { key: 'suspension', value: 'Suspension', label: 'Suspension' },
     { key: 'aircon', value: 'Air Conditioning', label: 'Air Conditioning' },
     { key: 'bodywork', value: 'Bodywork', label: 'Bodywork' },
-    { key: 'painting', value: 'Painting', label: 'Painting' }
+    { key: 'painting', value: 'Painting', label: 'Painting' },
   ];
 
   modules = [
@@ -232,8 +266,8 @@ export class PersonnelFormComponent implements OnInit {
         { key: 'read', label: 'View' },
         { key: 'write', label: 'Create/Edit' },
         { key: 'delete', label: 'Delete' },
-        { key: 'export', label: 'Export' }
-      ]
+        { key: 'export', label: 'Export' },
+      ],
     },
     {
       key: 'vehicles',
@@ -242,8 +276,8 @@ export class PersonnelFormComponent implements OnInit {
         { key: 'read', label: 'View' },
         { key: 'write', label: 'Create/Edit' },
         { key: 'delete', label: 'Delete' },
-        { key: 'export', label: 'Export' }
-      ]
+        { key: 'export', label: 'Export' },
+      ],
     },
     {
       key: 'diagnostics',
@@ -252,8 +286,8 @@ export class PersonnelFormComponent implements OnInit {
         { key: 'read', label: 'View' },
         { key: 'write', label: 'Create/Edit' },
         { key: 'delete', label: 'Delete' },
-        { key: 'export', label: 'Export' }
-      ]
+        { key: 'export', label: 'Export' },
+      ],
     },
     {
       key: 'quotes',
@@ -262,8 +296,8 @@ export class PersonnelFormComponent implements OnInit {
         { key: 'read', label: 'View' },
         { key: 'write', label: 'Create/Edit' },
         { key: 'delete', label: 'Delete' },
-        { key: 'export', label: 'Export' }
-      ]
+        { key: 'export', label: 'Export' },
+      ],
     },
     {
       key: 'invoices',
@@ -272,26 +306,26 @@ export class PersonnelFormComponent implements OnInit {
         { key: 'read', label: 'View' },
         { key: 'write', label: 'Create/Edit' },
         { key: 'delete', label: 'Delete' },
-        { key: 'export', label: 'Export' }
-      ]
+        { key: 'export', label: 'Export' },
+      ],
     },
     {
       key: 'reports',
       name: 'Reports',
       actions: [
         { key: 'read', label: 'View' },
-        { key: 'export', label: 'Export' }
-      ]
-    }
+        { key: 'export', label: 'Export' },
+      ],
+    },
   ];
 
   constructor(
-    private fb: FormBuilder,
-    private garageDataService: GarageDataService,
-    private userManagementService: UserManagementService,
-    private notificationService: NotificationService,
-    private router: Router,
-    private route: ActivatedRoute
+    private readonly fb: FormBuilder,
+    private readonly garageDataService: GarageDataService,
+    private readonly userManagementService: UserManagementService,
+    private readonly notificationService: NotificationService,
+    private readonly router: Router,
+    private readonly route: ActivatedRoute
   ) {
     this.personnelForm = this.fb.group({
       firstName: ['', Validators.required],
@@ -301,24 +335,29 @@ export class PersonnelFormComponent implements OnInit {
       role: ['', Validators.required],
       hireDate: ['', Validators.required],
       salary: [''],
-      isActive: [true]
+      isActive: [true],
     });
   }
 
-  async ngOnInit(): Promise<void> {
-    this.personnelId = this.route.snapshot.paramMap.get('id');
-    this.isEditMode = !!this.personnelId;
+  ngOnInit() {
+    (async () => {
+      this.personnelId = this.route.snapshot.paramMap.get('id');
+      this.isEditMode = !!this.personnelId;
 
-    if (this.isEditMode && this.personnelId) {
-      await this.loadPersonnel();
-    } else {
-      this.setDefaultHireDate();
-    }
+      if (this.isEditMode && this.personnelId) {
+        await this.loadPersonnel();
+      } else {
+        this.setDefaultHireDate();
+      }
+    })();
   }
 
   private async loadPersonnel(): Promise<void> {
     try {
-      const personnel = await this.garageDataService.getById<Personnel>('personnel', this.personnelId!);
+      const personnel = await this.garageDataService.getById<Personnel>(
+        'personnel',
+        this.personnelId!
+      );
       if (personnel) {
         this.personnelForm.patchValue({
           firstName: personnel.firstName,
@@ -326,15 +365,16 @@ export class PersonnelFormComponent implements OnInit {
           email: personnel.email,
           phone: personnel.phone,
           role: personnel.role,
-          hireDate: new Date(personnel.hireDate).toISOString().split('T')[0],
+          hireDate: this.convertTimestampToDateString(personnel.hireDate),
           salary: personnel.salary,
-          isActive: personnel.isActive
+          isActive: personnel.isActive,
         });
         this.selectedSpecializations = personnel.specializations || [];
         this.permissions = personnel.permissions || [];
       }
     } catch (error) {
       this.notificationService.showError('Failed to load personnel data');
+      console.log('Failed to load personnel data ' + error);
     }
   }
 
@@ -348,17 +388,19 @@ export class PersonnelFormComponent implements OnInit {
     if (event.target.checked) {
       this.selectedSpecializations.push(value);
     } else {
-      this.selectedSpecializations = this.selectedSpecializations.filter(s => s !== value);
+      this.selectedSpecializations = this.selectedSpecializations.filter(
+        (s) => s !== value
+      );
     }
   }
 
   hasPermission(module: string, action: string): boolean {
-    const permission = this.permissions.find(p => p.module === module);
+    const permission = this.permissions.find((p) => p.module === module);
     return permission ? permission.actions.includes(action) : false;
   }
 
   onPermissionChange(module: string, action: string, event: any): void {
-    let permission = this.permissions.find(p => p.module === module);
+    let permission = this.permissions.find((p) => p.module === module);
 
     if (!permission) {
       permission = { module, actions: [] };
@@ -370,9 +412,11 @@ export class PersonnelFormComponent implements OnInit {
         permission.actions.push(action);
       }
     } else {
-      permission.actions = permission.actions.filter((a: string) => a !== action);
+      permission.actions = permission.actions.filter(
+        (a: string) => a !== action
+      );
       if (permission.actions.length === 0) {
-        this.permissions = this.permissions.filter(p => p.module !== module);
+        this.permissions = this.permissions.filter((p) => p.module !== module);
       }
     }
   }
@@ -397,26 +441,32 @@ export class PersonnelFormComponent implements OnInit {
         isActive: formValue.isActive,
         permissions: this.permissions,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       if (this.isEditMode && this.personnelId) {
-        await this.garageDataService.update('personnel', this.personnelId, personnelData);
+        await this.garageDataService.update(
+          'personnel',
+          this.personnelId,
+          personnelData
+        );
         this.notificationService.showSuccess('Employé mis à jour avec succès');
       } else {
         if (this.createAccount) {
           // Création avec compte utilisateur
-          await this.userManagementService.createPersonnelAccount(personnelData);
+          await this.userManagementService.createPersonnelAccount(
+            personnelData
+          );
         } else {
           // Création sans compte utilisateur
-           await this.garageDataService.create('personnel', personnelData);
-           this.notificationService.showSuccess('Employé ajouté avec succès');
+          await this.garageDataService.create('personnel', personnelData);
+          this.notificationService.showSuccess('Employé ajouté avec succès');
         }
       }
 
       this.router.navigate(['/personnel']);
     } catch (error) {
-      this.notificationService.showError('Échec de sauvegarde de l\'employé');
+      this.notificationService.showError("Échec de sauvegarde de l'employé");
     } finally {
       this.isLoading = false;
     }
@@ -424,5 +474,16 @@ export class PersonnelFormComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/personnel']);
+  }
+
+  convertTimestampToDateString(timestamp: Timestamp | Date | string): string {
+    if (timestamp instanceof Timestamp) {
+      const date = timestamp.toDate();
+      return date.toISOString().split('T')[0]; // "yyyy-MM-dd"
+    } else if (timestamp instanceof Date) {
+      return timestamp.toISOString().split('T')[0];
+    } else {
+      return timestamp; // déjà au format string "yyyy-MM-dd"
+    }
   }
 }

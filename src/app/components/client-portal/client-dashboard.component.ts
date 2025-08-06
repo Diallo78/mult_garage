@@ -36,7 +36,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
               <h1 class="text-2xl font-bold text-gray-800">Mon Espace Client</h1>
             </div>
 
-            <div class="flex items-center space-x-6">
+            <!-- <div class="flex items-center space-x-6">
               <div class="relative group">
                 <div class="flex items-center space-x-2 cursor-pointer">
                   <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
@@ -49,7 +49,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                   <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Déconnexion</a>
                 </div>
               </div>
-            </div>
+            </div> -->
           </div>
         </div>
       </header>
