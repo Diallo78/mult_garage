@@ -99,7 +99,7 @@ import { AuthService } from '../../services/auth.service';
   //                 Total Revenue
   //               </div>
   //               <div class="text-2xl font-bold text-gray-900">
-  //                 \${{ getTotalRevenue().toFixed(2) }}
+  //                 \GNF {{ getTotalRevenue().toFixed(2) }}
   //               </div>
   //             </div>
   //           </div>
@@ -117,7 +117,7 @@ import { AuthService } from '../../services/auth.service';
   //             <div class="ml-4">
   //               <div class="text-sm font-medium text-gray-500">Outstanding</div>
   //               <div class="text-2xl font-bold text-gray-900">
-  //                 \${{ getOutstandingAmount().toFixed(2) }}
+  //                 \GNF {{ getOutstandingAmount().toFixed(2) }}
   //               </div>
   //             </div>
   //           </div>
@@ -280,9 +280,12 @@ import { AuthService } from '../../services/auth.service';
   template: `
     <!-- Loading State -->
     <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
-      <div
-        class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"
-      ></div>
+      <div class="animate-pulse flex flex-col items-center">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-500"
+        ></div>
+        <p class="mt-4 text-gray-600">Chargement de votre espace...</p>
+      </div>
     </div>
 
     <div *ngIf="!isLoading" class="p-3 sm:p-4">
@@ -365,7 +368,7 @@ import { AuthService } from '../../services/auth.service';
                   Chiffre d'affaires
                 </div>
                 <div class="text-lg sm:text-xl font-bold text-gray-900">
-                  \${{ getTotalRevenue().toFixed(2) }}
+                  \GNF {{ getTotalRevenue().toFixed(2) }}
                 </div>
               </div>
             </div>
@@ -385,7 +388,7 @@ import { AuthService } from '../../services/auth.service';
                   Impayées
                 </div>
                 <div class="text-lg sm:text-xl font-bold text-gray-900">
-                  \${{ getOutstandingAmount().toFixed(2) }}
+                  \GNF {{ getOutstandingAmount().toFixed(2) }}
                 </div>
               </div>
             </div>
@@ -500,13 +503,13 @@ import { AuthService } from '../../services/auth.service';
                           <div>
                             <div class="text-xs text-gray-500">Total</div>
                             <div class="text-xs font-medium text-gray-900">
-                              \${{ invoice.totalAmount.toFixed(2) }}
+                              \GNF {{ invoice.totalAmount.toFixed(2) }}
                             </div>
                           </div>
                           <div>
                             <div class="text-xs text-gray-500">Dû</div>
                             <div class="text-xs font-medium text-gray-900">
-                              \${{ invoice.amountDue.toFixed(2) }}
+                              \GNF {{ invoice.amountDue.toFixed(2) }}
                             </div>
                           </div>
                         </div>
@@ -554,12 +557,12 @@ import { AuthService } from '../../services/auth.service';
                   </td>
                   <td class="px-3 py-4 whitespace-nowrap hidden sm:table-cell">
                     <div class="text-sm font-medium text-gray-900">
-                      \${{ invoice.totalAmount.toFixed(2) }}
+                      \GNF {{ invoice.totalAmount.toFixed(2) }}
                     </div>
                   </td>
                   <td class="px-3 py-4 whitespace-nowrap hidden lg:table-cell">
                     <div class="text-sm font-medium text-gray-900">
-                      \${{ invoice.amountDue.toFixed(2) }}
+                      \GNF {{ invoice.amountDue.toFixed(2) }}
                     </div>
                   </td>
                   <td class="px-3 py-4 whitespace-nowrap hidden sm:table-cell">
@@ -615,14 +618,16 @@ export class InvoiceListComponent implements OnInit {
   isLoading = true;
 
   constructor(
-    private garageDataService: GarageDataService,
-    private notificationService: NotificationService,
-    public authService: AuthService
+    private readonly garageDataService: GarageDataService,
+    private readonly notificationService: NotificationService,
+    public readonly authService: AuthService
   ) {}
 
-  async ngOnInit(): Promise<void> {
-    if (this.authService.isClient) await this.loadDataClient();
-    else await this.loadDataGarage();
+  ngOnInit() {
+    (async () => {
+      if (this.authService.isClient) await this.loadDataClient();
+      else await this.loadDataGarage();
+    })();
   }
 
   private async loadDataClient(): Promise<void> {

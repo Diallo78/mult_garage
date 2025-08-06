@@ -16,35 +16,53 @@ import { Client, Vehicle } from '../../models/client.model';
     <div class="space-y-6" *ngIf="invoice && client && vehicle">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
-          <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Add Payment
+          <h2
+            class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate"
+          >
+            Ajouter un paiement
           </h2>
           <p class="text-lg text-gray-600">
-            Invoice {{ invoice.invoiceNumber }} - {{ client.firstName }} {{ client.lastName }}
+            Facture {{ invoice.invoiceNumber }} - {{ client.firstName }}
+            {{ client.lastName }}
           </p>
         </div>
       </div>
 
-      <!-- Invoice Summary -->
+      <!-- Résumé de la facture -->
       <div class="card">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Invoice Summary</h3>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Résumé de la facture
+        </h3>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div>
-            <label class="text-sm font-medium text-gray-500">Total Amount</label>
-            <p class="mt-1 text-lg font-bold text-gray-900">\${{ invoice.totalAmount.toFixed(2) }}</p>
+            <label class="text-sm font-medium text-gray-500"
+              >Montant total</label
+            >
+            <p class="mt-1 text-lg font-bold text-gray-900">
+              \GNF {{ invoice.totalAmount.toFixed(2) }}
+            </p>
           </div>
           <div>
-            <label class="text-sm font-medium text-gray-500">Amount Paid</label>
-            <p class="mt-1 text-lg font-bold text-green-600">\${{ invoice.amountPaid.toFixed(2) }}</p>
+            <label class="text-sm font-medium text-gray-500"
+              >Montant payé</label
+            >
+            <p class="mt-1 text-lg font-bold text-green-600">
+              \GNF {{ invoice.amountPaid.toFixed(2) }}
+            </p>
           </div>
           <div>
-            <label class="text-sm font-medium text-gray-500">Amount Due</label>
-            <p class="mt-1 text-lg font-bold text-red-600">\${{ invoice.amountDue.toFixed(2) }}</p>
+            <label class="text-sm font-medium text-gray-500">Montant dû</label>
+            <p class="mt-1 text-lg font-bold text-red-600">
+              \GNF {{ invoice.amountDue.toFixed(2) }}
+            </p>
           </div>
           <div>
-            <label class="text-sm font-medium text-gray-500">Status</label>
+            <label class="text-sm font-medium text-gray-500">Statut</label>
             <p class="mt-1">
-              <span class="status-badge" [ngClass]="getStatusClass(invoice.status)">
+              <span
+                class="status-badge"
+                [ngClass]="getStatusClass(invoice.status)"
+              >
                 {{ invoice.status }}
               </span>
             </p>
@@ -52,71 +70,108 @@ import { Client, Vehicle } from '../../models/client.model';
         </div>
       </div>
 
-      <!-- Payment Form -->
+      <!-- Formulaire de paiement -->
       <div class="card">
-        <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <form
+          [formGroup]="paymentForm"
+          (ngSubmit)="onSubmit()"
+          class="space-y-6"
+        >
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label class="form-label">Payment Amount *</label>
+              <label class="form-label">Montant du paiement *</label>
               <input
                 type="number"
                 formControlName="amount"
                 class="form-input"
-                [class.border-red-500]="paymentForm.get('amount')?.invalid && paymentForm.get('amount')?.touched"
-                placeholder="Enter payment amount"
+                [class.border-red-500]="
+                  paymentForm.get('amount')?.invalid &&
+                  paymentForm.get('amount')?.touched
+                "
+                placeholder="Saisir le montant du paiement"
                 min="0.01"
                 [max]="invoice.amountDue"
                 step="0.01"
               />
-              <div *ngIf="paymentForm.get('amount')?.invalid && paymentForm.get('amount')?.touched" class="mt-1 text-sm text-red-600">
-                <span *ngIf="paymentForm.get('amount')?.errors?.['required']">Payment amount is required</span>
-                <span *ngIf="paymentForm.get('amount')?.errors?.['min']">Amount must be greater than 0</span>
-                <span *ngIf="paymentForm.get('amount')?.errors?.['max']">Amount cannot exceed amount due</span>
+              <div
+                *ngIf="
+                  paymentForm.get('amount')?.invalid &&
+                  paymentForm.get('amount')?.touched
+                "
+                class="mt-1 text-sm text-red-600"
+              >
+                <span *ngIf="paymentForm.get('amount')?.errors?.['required']"
+                  >Le montant est requis</span
+                >
+                <span *ngIf="paymentForm.get('amount')?.errors?.['min']"
+                  >Le montant doit être supérieur à 0</span
+                >
+                <span *ngIf="paymentForm.get('amount')?.errors?.['max']"
+                  >Le montant ne peut pas dépasser le montant dû</span
+                >
               </div>
               <div class="mt-1 text-sm text-gray-500">
-                Maximum: \${{ invoice.amountDue.toFixed(2) }}
+                Maximum : \GNF {{ invoice.amountDue.toFixed(2) }}
               </div>
             </div>
 
             <div>
-              <label class="form-label">Payment Method *</label>
+              <label class="form-label">Méthode de paiement *</label>
               <select
                 formControlName="method"
                 class="form-input"
-                [class.border-red-500]="paymentForm.get('method')?.invalid && paymentForm.get('method')?.touched"
+                [class.border-red-500]="
+                  paymentForm.get('method')?.invalid &&
+                  paymentForm.get('method')?.touched
+                "
               >
-                <option value="">Select payment method</option>
-                <option value="Cash">Cash</option>
+                <option value="">Sélectionner une méthode de paiement</option>
+                <option value="Cash">Espèces</option>
                 <option value="MobileMoney">Mobile Money</option>
-                <option value="Cheque">Cheque</option>
-                <option value="BankTransfer">Bank Transfer</option>
-                <option value="Card">Card</option>
+                <option value="Cheque">Chèque</option>
+                <option value="BankTransfer">Virement bancaire</option>
+                <option value="Card">Carte</option>
               </select>
-              <div *ngIf="paymentForm.get('method')?.invalid && paymentForm.get('method')?.touched" class="mt-1 text-sm text-red-600">
-                Please select a payment method
+              <div
+                *ngIf="
+                  paymentForm.get('method')?.invalid &&
+                  paymentForm.get('method')?.touched
+                "
+                class="mt-1 text-sm text-red-600"
+              >
+                Veuillez sélectionner une méthode de paiement
               </div>
             </div>
 
             <div>
-              <label class="form-label">Payment Date *</label>
+              <label class="form-label">Date du paiement *</label>
               <input
                 type="datetime-local"
                 formControlName="date"
                 class="form-input"
-                [class.border-red-500]="paymentForm.get('date')?.invalid && paymentForm.get('date')?.touched"
+                [class.border-red-500]="
+                  paymentForm.get('date')?.invalid &&
+                  paymentForm.get('date')?.touched
+                "
               />
-              <div *ngIf="paymentForm.get('date')?.invalid && paymentForm.get('date')?.touched" class="mt-1 text-sm text-red-600">
-                Payment date is required
+              <div
+                *ngIf="
+                  paymentForm.get('date')?.invalid &&
+                  paymentForm.get('date')?.touched
+                "
+                class="mt-1 text-sm text-red-600"
+              >
+                La date du paiement est requise
               </div>
             </div>
 
             <div>
-              <label class="form-label">Reference Number</label>
+              <label class="form-label">Référence</label>
               <input
                 type="text"
                 formControlName="reference"
                 class="form-input"
-                placeholder="Transaction reference (optional)"
+                placeholder="Référence de transaction (facultatif)"
               />
             </div>
           </div>
@@ -127,86 +182,113 @@ import { Client, Vehicle } from '../../models/client.model';
               formControlName="notes"
               rows="3"
               class="form-input"
-              placeholder="Additional notes about this payment"
+              placeholder="Ajouter une note pour ce paiement"
             ></textarea>
           </div>
 
-          <!-- Payment Summary -->
+          <!-- Résumé du paiement -->
           <div class="border-t pt-6">
             <div class="bg-gray-50 rounded-lg p-4">
-              <h4 class="text-lg font-medium text-gray-900 mb-3">Payment Summary</h4>
+              <h4 class="text-lg font-medium text-gray-900 mb-3">
+                Résumé du paiement
+              </h4>
               <div class="space-y-2">
                 <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Current Amount Due:</span>
-                  <span class="text-sm font-medium">\${{ invoice.amountDue.toFixed(2) }}</span>
+                  <span class="text-sm text-gray-600">Montant dû actuel :</span>
+                  <span class="text-sm font-medium"
+                    >\GNF {{ invoice.amountDue.toFixed(2) }}</span
+                  >
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Payment Amount:</span>
-                  <span class="text-sm font-medium">\${{ (paymentForm.get('amount')?.value || 0).toFixed(2) }}</span>
+                  <span class="text-sm text-gray-600"
+                    >Montant du paiement :</span
+                  >
+                  <span class="text-sm font-medium"
+                    >\GNF {{
+                      (paymentForm.get('amount')?.value || 0).toFixed(2)
+                    }}</span
+                  >
                 </div>
                 <div class="border-t pt-2">
                   <div class="flex justify-between text-lg font-bold">
-                    <span>Remaining Balance:</span>
-                    <span [ngClass]="getRemainingBalance() === 0 ? 'text-green-600' : 'text-red-600'">
-                      \${{ getRemainingBalance().toFixed(2) }}
+                    <span>Solde restant :</span>
+                    <span
+                      [ngClass]="
+                        getRemainingBalance() === 0
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                      "
+                    >
+                      \GNF {{ getRemainingBalance().toFixed(2) }}
                     </span>
                   </div>
                 </div>
-                <div *ngIf="getRemainingBalance() === 0" class="text-center text-green-600 font-medium">
-                  ✓ Invoice will be fully paid
+                <div
+                  *ngIf="getRemainingBalance() === 0"
+                  class="text-center text-green-600 font-medium"
+                >
+                  ✓ La facture sera totalement réglée
                 </div>
               </div>
             </div>
           </div>
 
           <div class="flex justify-end space-x-4">
-            <button
-              type="button"
-              (click)="goBack()"
-              class="btn-outline"
-            >
-              Cancel
+            <button type="button" (click)="goBack()" class="btn-outline">
+              Annuler
             </button>
             <button
               type="submit"
               [disabled]="paymentForm.invalid || isLoading"
               class="btn-primary"
             >
-              <span *ngIf="isLoading" class="mr-2">Processing...</span>
-              Record Payment
+              <span *ngIf="isLoading" class="mr-2">Traitement...</span>
+              Enregistrer le paiement
             </button>
           </div>
         </form>
       </div>
 
-      <!-- Existing Payments -->
+      <!-- Paiements précédents -->
       <div class="card" *ngIf="invoice.payments.length > 0">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Previous Payments</h3>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Paiements précédents
+        </h3>
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Date
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Montant
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Method
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Méthode
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Reference
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Référence
                 </th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr *ngFor="let payment of invoice.payments">
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ payment.date | date:'short' }}
+                  {{ payment.date | date : 'short' }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  \${{ payment.amount.toFixed(2) }}
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  \GNF {{ payment.amount.toFixed(2) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {{ payment.method }}
@@ -220,7 +302,7 @@ import { Client, Vehicle } from '../../models/client.model';
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class PaymentFormComponent implements OnInit {
   paymentForm: FormGroup;
@@ -231,39 +313,50 @@ export class PaymentFormComponent implements OnInit {
   isLoading = false;
 
   constructor(
-    private fb: FormBuilder,
-    private garageDataService: GarageDataService,
-    private notificationService: NotificationService,
-    private pdfService: PDFService,
-    private router: Router,
-    private route: ActivatedRoute
+    private readonly fb: FormBuilder,
+    private readonly garageDataService: GarageDataService,
+    private readonly notificationService: NotificationService,
+    private readonly pdfService: PDFService,
+    private readonly router: Router,
+    private readonly route: ActivatedRoute
   ) {
     this.paymentForm = this.fb.group({
       amount: ['', [Validators.required, Validators.min(0.01)]],
       method: ['', Validators.required],
       date: ['', Validators.required],
       reference: [''],
-      notes: ['']
+      notes: [''],
     });
   }
 
-  async ngOnInit(): Promise<void> {
-    this.invoiceId = this.route.snapshot.paramMap.get('invoiceId');
-    if (this.invoiceId) {
-      await this.loadInvoiceData();
-      this.setDefaultDate();
-      this.setupAmountValidation();
-    }
+  ngOnInit() {
+    (async () => {
+      this.invoiceId = this.route.snapshot.paramMap.get('invoiceId');
+      if (this.invoiceId) {
+        await this.loadInvoiceData();
+        this.setDefaultDate();
+        this.setupAmountValidation();
+      }
+    })();
   }
 
   private async loadInvoiceData(): Promise<void> {
     try {
-      this.invoice = await this.garageDataService.getById<Invoice>('invoices', this.invoiceId!);
+      this.invoice = await this.garageDataService.getById<Invoice>(
+        'invoices',
+        this.invoiceId!
+      );
 
       if (this.invoice) {
         [this.client, this.vehicle] = await Promise.all([
-          this.garageDataService.getById<Client>('clients', this.invoice.clientId),
-          this.garageDataService.getById<Vehicle>('vehicles', this.invoice.vehicleId)
+          this.garageDataService.getById<Client>(
+            'clients',
+            this.invoice.clientId
+          ),
+          this.garageDataService.getById<Vehicle>(
+            'vehicles',
+            this.invoice.vehicleId
+          ),
         ]);
       }
     } catch (error) {
@@ -274,17 +367,19 @@ export class PaymentFormComponent implements OnInit {
   private setDefaultDate(): void {
     const now = new Date();
     this.paymentForm.patchValue({
-      date: now.toISOString().slice(0, 16)
+      date: now.toISOString().slice(0, 16),
     });
   }
 
   private setupAmountValidation(): void {
     if (this.invoice) {
-      this.paymentForm.get('amount')?.setValidators([
-        Validators.required,
-        Validators.min(0.01),
-        Validators.max(this.invoice.amountDue)
-      ]);
+      this.paymentForm
+        .get('amount')
+        ?.setValidators([
+          Validators.required,
+          Validators.min(0.01),
+          Validators.max(this.invoice.amountDue),
+        ]);
     }
   }
 
@@ -308,7 +403,7 @@ export class PaymentFormComponent implements OnInit {
         id: this.generateId(),
         amount: paymentAmount,
         method: formValue.method as PaymentMethod,
-        date: new Date(formValue.date)
+        date: new Date(formValue.date),
       };
 
       if (formValue.reference) {
@@ -334,15 +429,23 @@ export class PaymentFormComponent implements OnInit {
         payments: updatedPayments,
         amountPaid: newAmountPaid,
         amountDue: newAmountDue,
-        status: newStatus
+        status: newStatus,
       };
 
-      await this.garageDataService.update('invoices', this.invoiceId!, updateData);
+      await this.garageDataService.update(
+        'invoices',
+        this.invoiceId!,
+        updateData
+      );
 
       // Generate receipt
       if (this.client) {
         const clientName = `${this.client.firstName} ${this.client.lastName}`;
-        await this.pdfService.generatePaymentReceiptPDF(payment, this.invoice.invoiceNumber, clientName);
+        await this.pdfService.generatePaymentReceiptPDF(
+          payment,
+          this.invoice.invoiceNumber,
+          clientName
+        );
       }
 
       this.notificationService.showSuccess('Payment recorded successfully');
@@ -350,7 +453,6 @@ export class PaymentFormComponent implements OnInit {
     } catch (error) {
       this.notificationService.showError('Failed to record payment');
       console.log("Échec de l'enregistrement du paiement" + error);
-
     } finally {
       this.isLoading = false;
     }
@@ -358,11 +460,16 @@ export class PaymentFormComponent implements OnInit {
 
   getStatusClass(status: string): string {
     switch (status.toLowerCase()) {
-      case 'paid': return 'status-paid';
-      case 'unpaid': return 'status-unpaid';
-      case 'partial': return 'status-partial';
-      case 'overdue': return 'status-rejected';
-      default: return 'status-pending';
+      case 'paid':
+        return 'status-paid';
+      case 'unpaid':
+        return 'status-unpaid';
+      case 'partial':
+        return 'status-partial';
+      case 'overdue':
+        return 'status-rejected';
+      default:
+        return 'status-pending';
     }
   }
 

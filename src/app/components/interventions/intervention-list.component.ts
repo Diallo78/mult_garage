@@ -384,7 +384,6 @@ export class InterventionListComponent implements OnInit {
   }
 
   // Pagination
-  // Pagination
   currentPage = 1;
   itemsPerPage = 20;
 

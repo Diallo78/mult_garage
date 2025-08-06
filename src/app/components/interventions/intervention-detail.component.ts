@@ -13,252 +13,365 @@ import { Personnel } from '../../models/garage.model';
 @Component({
   selector: 'app-intervention-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, FirestoreDatePipe, FormsModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    FirestoreDatePipe,
+    FormsModule,
+  ],
   template: `
     <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
-    <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
-  </div>
-
-  <div *ngIf="!isLoading">
-    <div class="space-y-6" *ngIf="intervention">
-      <div class="md:flex md:items-center md:justify-between">
-        <div class="flex-1 min-w-0">
-          <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Intervention Details
-          </h2>
-          <p class="text-lg text-gray-600">
-            <span class="status-badge" [ngClass]="getStatusClass(intervention.status)">
-              {{ intervention.status }}
-            </span>
-          </p>
-        </div>
-        <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
-          <button
-            (click)="updateStatus('InProgress')"
-            class="btn-primary"
-            *ngIf="intervention.status === 'Scheduled'"
-          >
-            Start Work
-          </button>
-          <button
-            (click)="updateStatus('Completed')"
-            class="btn-primary"
-            *ngIf="intervention.status === 'InProgress' && allTasksCompleted()"
-          >
-            Complete Intervention
-          </button>
-          <button
-            [routerLink]="['/invoices/create', intervention.id]"
-            class="btn-primary"
-            *ngIf="intervention.status === 'Completed'"
-          >
-            Create Invoice
-          </button>
-        </div>
+      <div class="animate-pulse flex flex-col items-center">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-500"
+        ></div>
+        <p class="mt-4 text-gray-600">Chargement de votre espace...</p>
       </div>
+    </div>
 
-      <!-- Intervention Information -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div
+      *ngIf="!isLoading"
+      class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100"
+    >
+      <div class="space-y-6" *ngIf="intervention">
+        <div class="md:flex md:items-center md:justify-between">
+          <div class="flex-1 min-w-0">
+            <h2
+              class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate"
+            >
+              Détails de l'intervention
+            </h2>
+            <p class="text-lg text-gray-600">
+              <span
+                class="status-badge"
+                [ngClass]="getStatusClass(intervention.status)"
+              >
+                {{ intervention.status }}
+              </span>
+            </p>
+          </div>
+          <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
+            <button
+              (click)="updateStatus('InProgress')"
+              class="btn-primary"
+              *ngIf="intervention.status === 'Scheduled'"
+            >
+              Démarrer le travail
+            </button>
+            <button
+              (click)="updateStatus('Completed')"
+              class="btn-primary"
+              *ngIf="
+                intervention.status === 'InProgress' && allTasksCompleted()
+              "
+            >
+              Terminer l'intervention
+            </button>
+            <button
+              [routerLink]="['/invoices/create', intervention.id]"
+              class="btn-primary"
+              *ngIf="intervention.status === 'Completed'"
+            >
+              Créer une facture
+            </button>
+          </div>
+        </div>
+
+        <!-- Intervention Information -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="card">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+              Détails de l'intervention
+            </h3>
+            <div class="space-y-3">
+              <div>
+                <label class="text-sm font-medium text-gray-500"
+                  >Date de début</label
+                >
+                <p class="mt-1 text-sm text-gray-900">
+                  {{ intervention.startDate | firestoreDate | date : 'medium' }}
+                </p>
+              </div>
+              <div *ngIf="intervention.endDate">
+                <label class="text-sm font-medium text-gray-500"
+                  >Date de fin</label
+                >
+                <p class="mt-1 text-sm text-gray-900">
+                  {{ intervention.endDate | firestoreDate | date : 'medium' }}
+                </p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-500"
+                  >Durée</label
+                >
+                <p class="mt-1 text-sm text-gray-900">
+                  {{
+                    intervention.actualDuration ||
+                      intervention.estimatedDuration
+                  }}h
+                  <span class="text-gray-500"
+                    >(Est: {{ intervention.estimatedDuration }}h)</span
+                  >
+                </p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-500">Statut</label>
+                <p class="mt-1">
+                  <span
+                    class="status-badge"
+                    [ngClass]="getStatusClass(intervention.status)"
+                  >
+                    {{ intervention.status }}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" *ngIf="client && vehicle">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+              Client & Véhicule
+            </h3>
+            <div class="space-y-3">
+              <div>
+                <label class="text-sm font-medium text-gray-500">Client</label>
+                <p class="mt-1 text-sm text-gray-900">
+                  {{ client.firstName }} {{ client.lastName }}
+                </p>
+              </div>
+              <div>
+                  <label class="text-sm font-medium text-gray-500">Téléphone</label>
+                <p class="mt-1 text-sm text-gray-900">{{ client.phone }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-500">Véhicule</label>
+                <p class="mt-1 text-sm text-gray-900">
+                  {{ vehicle.brand }} {{ vehicle.model }}
+                </p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-500"
+                  >Plaque d'immatriculation</label
+                >
+                <p class="mt-1 text-sm text-gray-900">
+                  {{ vehicle.licensePlate }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Overview -->
         <div class="card">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Intervention Details</h3>
-          <div class="space-y-3">
-            <div>
-              <label class="text-sm font-medium text-gray-500">Start Date</label>
-              <p class="mt-1 text-sm text-gray-900">{{ intervention.startDate | firestoreDate | date:'medium' }}</p>
+          <h3 class="text-lg font-medium text-gray-900 mb-4">
+            Aperçu de la progression
+          </h3>
+          <div class="mb-4">
+            <div class="flex justify-between text-sm text-gray-600 mb-1">
+              <span>Progression globale</span>
+              <span
+                >{{ getCompletedTasks() }}/{{ intervention.tasks.length }} tâches
+                terminées</span
+              >
             </div>
-            <div *ngIf="intervention.endDate">
-              <label class="text-sm font-medium text-gray-500">End Date</label>
-              <p class="mt-1 text-sm text-gray-900">{{ intervention.endDate | firestoreDate | date:'medium' }}</p>
-            </div>
-            <div>
-              <label class="text-sm font-medium text-gray-500">Duration</label>
-              <p class="mt-1 text-sm text-gray-900">
-                {{ intervention.actualDuration || intervention.estimatedDuration }}h
-                <span class="text-gray-500">(Est: {{ intervention.estimatedDuration }}h)</span>
-              </p>
-            </div>
-            <div>
-              <label class="text-sm font-medium text-gray-500">Status</label>
-              <p class="mt-1">
-                <span class="status-badge" [ngClass]="getStatusClass(intervention.status)">
-                  {{ intervention.status }}
-                </span>
-              </p>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+              <div
+                class="bg-primary-600 h-3 rounded-full transition-all duration-300"
+                [style.width.%]="getProgress()"
+              ></div>
             </div>
           </div>
         </div>
 
-        <div class="card" *ngIf="client && vehicle">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Client & Vehicle</h3>
-          <div class="space-y-3">
-            <div>
-              <label class="text-sm font-medium text-gray-500">Client</label>
-              <p class="mt-1 text-sm text-gray-900">{{ client.firstName }} {{ client.lastName }}</p>
-            </div>
-            <div>
-              <label class="text-sm font-medium text-gray-500">Phone</label>
-              <p class="mt-1 text-sm text-gray-900">{{ client.phone }}</p>
-            </div>
-            <div>
-              <label class="text-sm font-medium text-gray-500">Vehicle</label>
-              <p class="mt-1 text-sm text-gray-900">{{ vehicle.brand }} {{ vehicle.model }}</p>
-            </div>
-            <div>
-              <label class="text-sm font-medium text-gray-500">License Plate</label>
-              <p class="mt-1 text-sm text-gray-900">{{ vehicle.licensePlate }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Progress Overview -->
-      <div class="card">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Progress Overview</h3>
-        <div class="mb-4">
-          <div class="flex justify-between text-sm text-gray-600 mb-1">
-            <span>Overall Progress</span>
-            <span>{{ getCompletedTasks() }}/{{ intervention.tasks.length }} tasks completed</span>
-          </div>
-          <div class="w-full bg-gray-200 rounded-full h-3">
+        <!-- Tasks -->
+        <div class="card">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Tâches</h3>
+          <div class="space-y-4">
             <div
-              class="bg-primary-600 h-3 rounded-full transition-all duration-300"
-              [style.width.%]="getProgress()"
-            ></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tasks -->
-      <div class="card">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Tasks</h3>
-        <div class="space-y-4">
-          <div *ngFor="let task of intervention.tasks; let i = index"
-               class="border rounded-lg p-4"
-               [ngClass]="task.completed ? 'border-green-200 bg-green-50' : 'border-gray-200'">
-            <div class="flex items-start justify-between">
-              <div class="flex items-start space-x-3 flex-1">
-                <input
-                  type="checkbox"
-                  [checked]="task.completed"
-                  (change)="toggleTask(i, $event)"
-                  class="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                  [disabled]="intervention.status === 'Completed'"
-                />
-                <div class="flex-1">
-                  <h4 class="font-medium text-gray-900" [ngClass]="task.completed ? 'line-through text-gray-500' : ''">
-                    {{ task.description }}
-                  </h4>
-                  <div class="mt-1 text-sm text-gray-500">
-                    Estimated: {{ task.estimatedTime }}h
-                    <span *ngIf="task.actualTime"> | Actual: {{ task.actualTime }}h</span>
-                  </div>
-                  <div *ngIf="task.notes" class="mt-2 text-sm text-gray-600">
-                    <strong>Notes:</strong> {{ task.notes }}
+              *ngFor="let task of intervention.tasks; let i = index"
+              class="border rounded-lg p-4"
+              [ngClass]="
+                task.completed
+                  ? 'border-green-200 bg-green-50'
+                  : 'border-gray-200'
+              "
+            >
+              <div class="flex items-start justify-between">
+                <div class="flex items-start space-x-3 flex-1">
+                  <input
+                    type="checkbox"
+                    [checked]="task.completed"
+                    (change)="toggleTask(i, $event)"
+                    class="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    [disabled]="intervention.status === 'Completed'"
+                  />
+                  <div class="flex-1">
+                    <h4
+                      class="font-medium text-gray-900"
+                      [ngClass]="
+                        task.completed ? 'line-through text-gray-500' : ''
+                      "
+                    >
+                      {{ task.description }}
+                    </h4>
+                    <div class="mt-1 text-sm text-gray-500">
+                      Estimation: {{ task.estimatedTime }}h
+                      <span *ngIf="task.actualTime">
+                        | Réel: {{ task.actualTime }}h</span
+                      >
+                    </div>
+                    <div *ngIf="task.notes" class="mt-2 text-sm text-gray-600">
+                        <strong>Notes:</strong> {{ task.notes }}
+                      <!-- <strong>Notes:</strong> {{ task.notes }}  ({{task.status}}) -->
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="ml-4">
-                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium"
-                      [ngClass]="task.completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'">
-                  {{ task.completed ? '✓' : i + 1 }}
-                </span>
-<button
-  *ngIf="intervention.status !== 'Completed' && !task.completed"
-  class="text-xs underline ml-4"
-  [ngClass]="{
-    'text-yellow-600': task.status !== 'Suspended',
-    'text-blue-600': task.status === 'Suspended'
-  }"
-  (click)="task.status === 'Suspended' ? resumeTask(task) : openSuspendModal(task)"
->
-  {{ task.status === 'Suspended' ? 'Resume' : 'Suspend' }}
-</button>
-
+                <div class="ml-4">
+                  <span
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium"
+                    [ngClass]="
+                      task.completed
+                        ? 'bg-green-100 text-green-600'
+                        : 'bg-gray-100 text-gray-600'
+                    "
+                  >
+                    {{ task.completed ? '✓' : i + 1 }}
+                  </span>
+                  <button
+                    *ngIf="
+                      intervention.status !== 'Completed' && !task.completed
+                    "
+                    class="text-xs underline ml-4"
+                    [ngClass]="{
+                      'text-yellow-600': task.status !== 'Suspended',
+                      'text-blue-600': task.status === 'Suspended'
+                    }"
+                    (click)="
+                      task.status === 'Suspended'
+                        ? resumeTask(task)
+                        : openSuspendModal(task)
+                    "
+                  >
+                    {{ task.status === 'Suspended' ? 'Resume' : 'Suspend' }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Used Parts -->
-      <div class="card" *ngIf="intervention.usedParts.length > 0">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Used Parts</h3>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Part Name
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Quantity
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Unit Cost
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Cost
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr *ngFor="let part of intervention.usedParts">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {{ part.partName }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ part.quantity }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  \${{ part.unitCost.toFixed(2) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  \${{ part.totalCost.toFixed(2) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Used Parts -->
+        <div class="card" *ngIf="intervention.usedParts.length > 0">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Pièces utilisées</h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Nom de la pièce
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Quantité
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Coût unitaire
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Coût total
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let part of intervention.usedParts">
+                  <td
+                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                  >
+                    {{ part.partName }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ part.quantity }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ part.unitCost.toFixed(2) }} GNF
+                  </td>
+                  <td
+                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                  >
+                    {{ part.totalCost.toFixed(2) }} GNF
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Final Report -->
+        <div class="card" *ngIf="intervention.finalReport">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Rapport final</h3>
+          <p class="text-gray-900 whitespace-pre-wrap">
+            {{ intervention.finalReport }}
+          </p>
+        </div>
+
+        <!-- Technic interve -->
+
+        <div class="card" *ngIf="technicianUsers.length > 0">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">
+            Techniciens impliqués
+          </h3>
+          <ul class="space-y-2">
+            <li
+              *ngFor="let tech of technicianUsers"
+              class="text-sm text-gray-800 flex items-center gap-2"
+            >
+              <span>{{ tech.firstName }}. {{ tech.lastName }}</span>
+              <span
+                *ngIf="tech.id === intervention?.groupLeader"
+                class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full"
+                >Chef de groupe</span
+              >
+            </li>
+          </ul>
         </div>
       </div>
 
-      <!-- Final Report -->
-      <div class="card" *ngIf="intervention.finalReport">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Final Report</h3>
-        <p class="text-gray-900 whitespace-pre-wrap">{{ intervention.finalReport }}</p>
+      <!-- Modal de suspension -->
+      <div
+        *ngIf="showSuspendModal"
+        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+      >
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+          <h3 class="text-lg font-bold mb-4">Suspendre la tâche</h3>
+          <p class="text-sm text-gray-600 mb-2">
+            Fournir le motif pour suspendre la tâche:
+          </p>
+          <textarea
+            [(ngModel)]="suspendReason"
+            rows="3"
+            class="w-full border border-gray-300 rounded p-2 mb-4"
+          ></textarea>
+
+          <div class="flex justify-end space-x-3">
+            <button (click)="cancelSuspend()" class="btn-secondary">
+              Annuler
+            </button>
+            <button (click)="confirmSuspend()" class="btn-primary">
+              Confirmer
+            </button>
+          </div>
+        </div>
       </div>
-
-       <!-- Technic interve -->
-
-      <div class="card" *ngIf="technicianUsers.length > 0">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Technicians Involved</h3>
-        <ul class="space-y-2">
-          <li *ngFor="let tech of technicianUsers" class="text-sm text-gray-800 flex items-center gap-2">
-            <span>{{ tech.firstName }}. {{ tech.lastName }}</span>
-            <span *ngIf="tech.id === intervention?.groupLeader" class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Group Leader</span>
-          </li>
-        </ul>
-      </div>
     </div>
-
-
-
-    <!-- Modal de suspension -->
-<div *ngIf="showSuspendModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-  <div class="bg-white rounded-lg p-6 w-full max-w-md">
-    <h3 class="text-lg font-bold mb-4">Suspend Task</h3>
-    <p class="text-sm text-gray-600 mb-2">Provide the reason for suspending the task:</p>
-    <textarea [(ngModel)]="suspendReason" rows="3" class="w-full border border-gray-300 rounded p-2 mb-4"></textarea>
-
-    <div class="flex justify-end space-x-3">
-      <button (click)="cancelSuspend()" class="btn-secondary">Cancel</button>
-      <button (click)="confirmSuspend()" class="btn-primary">Confirm</button>
-    </div>
-  </div>
-</div>
-    </div>
-
-
-  `
+  `,
 })
 export class InterventionDetailComponent implements OnInit {
   intervention: Intervention | null = null;
@@ -287,31 +400,46 @@ export class InterventionDetailComponent implements OnInit {
   private async loadInterventionData(): Promise<void> {
     this.isLoading = true;
     try {
-      this.intervention = await this.garageDataService.getById<Intervention>('interventions', this.interventionId!);
+      this.intervention = await this.garageDataService.getById<Intervention>(
+        'interventions',
+        this.interventionId!
+      );
       if (!this.intervention) throw new Error('Intervention not found');
 
       const [quote, vehicle] = await Promise.all([
-        this.garageDataService.getById<Quote>('quotes', this.intervention.quoteId),
-        this.garageDataService.getById<Vehicle>('vehicles', this.intervention.vehicleId)
+        this.garageDataService.getById<Quote>(
+          'quotes',
+          this.intervention.quoteId
+        ),
+        this.garageDataService.getById<Vehicle>(
+          'vehicles',
+          this.intervention.vehicleId
+        ),
       ]);
       this.quote = quote;
       this.vehicle = vehicle;
 
       if (quote) {
-        this.client = await this.garageDataService.getById<Client>('clients', quote.clientId);
+        this.client = await this.garageDataService.getById<Client>(
+          'clients',
+          quote.clientId
+        );
       }
 
       // Charger les techniciens
-      const technicianPromises = this.intervention.technicians.map(id =>
+      const technicianPromises = this.intervention.technicians.map((id) =>
         this.garageDataService.getById<Personnel>('personnel', id)
       );
       const techResults = await Promise.all(technicianPromises);
-      this.technicianUsers = techResults.filter((user): user is Personnel => user !== null);
+      this.technicianUsers = techResults.filter(
+        (user): user is Personnel => user !== null
+      );
 
       // Trouver le chef de groupe
-      const leader = this.technicianUsers.find(u => u.id === this.intervention!.groupLeader);
+      const leader = this.technicianUsers.find(
+        (u) => u.id === this.intervention!.groupLeader
+      );
       this.groupLeaderName = leader ? leader.firstName : 'Not Found';
-
     } catch (error) {
       this.notificationService.showError('Failed to load intervention data');
     } finally {
@@ -319,48 +447,45 @@ export class InterventionDetailComponent implements OnInit {
     }
   }
 
+  //   private async loadInterventionData(): Promise<void> {
+  //     this.isLoading = true
+  //     try {
+  //       this.intervention = await this.garageDataService.getById<Intervention>('interventions', this.interventionId!);
 
-//   private async loadInterventionData(): Promise<void> {
-//     this.isLoading = true
-//     try {
-//       this.intervention = await this.garageDataService.getById<Intervention>('interventions', this.interventionId!);
+  //       if (this.intervention) {
+  //         [this.quote, this.vehicle] = await Promise.all([
+  //           this.garageDataService.getById<Quote>('quotes', this.intervention.quoteId),
+  //           this.garageDataService.getById<Vehicle>('vehicles', this.intervention.vehicleId)
+  //         ]);
+  //         // Charger les techniciens de l'intervention
+  //         await this.loadTechnicians(this.intervention.technicians, this.intervention.groupLeader);
 
-//       if (this.intervention) {
-//         [this.quote, this.vehicle] = await Promise.all([
-//           this.garageDataService.getById<Quote>('quotes', this.intervention.quoteId),
-//           this.garageDataService.getById<Vehicle>('vehicles', this.intervention.vehicleId)
-//         ]);
-//         // Charger les techniciens de l'intervention
-//         await this.loadTechnicians(this.intervention.technicians, this.intervention.groupLeader);
+  //         if (this.quote) {
+  //           this.client = await this.garageDataService.getById<Client>('clients', this.quote.clientId);
+  //         }
+  //       }
+  //     } catch (error) {
+  //       this.notificationService.showError('Failed to load intervention data');
+  //     }finally{
+  //       this.isLoading = false
+  //     }
+  //   }
 
-//         if (this.quote) {
-//           this.client = await this.garageDataService.getById<Client>('clients', this.quote.clientId);
-//         }
-//       }
-//     } catch (error) {
-//       this.notificationService.showError('Failed to load intervention data');
-//     }finally{
-//       this.isLoading = false
-//     }
-//   }
+  //  private async loadTechnicians(technicianIds: string[], groupLeaderId: string): Promise<void> {
+  //   try {
+  //     const userFetches = technicianIds.map(id => this.garageDataService.getById<Personnel>('personnel', id));
+  //     const results = await Promise.all(userFetches);
 
-//  private async loadTechnicians(technicianIds: string[], groupLeaderId: string): Promise<void> {
-//   try {
-//     const userFetches = technicianIds.map(id => this.garageDataService.getById<Personnel>('personnel', id));
-//     const results = await Promise.all(userFetches);
+  //     // Filtrer les `null`
+  //     this.technicianUsers = results.filter((user): user is Personnel => user !== null);
 
-//     // Filtrer les `null`
-//     this.technicianUsers = results.filter((user): user is Personnel => user !== null);
+  //     const leader = this.technicianUsers.find(u => u.id === groupLeaderId);
+  //     this.groupLeaderName = leader ? leader.firstName : 'Not Found';
 
-//     const leader = this.technicianUsers.find(u => u.id === groupLeaderId);
-//     this.groupLeaderName = leader ? leader.firstName : 'Not Found';
-
-//   } catch (error) {
-//     this.notificationService.showError('Failed to load technician information');
-//   }
-// }
-
-
+  //   } catch (error) {
+  //     this.notificationService.showError('Failed to load technician information');
+  //   }
+  // }
 
   async toggleTask(index: number, event: any): Promise<void> {
     if (!this.intervention || this.intervention.status === 'Completed') return;
@@ -369,17 +494,21 @@ export class InterventionDetailComponent implements OnInit {
     this.intervention.tasks[index].completed = completed;
 
     try {
-      await this.garageDataService.update('interventions', this.interventionId!, {
-        tasks: this.intervention.tasks
-      });
+      await this.garageDataService.update(
+        'interventions',
+        this.interventionId!,
+        {
+          tasks: this.intervention.tasks,
+        }
+      );
 
       if (completed) {
-        this.notificationService.showSuccess('Task marked as completed');
+        this.notificationService.showSuccess('Tâche marquée comme terminée');
       } else {
-        this.notificationService.showSuccess('Task marked as incomplete');
+        this.notificationService.showSuccess('Tâche marquée comme non terminée');
       }
     } catch (error) {
-      this.notificationService.showError('Failed to update task');
+      this.notificationService.showError('Échec de la mise à jour de la tâche');
       // Revert the change
       this.intervention.tasks[index].completed = !completed;
     }
@@ -396,10 +525,15 @@ export class InterventionDetailComponent implements OnInit {
         // Calculate actual duration
         const startTime = new Date(this.intervention.startDate).getTime();
         const endTime = new Date().getTime();
-        updateData.actualDuration = Math.round((endTime - startTime) / (1000 * 60 * 60) * 10) / 10; // Hours with 1 decimal
+        updateData.actualDuration =
+          Math.round(((endTime - startTime) / (1000 * 60 * 60)) * 10) / 10; // Hours with 1 decimal
       }
 
-      await this.garageDataService.update('interventions', this.interventionId!, updateData);
+      await this.garageDataService.update(
+        'interventions',
+        this.interventionId!,
+        updateData
+      );
       this.intervention.status = status;
 
       if (status === 'Completed') {
@@ -407,19 +541,28 @@ export class InterventionDetailComponent implements OnInit {
         this.intervention.actualDuration = updateData.actualDuration;
       }
 
-      this.notificationService.showSuccess(`Intervention ${status.toLowerCase()} successfully`);
+      this.notificationService.showSuccess(
+        `Intervention ${status.toLowerCase()} successfully`
+      );
     } catch (error) {
-      this.notificationService.showError(`Failed to ${status.toLowerCase()} intervention`);
+      this.notificationService.showError(
+        `Échec de la mise à jour de l'intervention ${status.toLowerCase()}`
+      );
     }
   }
 
   getStatusClass(status: string): string {
     switch (status.toLowerCase()) {
-      case 'scheduled': return 'status-pending';
-      case 'inprogress': return 'status-accepted';
-      case 'completed': return 'status-paid';
-      case 'onhold': return 'status-partial';
-      default: return 'status-pending';
+      case 'scheduled':
+        return 'status-pending';
+      case 'inprogress':
+        return 'status-accepted';
+      case 'completed':
+        return 'status-paid';
+      case 'onhold':
+        return 'status-partial';
+      default:
+        return 'status-pending';
     }
   }
 
@@ -431,61 +574,67 @@ export class InterventionDetailComponent implements OnInit {
 
   getCompletedTasks(): number {
     if (!this.intervention) return 0;
-    return this.intervention.tasks.filter(task => task.completed).length;
+    return this.intervention.tasks.filter((task) => task.completed).length;
   }
 
   allTasksCompleted(): boolean {
     if (!this.intervention) return false;
-    return this.intervention.tasks.every(task => task.completed);
+    return this.intervention.tasks.every((task) => task.completed);
   }
 
   // 🔧 Variables pour la suspension
-showSuspendModal = false;
-suspendReason: string = '';
-taskToSuspend: InterventionTask | null = null;
+  showSuspendModal = false;
+  suspendReason: string = '';
+  taskToSuspend: InterventionTask | null = null;
 
-openSuspendModal(task: InterventionTask): void {
-  this.taskToSuspend = task;
-  this.suspendReason = task.suspendReason || '';
-  this.showSuspendModal = true;
-}
-
-cancelSuspend(): void {
-  this.showSuspendModal = false;
-  this.taskToSuspend = null;
-  this.suspendReason = '';
-}
-
-async confirmSuspend(): Promise<void> {
-  if (!this.intervention || !this.taskToSuspend) return;
-
-  this.taskToSuspend.status = 'Suspended';
-  this.taskToSuspend.suspendReason = this.suspendReason;
-
-  try {
-    await this.garageDataService.update('interventions', this.interventionId!, {
-      tasks: this.intervention.tasks
-    });
-
-    this.notificationService.showSuccess('Task suspended successfully');
-  } catch (error) {
-    this.notificationService.showError('Failed to suspend task');
-  } finally {
-    this.cancelSuspend();
+  openSuspendModal(task: InterventionTask): void {
+    this.taskToSuspend = task;
+    this.suspendReason = task.suspendReason || '';
+    this.showSuspendModal = true;
   }
-}
 
-resumeTask(task: InterventionTask): void {
-  task.status = 'Pending';
-  task.suspendReason = '';
+  cancelSuspend(): void {
+    this.showSuspendModal = false;
+    this.taskToSuspend = null;
+    this.suspendReason = '';
+  }
 
-  this.garageDataService.update('interventions', this.interventionId!, {
-    tasks: this.intervention?.tasks
-  }).then(() => {
-    this.notificationService.showSuccess('Task resumed');
-  }).catch(() => {
-    this.notificationService.showError('Failed to resume task');
-  });
-}
+  async confirmSuspend(): Promise<void> {
+    if (!this.intervention || !this.taskToSuspend) return;
 
+    this.taskToSuspend.status = 'Suspended';
+    this.taskToSuspend.suspendReason = this.suspendReason;
+
+    try {
+      await this.garageDataService.update(
+        'interventions',
+        this.interventionId!,
+        {
+          tasks: this.intervention.tasks,
+        }
+      );
+
+      this.notificationService.showSuccess('Task suspended successfully');
+    } catch (error) {
+      this.notificationService.showError('Failed to suspend task');
+    } finally {
+      this.cancelSuspend();
+    }
+  }
+
+  resumeTask(task: InterventionTask): void {
+    task.status = 'Pending';
+    task.suspendReason = '';
+
+    this.garageDataService
+      .update('interventions', this.interventionId!, {
+        tasks: this.intervention?.tasks,
+      })
+      .then(() => {
+        this.notificationService.showSuccess('Task resumed');
+      })
+      .catch(() => {
+        this.notificationService.showError('Failed to resume task');
+      });
+  }
 }

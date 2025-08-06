@@ -137,7 +137,7 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
   //                 {{ item.quantity }}
   //               </td>
   //               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-  //                 \${{ item.unitPrice.toFixed(2) }}
+  //                 \GNF {{ item.unitPrice.toFixed(2) }}
   //               </td>
   //               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
   //                 \${{ item.subtotal.toFixed(2) }}
@@ -241,9 +241,12 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
   template: `
     <!-- Loading State -->
     <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
-      <div
-        class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"
-      ></div>
+      <div class="animate-pulse flex flex-col items-center">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-500"
+        ></div>
+        <p class="mt-4 text-gray-600">Chargement de votre espace...</p>
+      </div>
     </div>
 
     <div *ngIf="!isLoading" class="p-3 sm:p-4">
@@ -443,13 +446,13 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
                           <div>
                             <div class="text-xs text-gray-500">Prix unit.</div>
                             <div class="text-xs text-gray-900">
-                              \${{ item.unitPrice.toFixed(2) }}
+                              \GNF {{ item.unitPrice.toFixed(2) }}
                             </div>
                           </div>
                           <div>
                             <div class="text-xs text-gray-500">Total</div>
                             <div class="text-xs font-medium text-gray-900">
-                              \${{ item.subtotal.toFixed(2) }}
+                              \GNF {{ item.subtotal.toFixed(2) }}
                             </div>
                           </div>
                         </div>
@@ -476,12 +479,12 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
                   <td
                     class="px-3 py-3 sm:px-4 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell"
                   >
-                    \${{ item.unitPrice.toFixed(2) }}
+                    \GNF {{ item.unitPrice.toFixed(2) }}
                   </td>
                   <td
                     class="px-3 py-3 sm:px-4 whitespace-nowrap text-sm font-medium text-gray-900 hidden sm:table-cell"
                   >
-                    \${{ item.subtotal.toFixed(2) }}
+                    \GNF {{ item.subtotal.toFixed(2) }}
                   </td>
                 </tr>
               </tbody>
@@ -498,7 +501,7 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
                   >Sous-total:</span
                 >
                 <span class="text-xs sm:text-sm font-medium"
-                  >\${{ invoice.subtotal.toFixed(2) }}</span
+                  >\GNF {{ invoice.subtotal.toFixed(2) }}</span
                 >
               </div>
               <div
@@ -507,32 +510,32 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
               >
                 <span class="text-xs sm:text-sm text-gray-600">Remise:</span>
                 <span class="text-xs sm:text-sm font-medium"
-                  >-\${{ invoice.discountAmount.toFixed(2) }}</span
+                  >-\GNF {{ invoice.discountAmount.toFixed(2) }}</span
                 >
               </div>
               <div class="flex justify-between">
                 <span class="text-xs sm:text-sm text-gray-600">TVA:</span>
                 <span class="text-xs sm:text-sm font-medium"
-                  >\${{ invoice.vatAmount.toFixed(2) }}</span
+                  >\GNF {{ invoice.vatAmount.toFixed(2) }}</span
                 >
               </div>
               <div class="border-t pt-2">
                 <div class="flex justify-between text-sm sm:text-lg font-bold">
                   <span>Total:</span>
-                  <span>\${{ invoice.totalAmount.toFixed(2) }}</span>
+                  <span>\GNF {{ invoice.totalAmount.toFixed(2) }}</span>
                 </div>
               </div>
               <div class="border-t pt-2">
                 <div class="flex justify-between text-xs sm:text-sm">
                   <span class="text-gray-600">Payé:</span>
                   <span class="font-medium text-green-600"
-                    >\${{ invoice.amountPaid.toFixed(2) }}</span
+                    >\GNF {{ invoice.amountPaid.toFixed(2) }}</span
                   >
                 </div>
                 <div class="flex justify-between text-sm sm:text-lg font-bold">
                   <span class="text-red-600">Dû:</span>
                   <span class="text-red-600"
-                    >\${{ invoice.amountDue.toFixed(2) }}</span
+                    >\GNF {{ invoice.amountDue.toFixed(2) }}</span
                   >
                 </div>
               </div>
@@ -588,7 +591,7 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
                         {{ payment.date | firestoreDate | date : 'short' }}
                       </div>
                       <div class="sm:hidden text-xs text-gray-500 mt-1">
-                        <div>Montant: \${{ payment.amount.toFixed(2) }}</div>
+                        <div>Montant: \GNF {{ payment.amount.toFixed(2) }}</div>
                         <div>Méthode: {{ payment.method }}</div>
                         <div *ngIf="payment.reference">
                           Réf: {{ payment.reference }}
@@ -608,7 +611,7 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
                   <!-- Desktop View -->
                   <td class="px-3 py-4 whitespace-nowrap hidden sm:table-cell">
                     <div class="text-sm font-medium text-gray-900">
-                      \${{ payment.amount.toFixed(2) }}
+                      \GNF {{ payment.amount.toFixed(2) }}
                     </div>
                   </td>
                   <td class="px-3 py-4 whitespace-nowrap hidden md:table-cell">
