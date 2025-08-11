@@ -190,7 +190,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                     <p class="text-sm text-gray-500 mt-1">{{ quote.createdAt | firestoreDate | date:'mediumDate' }}</p>
                   </div>
                   <div class="text-right">
-                    <p class="font-semibold">{{ quote.total | currency:'EUR':'symbol':'1.2-2' }}</p>
+                    <p class="font-semibold">{{ quote.total | currency:'GNF ':'symbol':'1.2-2' }}</p>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1"
                           [ngClass]="{
                             'bg-green-100 text-green-800': quote.status === 'Accepted',
@@ -298,7 +298,7 @@ export class ClientDashboardComponent implements OnInit {
         await this.loadRelatedData();
       }
     } catch (error) {
-      this.notificationService.showError('Échec de chargement des données client');
+      this.notificationService.showError('Échec de chargement des données client ' + error);
     }finally{ this.isLoading = false}
   }
 
@@ -322,13 +322,25 @@ export class ClientDashboardComponent implements OnInit {
       ]);
 
       // Filter recent items
-      this.recentQuotes = this.quotes.slice(0, 5);
-      this.recentVisits = this.visits.slice(0, 5);
+      // this.recentQuotes = this.quotes.slice(0, 2);
+      // this.recentVisits = this.visits.slice(0, 2);
+      const sortedQuotes = [...this.quotes].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      this.recentQuotes = sortedQuotes.slice(0, 5);
+
+      const sortedVisits = [...this.visits].sort(
+        (a, b) =>
+          new Date(b.visitDate).getTime() - new Date(a.visitDate).getTime()
+      );
+      this.recentVisits = sortedVisits.slice(0, 5);
+
       this.pendingQuotes = this.quotes.filter(q => q.status === 'Pending');
       this.unpaidInvoices = this.invoices.filter(i => i.status === 'Unpaid');
 
     } catch (error) {
-      this.notificationService.showError('Failed to load related data');
+      this.notificationService.showError('Failed to load related data: ' +error);
     }
   }
 

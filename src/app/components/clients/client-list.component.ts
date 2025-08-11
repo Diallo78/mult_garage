@@ -275,6 +275,7 @@ import { AuthService } from '../../services/auth.service';
                     <div class="text-sm text-gray-900">{{ client.email }}</div>
                     <div class="text-sm text-gray-500">{{ client.phone }}</div>
                   </td>
+
                   <td class="px-3 py-4 whitespace-nowrap hidden md:table-cell">
                     <div class="text-sm text-gray-900">
                       {{ client.address || 'N/A' }}
@@ -343,9 +344,15 @@ export class ClientListComponent implements OnInit {
     this.isLoading = true;
     try {
       this.clients = await this.garageDataService.getAll<Client>('clients');
-      this.filteredClients = [...this.clients];
+      // this.filteredClients = [...this.clients]
+      const sortedClients = [...this.clients]; // copie propre
+      sortedClients.sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+    this.filteredClients = sortedClients;
     } catch (error) {
-      this.notificationService.showError('Failed to load clients');
+      this.notificationService.showError('Failed to load clients ' + error);
     } finally {
       this.isLoading = false;
     }
@@ -379,7 +386,7 @@ export class ClientListComponent implements OnInit {
         this.filterClients();
         this.notificationService.showSuccess('Client deleted successfully');
       } catch (error) {
-        this.notificationService.showError('Failed to delete client');
+        this.notificationService.showError('Failed to delete client ' + error);
       }
     }
   }
