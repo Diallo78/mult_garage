@@ -1,5 +1,10 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
@@ -20,7 +25,9 @@ import { NotificationService } from '../../services/notification.service';
         <div class="w-full lg:w-1/2 bg-white p-8 sm:p-12 space-y-8">
           <div class="flex items-center space-x-3">
             <img src="image/logo1.png" alt="Logo" class="h-10 w-auto" />
-            <span class="text-2xl font-bold text-gray-700">Multi-Garage</span>
+            <span class="text-2xl font-bold text-gray-700"
+              >GuiDev -  Multi-Garage</span
+            >
           </div>
 
           <div>
@@ -69,7 +76,7 @@ import { NotificationService } from '../../services/notification.service';
               <a
                 href="#"
                 class="text-sm text-gray-500 hover:text-blue-600 hover:underline"
-                >{{_message}}</a
+                >{{ _message }}</a
               >
             </div>
 
@@ -233,7 +240,6 @@ export class LoginComponent {
         default:
           this._message = error.message || 'Erreur inconnue';
       }
-
     } finally {
       this.isLoading = false;
     }

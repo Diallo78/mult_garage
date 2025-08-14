@@ -287,7 +287,7 @@ export class QuoteFormComponent implements OnInit {
         }
       }
     } catch (error) {
-      this.notificationService.showError('Failed to load diagnostic data');
+      this.notificationService.showError('Failed to load diagnostic data ' + error);
     }
   }
 
@@ -424,6 +424,7 @@ export class QuoteFormComponent implements OnInit {
         read: false,
         quoteId: quoteId,
         emailDesitnateur: this.client.email,
+        type: 'Devis'
       };
 
       await this.garageDataService.create('notifications', notification);
@@ -432,7 +433,7 @@ export class QuoteFormComponent implements OnInit {
 
       this.router.navigate(['/quotes']);
     } catch (error) {
-      this.notificationService.showError('Failed to create quote');
+      this.notificationService.showError('Failed to create quote ' + error);
     } finally {
       this.isLoading = false;
     }

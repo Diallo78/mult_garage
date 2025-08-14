@@ -3,13 +3,14 @@ import jsPDF from 'jspdf';
 import { Quote } from '../models/quote.model';
 import { Invoice } from '../models/invoice.model';
 import { Diagnostic } from '../models/diagnostic.model';
-import autoTable from 'jspdf-autotable';
+import autoTable, { RowInput } from 'jspdf-autotable';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PDFService {
 
+  // Diagnostic
   async generateDiagnosticReportPDF(
     diagnostic: Diagnostic,
     clientName: string,
@@ -17,6 +18,7 @@ export class PDFService {
   ): Promise<void> {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
     // --- LOGO ---
     const logoBase64 = await this.getBase64FromUrl('/image/logo1.png');
@@ -26,10 +28,11 @@ export class PDFService {
     doc.setFont('times', 'normal');
     doc.setFontSize(12);
     const companyInfo = [
-      "Garage AutoPro",
-      "Adresse : Quartier XYZ, Conakry",
-      "Téléphone : +224 620 00 00 00",
-      "Email : contact@autopro.gn"
+      "Garage AutoPro - Expert en diagnostic automobile",
+      "Adresse : Quartier XYZ, Conakry, Guinée",
+      "Téléphone : +224 620 00 00 00 / +224 655 00 00 00",
+      "Email : contact@autopro.gn / support@autopro.gn",
+      "Agrément : N°12345/MT/DG/2023"
     ];
     let y = 15;
     companyInfo.forEach(line => {
@@ -55,24 +58,47 @@ export class PDFService {
     // --- TABLEAU DES CONTRÔLES ---
     autoTable(doc, {
       startY: y + 27,
-      head: [['Categorie', 'Description', 'Conformité', 'Gravité']],
+      head: [['Catégorie', 'Description', 'Conformité', 'Gravité']],
       body: diagnostic.checks.map(check => [
         check.category,
         check.description,
-        check.compliant ? 'Conforme' : 'Non-conforme',
-        check.severityLevel,
+        {
+          content: check.compliant ? 'Conforme' : 'Non-conforme',
+          styles: {
+            textColor: check.compliant ? [0, 128, 0] : [255, 0, 0]
+          }
+        },
+        {
+          content: check.severityLevel,
+          styles: {
+            fontStyle: 'bold',
+            textColor: check.severityLevel === 'Critical' ? [255, 0, 0] :
+              check.severityLevel === 'Low' ? [255, 165, 0] : [0, 0, 255]
+          }
+        }
       ]),
       styles: {
-        font: 'times',
-        fontSize: 10
+        font: 'helvetica',
+        fontSize: 10,
+        cellPadding: 4,
+        lineColor: [200, 200, 200],
+        lineWidth: 0.2
       },
       headStyles: {
         fillColor: [22, 160, 133],
         textColor: 255,
-        halign: 'center'
+        fontStyle: 'bold',
+        halign: 'center',
+        cellPadding: 6
       },
-      bodyStyles: {
-        valign: 'top'
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' },
+        1: { cellWidth: 'auto', halign: 'left' },
+        2: { cellWidth: 'auto', halign: 'center' },
+        3: { cellWidth: 'auto', halign: 'center' }
       }
     });
 
@@ -94,57 +120,25 @@ export class PDFService {
     doc.setFontSize(11);
     doc.text(diagnostic.finalDecision, 15, decisionY + 6);
 
+    // --- PIED DE PAGE ---
+    const footerY = pageHeight - 15;
+    doc.setFontSize(8);
+    doc.setFont('times', 'italic');
+    doc.setTextColor(100);
+    doc.text(`Document généré le ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString()}`, pageWidth / 2, footerY, { align: 'center' });
+
+    doc.setFontSize(9);
+    doc.setFont('times', 'normal');
+    doc.setTextColor(0);
+    doc.text('GARAGE AUTO PRO S.A - Capital social : 50 000 000 000 GNF - RC : 123456789', pageWidth / 2, footerY + 5, { align: 'center' });
+    doc.text('Siège social : Yimbaya Km 17, Commune de Matoto - BP : 4885 CONAKRY', pageWidth / 2, footerY + 10, { align: 'center' });
+    doc.text('Tél : (+224) 612 12 19 19 / 622 12 19 19 - Email : contact@autopro.gn', pageWidth / 2, footerY + 15, { align: 'center' });
+    doc.text('Site web : www.autopro.gn - SIRET : 12345678900012', pageWidth / 2, footerY + 20, { align: 'center' });
+
     doc.save(`rapport-diagnostic-${diagnostic.id}.pdf`);
   }
 
-  async generateQuotePDFv1(quote: Quote, clientName: string, vehicleInfo: string): Promise<void> {
-    const doc = new jsPDF();
-
-    // Header
-    doc.setFontSize(20);
-    doc.text('QUOTE', 20, 20);
-
-    doc.setFontSize(12);
-    doc.text(`Quote #: ${quote.quoteNumber}`, 20, 35);
-    doc.text(`Date: ${quote.createdAt.toLocaleDateString()}`, 20, 45);
-    doc.text(`Valid Until: ${quote.validUntil.toLocaleDateString()}`, 20, 55);
-
-    // Client Info
-    doc.text(`Client: ${clientName}`, 20, 75);
-    doc.text(`Vehicle: ${vehicleInfo}`, 20, 85);
-
-    // Items table
-    let yPosition = 105;
-    doc.text('Description', 20, yPosition);
-    doc.text('Qty', 120, yPosition);
-    doc.text('Unit Price', 140, yPosition);
-    doc.text('Total', 170, yPosition);
-
-    yPosition += 10;
-    doc.line(20, yPosition, 190, yPosition);
-    yPosition += 5;
-
-    quote.items.forEach(item => {
-      doc.text(item.designation, 20, yPosition);
-      doc.text(item.quantity.toString(), 120, yPosition);
-      doc.text(`$${item.unitPrice.toFixed(2)}`, 140, yPosition);
-      doc.text(`$${item.subtotal.toFixed(2)}`, 170, yPosition);
-      yPosition += 10;
-    });
-
-    // Totals
-    yPosition += 10;
-    doc.text(`Subtotal: $${quote.subtotal.toFixed(2)}`, 140, yPosition);
-    yPosition += 8;
-    doc.text(`VAT (${quote.vatRate}%): $${quote.vatAmount.toFixed(2)}`, 140, yPosition);
-    yPosition += 8;
-    doc.setFontSize(14);
-    doc.text(`Total: $${quote.total.toFixed(2)}`, 140, yPosition);
-
-    doc.save(`quote-${quote.quoteNumber}.pdf`);
-  }
-
-
+  // Devis
   async generateQuotePDF(quote: Quote, clientName: string, vehicleInfo: string): Promise<void> {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -157,10 +151,11 @@ export class PDFService {
     doc.setFont('times', 'normal');
     doc.setFontSize(12);
     const companyInfo = [
-      'Garage AutoPro',
-      'Adresse : Quartier XYZ, Conakry',
-      'Tél : +224 620 00 00 00',
-      'Email : contact@autopro.gn'
+      "Garage AutoPro - Expert en diagnostic automobile",
+      "Adresse : Quartier XYZ, Conakry, Guinée",
+      "Téléphone : +224 620 00 00 00 / +224 655 00 00 00",
+      "Email : contact@autopro.gn / support@autopro.gn",
+      "Agrément : N°12345/MT/DG/2023"
     ];
     let y = 15;
     companyInfo.forEach(line => {
@@ -190,19 +185,40 @@ export class PDFService {
       body: quote.items.map(item => [
         item.designation,
         item.quantity.toString(),
-        this.formatAmount(item.unitPrice),
-        this.formatAmount(item.subtotal)
+        {
+          content: this.formatAmount(item.unitPrice),
+          styles: { halign: 'right' }
+        },
+        {
+          content: this.formatAmount(item.subtotal),
+          styles: {
+            halign: 'right',
+            fontStyle: 'bold'
+          }
+        }
       ]),
       styles: {
-        font: 'Cambria, Georgia',
-        fontSize: 10
+        font: 'helvetica',
+        fontSize: 10,
+        cellPadding: 4,
+        lineColor: [200, 200, 200],
+        lineWidth: 0.2
       },
       headStyles: {
         fillColor: [22, 160, 133],
-        textColor: 255
+        textColor: 255,
+        fontStyle: 'bold',
+        halign: 'center',
+        cellPadding: 6
       },
-      bodyStyles: {
-        valign: 'top'
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' },
+        1: { cellWidth: 'auto', halign: 'center' },
+        2: { cellWidth: 'auto', halign: 'right' },
+        3: { cellWidth: 'auto', halign: 'right' }
       }
     });
 
@@ -217,25 +233,56 @@ export class PDFService {
     doc.setFontSize(13);
     doc.text(`Total à payer : ${this.formatAmount(quote.total)}`, 140, finalY + 14);
 
+    /// --- PIED DE PAGE ---
+    // Calcul des positions
+    const footerYY = doc.internal.pageSize.getHeight() - 20;
+    const signaturesY = footerYY - 40;
+
+    // Section signatures
+    doc.setFontSize(10);
+    doc.setTextColor(0);
+
+    // Signature client (gauche)
+    // doc.text('Signature client :', 20, signaturesY);
+    // Signature garage (droite)
+    doc.text('Signature Garage AutoPro :', pageWidth - 70, signaturesY);
+
+    // Pied de page remonté
+    const footerY = doc.internal.pageSize.getHeight() - 25;
+    doc.setFontSize(8);
+    doc.setFont('times', 'italic');
+    doc.setTextColor(100);
+    doc.text(`Document généré le ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString()}`, pageWidth / 2, footerY, { align: 'center' });
+
+    doc.setFontSize(9);
+    doc.setFont('times', 'normal');
+    doc.setTextColor(0);
+    doc.text('Garage AutoPro - Agrément : N°12345/MT/DG/2023', pageWidth / 2, footerY + 5, { align: 'center' });
+    doc.text('Siège social : Quartier XYZ, Conakry - BP : 1234 CONAKRY', pageWidth / 2, footerY + 10, { align: 'center' });
+    doc.text('Tél : (+224) 620 00 00 00 / 655 00 00 00 - Email : contact@autopro.gn', pageWidth / 2, footerY + 15, { align: 'center' });
+    doc.text('Site web : www.autopro.gn - RC : 123456789', pageWidth / 2, footerY + 20, { align: 'center' });
+
     doc.save(`devis-${quote.quoteNumber}.pdf`);
   }
 
+  // Facture
   async generateInvoicePDF(invoice: Invoice, clientName: string, vehicleInfo: string): Promise<void> {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // --- LOGO ---
-    const logoBase64 = await this.getBase64FromUrl('/image/logo.png'); // Assure-toi que cette fonction existe
+    const logoBase64 = await this.getBase64FromUrl('/image/logo1.png'); // Assure-toi que cette fonction existe
     doc.addImage(logoBase64, 'PNG', pageWidth - 50, 10, 40, 20);
 
     // --- ENTREPRISE INFO ---
     doc.setFont('times', 'normal');
     doc.setFontSize(12);
     const entrepriseInfo = [
-      "Garage AutoPro",
-      "Adresse : Quartier XYZ, Conakry",
-      "Téléphone : +224 620 00 00 00",
-      "Email : contact@autopro.gn"
+      "Garage AutoPro - Expert en diagnostic automobile",
+      "Adresse : Quartier XYZ, Conakry, Guinée",
+      "Téléphone : +224 620 00 00 00 / +224 655 00 00 00",
+      "Email : contact@autopro.gn / support@autopro.gn",
+      "Agrément : N°12345/MT/DG/2023"
     ];
     let y = 15;
     entrepriseInfo.forEach(line => {
@@ -262,29 +309,55 @@ export class PDFService {
     doc.text(`Véhicule : ${vehicleInfo}`, 15, y + 6);
 
     // --- TABLEAU DES ARTICLES ---
-    const tableData = invoice.items.map(item => ([
-      item.description,
-      item.quantity,
-      this.formatAmount(item.unitPrice),
-      this.formatAmount(item.subtotal)
-    ]));
+    const tableData: RowInput[] = invoice.items.map(item => ({
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: {
+        content: this.formatAmount(item.unitPrice),
+        styles: { halign: 'right' as const }
+      },
+      total: {
+        content: this.formatAmount(item.subtotal),
+        styles: {
+          halign: 'right' as const,
+          fontStyle: 'bold' as const
+        }
+      }
+    }));
+
+    const columns = [
+      { header: 'Description', dataKey: 'description' },
+      { header: 'Quantité', dataKey: 'quantity' },
+      { header: 'Prix unitaire', dataKey: 'unitPrice' },
+      { header: 'Total', dataKey: 'total' }
+    ];
 
     autoTable(doc, {
       startY: y + 20,
-      head: [['Description', 'Quantité', 'Prix unitaire', 'Total']],
+      columns: columns,
       body: tableData,
-      theme: 'grid',
+      styles: {
+        font: 'helvetica',
+        fontSize: 10,
+        cellPadding: 4,
+        lineColor: [200, 200, 200],
+        lineWidth: 0.2
+      },
       headStyles: {
         fillColor: [22, 160, 133],
         textColor: 255,
-        halign: 'center'
+        fontStyle: 'bold',
+        halign: 'center',
+        cellPadding: 6
       },
-      bodyStyles: {
-        fontSize: 10,
-        halign: 'center'
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
       },
-      styles: {
-        font: 'times,',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' },
+        1: { cellWidth: 'auto', halign: 'center' },
+        2: { cellWidth: 'auto', halign: 'right' },
+        3: { cellWidth: 'auto', halign: 'right' }
       }
     });
 
@@ -304,9 +377,39 @@ export class PDFService {
     finalY += 6;
     doc.text(`Montant dû : ${this.formatAmount(invoice.amountDue)}`, 140, finalY);
 
+    // --- PIED DE PAGE ---
+    // Calcul des positions
+    const footerYY = doc.internal.pageSize.getHeight() - 15;
+    const signaturesY = footerYY - 40;
+
+    // Section signatures
+    doc.setFontSize(10);
+    doc.setTextColor(0);
+
+    // Signature client (gauche)
+    doc.text('Signature client :', 20, signaturesY);
+    // Signature garage (droite)
+    doc.text('Signature Garage AutoPro :', pageWidth - 70, signaturesY);
+
+    // Pied de page remonté
+    const footerY = doc.internal.pageSize.getHeight() - 25;
+    doc.setFontSize(8);
+    doc.setFont('times', 'italic');
+    doc.setTextColor(100);
+    doc.text(`Document généré le ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString()}`, pageWidth / 2, footerY, { align: 'center' });
+
+    doc.setFontSize(9);
+    doc.setFont('times', 'normal');
+    doc.setTextColor(0);
+    doc.text('Garage AutoPro - Agrément : N°12345/MT/DG/2023', pageWidth / 2, footerY + 5, { align: 'center' });
+    doc.text('Siège social : Quartier XYZ, Conakry - BP : 1234 CONAKRY', pageWidth / 2, footerY + 10, { align: 'center' });
+    doc.text('Tél : (+224) 620 00 00 00 / 655 00 00 00 - Email : contact@autopro.gn', pageWidth / 2, footerY + 15, { align: 'center' });
+    doc.text('Site web : www.autopro.gn - RC : 123456789', pageWidth / 2, footerY + 20, { align: 'center' });
+
     doc.save(`facture-${invoice.invoiceNumber}.pdf`);
   }
 
+  // Reçu de paiement
   async generatePaymentReceiptPDF(payment: any, invoiceNumber: string, clientName: string): Promise<void> {
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -321,10 +424,11 @@ export class PDFService {
     doc.setFont('times', 'normal');
     doc.setFontSize(11);
     const companyInfo = [
-      'Garage Expert Auto',
-      'Adresse : Conakry - Matoto',
-      'Téléphone : +224 621 00 00 00',
-      'Email : contact@garage-expert.com'
+      "Garage AutoPro - Expert en diagnostic automobile",
+      "Adresse : Quartier XYZ, Conakry, Guinée",
+      "Téléphone : +224 620 00 00 00 / +224 655 00 00 00",
+      "Email : contact@autopro.gn / support@autopro.gn",
+      "Agrément : N°12345/MT/DG/2023"
     ];
     let y = 15;
     companyInfo.forEach(line => {
@@ -355,7 +459,6 @@ export class PDFService {
     const col1X = 20;
     const col2X = 70;
 
-    // const formattedAmount = payment.amount + ' GNF';
     const formattedAmount = new Intl.NumberFormat('en-US').format(payment.amount) + ' GNF';
 
     const tableRows: [string, string][] = [
@@ -382,11 +485,27 @@ export class PDFService {
     doc.setFont('times', 'italic');
     doc.text(`Montant en lettres : ${montantEnLettres}`, 20, textY, { maxWidth: pageWidth - 40 });
 
-    // ✅ Signature
+    // ✅ Signatures
     const signY = textY + 25;
     doc.setFont('times', 'normal');
+
     doc.text('Signature autorisée', pageWidth - 60, signY + 10);
-    doc.line(pageWidth - 80, signY + 8, pageWidth - 20, signY + 8);
+    doc.line(pageWidth - 80, signY + 15, pageWidth - 20, signY + 15);
+
+    // ✅ Pied de page
+    const footerY = doc.internal.pageSize.getHeight() - 15;
+    doc.setFontSize(8);
+    doc.setFont('times', 'italic');
+    doc.setTextColor(100);
+    doc.text(`Document généré le ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString()}`, pageWidth / 2, footerY - 15, { align: 'center' });
+
+    doc.setFontSize(9);
+    doc.setFont('times', 'normal');
+    doc.setTextColor(0);
+    doc.text('GARAGE EXPERT AUTO S.A - Capital social : 50 000 000 000 GNF - RC : 123456789', pageWidth / 2, footerY - 10, { align: 'center' });
+    doc.text('Siège social : Yimbaya Km 17, Commune de Matoto - BP : 4885 CONAKRY', pageWidth / 2, footerY - 5, { align: 'center' });
+    doc.text('Tél : (+224) 612 12 19 19 / 622 12 19 19 - Email : contact@garage-expert.com', pageWidth / 2, footerY, { align: 'center' });
+    doc.text('Site web : www.garage-expert.com - SIRET : 12345678900012', pageWidth / 2, footerY + 5, { align: 'center' });
 
     doc.save(`recu-${payment.id}.pdf`);
   }
@@ -404,65 +523,65 @@ export class PDFService {
   }
 
   private nombreEnLettres(nombre: number): string {
-  if (nombre === 0) return 'zéro';
+    if (nombre === 0) return 'zéro';
 
-  const unites = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf'];
-  const dizaines = ['', 'dix', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante'];
-  const teens = ['dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+    const unites = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf'];
+    const dizaines = ['', 'dix', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante'];
+    const teens = ['dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
 
-  const convertMoinsDeCent = (n: number): string => {
-    if (n < 10) return unites[n];
-    if (n < 20) return teens[n - 10];
-    if (n < 70) {
-      const dizaine = Math.floor(n / 10);
-      const unite = n % 10;
-      return dizaines[dizaine] + (unite === 1 ? ' et un' : (unite > 0 ? '-' + unites[unite] : ''));
-    }
-    if (n < 80) {
-      return 'soixante' + (n === 71 ? ' et onze' : '-' + convertMoinsDeCent(n - 60));
-    }
-    if (n < 100) {
-      return 'quatre-vingt' + (n === 80 ? 's' : (n % 10 === 1 ? '-un' : '-' + convertMoinsDeCent(n - 80)));
-    }
-    return '';
-  };
+    const convertMoinsDeCent = (n: number): string => {
+      if (n < 10) return unites[n];
+      if (n < 20) return teens[n - 10];
+      if (n < 70) {
+        const dizaine = Math.floor(n / 10);
+        const unite = n % 10;
+        return dizaines[dizaine] + (unite === 1 ? ' et un' : (unite > 0 ? '-' + unites[unite] : ''));
+      }
+      if (n < 80) {
+        return 'soixante' + (n === 71 ? ' et onze' : '-' + convertMoinsDeCent(n - 60));
+      }
+      if (n < 100) {
+        return 'quatre-vingt' + (n === 80 ? 's' : (n % 10 === 1 ? '-un' : '-' + convertMoinsDeCent(n - 80)));
+      }
+      return '';
+    };
 
-  const convertMoinsDeMille = (n: number): string => {
-    const centaine = Math.floor(n / 100);
-    const reste = n % 100;
+    const convertMoinsDeMille = (n: number): string => {
+      const centaine = Math.floor(n / 100);
+      const reste = n % 100;
+      let result = '';
+
+      if (centaine > 0) {
+        result += (centaine === 1 ? 'cent' : unites[centaine] + ' cent');
+        if (reste === 0 && centaine > 1) result += 's';
+        if (reste > 0) result += ' ';
+      }
+
+      if (reste > 0) {
+        result += convertMoinsDeCent(reste);
+      }
+
+      return result.trim();
+    };
+
     let result = '';
+    const million = Math.floor(nombre / 1_000_000);
+    const mille = Math.floor((nombre % 1_000_000) / 1000);
+    const reste = nombre % 1000;
 
-    if (centaine > 0) {
-      result += (centaine === 1 ? 'cent' : unites[centaine] + ' cent');
-      if (reste === 0 && centaine > 1) result += 's';
-      if (reste > 0) result += ' ';
+    if (million > 0) {
+      result += (million === 1 ? 'un million' : this.nombreEnLettres(million) + ' millions') + ' ';
+    }
+
+    if (mille > 0) {
+      result += (mille === 1 ? 'mille' : this.nombreEnLettres(mille) + ' mille') + ' ';
     }
 
     if (reste > 0) {
-      result += convertMoinsDeCent(reste);
+      result += convertMoinsDeMille(reste);
     }
 
     return result.trim();
-  };
-
-  let result = '';
-  const million = Math.floor(nombre / 1_000_000);
-  const mille = Math.floor((nombre % 1_000_000) / 1000);
-  const reste = nombre % 1000;
-
-  if (million > 0) {
-    result += (million === 1 ? 'un million' : this.nombreEnLettres(million) + ' millions') + ' ';
-  }
-
-  if (mille > 0) {
-    result += (mille === 1 ? 'mille' : this.nombreEnLettres(mille) + ' mille') + ' ';
-  }
-
-  if (reste > 0) {
-    result += convertMoinsDeMille(reste);
-  }
-
-  return result.trim();
   }
 
   private formatAmount(amount: number): string {

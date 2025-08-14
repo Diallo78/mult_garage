@@ -8,42 +8,59 @@ import { FormsModule } from '@angular/forms';
   imports: [CommonModule, FormsModule],
   template: `
     <div
-      class="flex justify-between items-center mt-4"
+      class="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 space-y-3 sm:space-y-0"
       *ngIf="totalItems > itemsPerPage"
     >
-      <div class="text-sm text-gray-600">
+      <!-- Informations sur les éléments -->
+      <div class="text-xs sm:text-sm text-gray-600 order-1 sm:order-none">
         Affichage de {{ startItem }}-{{ endItem }} sur {{ totalItems }} éléments
       </div>
 
-      <div class="flex items-center space-x-2">
-        <select
-          class="text-sm border rounded px-2 py-1"
-          [(ngModel)]="itemsPerPage"
-          (change)="onItemsPerPageChange()"
-        >
-          <option value="5">5 par page</option>
-          <option value="10">10 par page</option>
-          <option value="20">20 par page</option>
-          <option value="50">50 par page</option>
-        </select>
+      <!-- Contrôles de pagination -->
+      <div
+        class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto order-2 sm:order-none"
+      >
+        <!-- Sélecteur d'éléments par page -->
+        <div class="flex items-center space-x-2 w-full sm:w-auto">
+          <label class="text-xs sm:text-sm text-gray-600 whitespace-nowrap"
+            >Afficher:</label
+          >
+          <select
+            class="text-xs sm:text-sm border rounded px-2 py-1.5 sm:py-1 min-w-16 sm:min-w-20"
+            [(ngModel)]="itemsPerPage"
+            (change)="onItemsPerPageChange()"
+          >
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
 
-        <button
-          class="px-3 py-1 border rounded text-sm disabled:opacity-50"
-          [disabled]="currentPage === 1"
-          (click)="changePage(currentPage - 1)"
-        >
-          &larr; Précédent
-        </button>
+        <!-- Navigation des pages -->
+        <div class="flex items-center space-x-1 sm:space-x-2">
+          <button
+            class="px-2 sm:px-3 py-1.5 sm:py-1 border rounded text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors touch-target"
+            [disabled]="currentPage === 1"
+            (click)="changePage(currentPage - 1)"
+          >
+            <span class="hidden sm:inline">&larr; Précédent</span>
+            <span class="sm:hidden">&larr;</span>
+          </button>
 
-        <span class="text-sm"> Page {{ currentPage }} / {{ totalPages }} </span>
+          <span class="text-xs sm:text-sm px-2 py-1 bg-gray-100 rounded">
+            {{ currentPage }} / {{ totalPages }}
+          </span>
 
-        <button
-          class="px-3 py-1 border rounded text-sm disabled:opacity-50"
-          [disabled]="currentPage === totalPages"
-          (click)="changePage(currentPage + 1)"
-        >
-          Suivant &rarr;
-        </button>
+          <button
+            class="px-2 sm:px-3 py-1.5 sm:py-1 border rounded text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors touch-target"
+            [disabled]="currentPage === totalPages"
+            (click)="changePage(currentPage + 1)"
+          >
+            <span class="hidden sm:inline">Suivant &rarr;</span>
+            <span class="sm:hidden">&rarr;</span>
+          </button>
+        </div>
       </div>
     </div>
   `,

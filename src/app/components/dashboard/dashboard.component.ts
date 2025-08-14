@@ -21,6 +21,8 @@ import {
   stagger,
   state,
 } from '@angular/animations';
+import { Diagnostic } from '../../models/diagnostic.model';
+import { StockModel } from '../../models/stock-model';
 
 @Component({
   selector: 'app-dashboard',
@@ -102,10 +104,14 @@ import {
   ],
   template: `
     @if(this.authService.canccessDashboard){
+    <!-- Loading State -->
     <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
-      <div
-        class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"
-      ></div>
+      <div class="animate-pulse flex flex-col items-center">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-500"
+        ></div>
+        <p class="mt-4 text-gray-600">Chargement de votre espace...</p>
+      </div>
     </div>
 
     <div *ngIf="!isLoading">
@@ -272,7 +278,7 @@ import {
                 </div>
                 <div class="text-right">
                   <div class="text-sm font-medium text-gray-900">
-                    \GNF {{ quote.total.toFixed(2) }}
+                    GNF {{ quote.total.toFixed(2) }}
                   </div>
                   <span
                     class="status-badge"
@@ -352,7 +358,7 @@ import {
                 </div>
                 <div class="text-right">
                   <div class="text-sm font-medium text-gray-900">
-                    \GNF {{ invoice.totalAmount.toFixed(2) }}
+                    GNF {{ invoice.totalAmount.toFixed(2) }}
                   </div>
                   <span
                     class="status-badge"
@@ -366,42 +372,90 @@ import {
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Bloc Revenus Mensuels -->
-          <div
-            class="bg-white rounded-2xl shadow-lg p-6 transition duration-300 hover:shadow-2xl hover:scale-[1.02]"
-          >
-            <h3
-              class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2"
-            >
-              📈 Revenus mensuels
-            </h3>
+        <!-- Filtres de date pour tous les graphiques -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">📅 Filtres de période</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="flex flex-col">
+              <label class="text-sm font-medium text-gray-600 mb-1">Date début</label>
+              <input
+                type="date"
+                [(ngModel)]="filterStartDate"
+                (change)="onFilterChange()"
+                class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-6">
-              <div class="flex flex-col">
-                <label class="text-sm font-medium text-gray-600 mb-1"
-                  >Date début</label
-                >
-                <input
-                  type="date"
-                  [(ngModel)]="filterStartDate"
-                  (change)="onFilterChange()"
-                  class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                />
+            <div class="flex flex-col">
+              <label class="text-sm font-medium text-gray-600 mb-1">Date fin</label>
+              <input
+                type="date"
+                [(ngModel)]="filterEndDate"
+                (change)="onFilterChange()"
+                class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistiques supplémentaires -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+          <div class="card">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="flex items-center justify-center h-8 w-8 rounded-md bg-green-500 text-white">
+                  💰
+                </div>
               </div>
-
-              <div class="flex flex-col">
-                <label class="text-sm font-medium text-gray-600 mb-1"
-                  >Date fin</label
-                >
-                <input
-                  type="date"
-                  [(ngModel)]="filterEndDate"
-                  (change)="onFilterChange()"
-                  class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                />
+              <div class="ml-4">
+                <div class="text-sm font-medium text-gray-500">Revenu total</div>
+                <div class="text-2xl font-bold text-gray-900">
+                  GNF {{ stats.totalRevenue.toLocaleString() }}
+                </div>
               </div>
             </div>
+          </div>
+
+          <div class="card">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="flex items-center justify-center h-8 w-8 rounded-md bg-blue-500 text-white">
+                  🔍
+                </div>
+              </div>
+              <div class="ml-4">
+                <div class="text-sm font-medium text-gray-500">Total diagnostics</div>
+                <div class="text-2xl font-bold text-gray-900">
+                  {{ stats.totalDiagnostics }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="flex items-center justify-center h-8 w-8 rounded-md bg-purple-500 text-white">
+                  📦
+                </div>
+              </div>
+              <div class="ml-4">
+                <div class="text-sm font-medium text-gray-500">Articles en stock</div>
+                <div class="text-2xl font-bold text-gray-900">
+                  {{ stats.totalStock }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Première rangée de graphiques -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <!-- Bloc Revenus Mensuels -->
+          <div class="bg-white rounded-2xl shadow-lg p-6 transition duration-300 hover:shadow-2xl hover:scale-[1.02]">
+            <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+              📈 Revenus mensuels
+            </h3>
 
             <canvas
               baseChart
@@ -413,12 +467,8 @@ import {
           </div>
 
           <!-- Bloc Diagnostics clôturés -->
-          <div
-            class="bg-white rounded-2xl shadow-lg p-6 transition duration-300 hover:shadow-2xl hover:scale-[1.02]"
-          >
-            <h3
-              class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2"
-            >
+          <div class="bg-white rounded-2xl shadow-lg p-6 transition duration-300 hover:shadow-2xl hover:scale-[1.02]">
+            <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
               🛠️ Diagnostics & Entretiens clôturés
             </h3>
 
@@ -427,6 +477,65 @@ import {
               [data]="closedDiagChartData"
               [options]="closedDiagChartOptions"
               [type]="'bar'"
+              class="w-full h-64"
+            ></canvas>
+          </div>
+        </div>
+
+        <!-- Deuxième rangée de graphiques -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+          <!-- Bloc Sévérité des diagnostics -->
+          <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6 transition duration-300 hover:shadow-2xl hover:scale-[1.02]">
+            <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+              🔍 Sévérité des problèmes diagnostiqués
+            </h3>
+
+            <div class="flex justify-center">
+              <div class="w-full max-w-xs">
+                <canvas
+                  baseChart
+                  [data]="diagnosticSeverityChartData"
+                  [options]="diagnosticSeverityChartOptions"
+                  [type]="'doughnut'"
+                  class="w-full h-64"
+                ></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bloc Statut des devis -->
+          <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6 transition duration-300 hover:shadow-2xl hover:scale-[1.02]">
+            <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+              📝 Statut des devis
+            </h3>
+
+            <div class="flex justify-center">
+              <div class="w-full max-w-xs">
+                <canvas
+                  baseChart
+                  [data]="quoteStatusChartData"
+                  [options]="quoteStatusChartOptions"
+                  [type]="'pie'"
+                  class="w-full h-64"
+                ></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Troisième rangée de graphiques -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Bloc Mouvements de stock -->
+          <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6 transition duration-300 hover:shadow-2xl hover:scale-[1.02]">
+            <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+              📦 Mouvements de stock
+            </h3>
+
+            <canvas
+              baseChart
+              [data]="stockMovementChartData"
+              [options]="stockMovementChartOptions"
+              [type]="'line'"
               class="w-full h-64"
             ></canvas>
           </div>
@@ -444,6 +553,9 @@ export class DashboardComponent implements OnInit {
     pendingQuotes: 0,
     activeInterventions: 0,
     unpaidInvoices: 0,
+    totalRevenue: 0,
+    totalDiagnostics: 0,
+    totalStock: 0,
   };
 
   recentQuotes: Quote[] = [];
@@ -455,22 +567,311 @@ export class DashboardComponent implements OnInit {
 
   public revenueChartData: ChartConfiguration<'line'>['data'] = {
     labels: [], // Mois ou dates
-    datasets: [{ data: [], label: 'Revenus (GNF)' }],
+    datasets: [{ 
+      data: [], 
+      label: 'Revenus (GNF)',
+      borderColor: '#4F46E5',
+      backgroundColor: 'rgba(79, 70, 229, 0.1)',
+      tension: 0.3,
+      fill: true,
+      pointBackgroundColor: '#4F46E5',
+      pointBorderColor: '#fff',
+      pointRadius: 4,
+      pointHoverRadius: 6
+    }],
   };
   public revenueChartOptions: ChartConfiguration<'line'>['options'] = {
     responsive: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top',
+        labels: {
+          usePointStyle: true,
+          padding: 20,
+          font: {
+            size: 12
+          }
+        }
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        padding: 10,
+        cornerRadius: 4,
+        titleFont: {
+          size: 14
+        },
+        bodyFont: {
+          size: 13
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false
+        }
+      },
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        },
+        ticks: {
+          callback: function(value) {
+            return value.toLocaleString() + ' GNF';
+          }
+        }
+      }
+    }
   };
 
   public closedDiagChartData: ChartConfiguration<'bar'>['data'] = {
     labels: [], // Mois ou dates
     datasets: [
-      { data: [], label: 'Diagnostics clôturés' },
-      { data: [], label: 'Entretiens clôturés' },
+      { 
+        data: [], 
+        label: 'Diagnostics clôturés',
+        backgroundColor: 'rgba(79, 70, 229, 0.7)',
+        borderColor: 'rgba(79, 70, 229, 1)',
+        borderWidth: 1,
+        borderRadius: 4,
+        hoverBackgroundColor: 'rgba(79, 70, 229, 0.9)'
+      },
+      { 
+        data: [], 
+        label: 'Entretiens clôturés',
+        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+        borderColor: 'rgba(16, 185, 129, 1)',
+        borderWidth: 1,
+        borderRadius: 4,
+        hoverBackgroundColor: 'rgba(16, 185, 129, 0.9)'
+      },
     ],
   };
 
   public closedDiagChartOptions: ChartConfiguration<'bar'>['options'] = {
     responsive: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top',
+        labels: {
+          usePointStyle: true,
+          padding: 20,
+          font: {
+            size: 12
+          }
+        }
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        padding: 10,
+        cornerRadius: 4
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false
+        }
+      },
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        },
+        ticks: {
+          precision: 0
+        }
+      }
+    }
+  };
+
+  // Nouveaux graphiques pour les statistiques supplémentaires
+  public diagnosticSeverityChartData: ChartConfiguration<'doughnut'>['data'] = {
+    labels: ['Critique', 'Élevé', 'Moyen', 'Faible'],
+    datasets: [{
+      data: [0, 0, 0, 0],
+      backgroundColor: [
+        'rgba(239, 68, 68, 0.8)',   // Rouge pour Critique
+        'rgba(245, 158, 11, 0.8)',  // Orange pour Élevé
+        'rgba(59, 130, 246, 0.8)',  // Bleu pour Moyen
+        'rgba(16, 185, 129, 0.8)',  // Vert pour Faible
+      ],
+      borderColor: [
+        'rgba(239, 68, 68, 1)',
+        'rgba(245, 158, 11, 1)',
+        'rgba(59, 130, 246, 1)',
+        'rgba(16, 185, 129, 1)',
+      ],
+      borderWidth: 1,
+      hoverOffset: 4
+    }]
+  };
+
+  public diagnosticSeverityChartOptions: ChartConfiguration<'doughnut'>['options'] = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: {
+          usePointStyle: true,
+          padding: 20,
+          font: {
+            size: 12
+          }
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        padding: 10,
+        cornerRadius: 4,
+        callbacks: {
+          label: function(context) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+            const percentage = Math.round((value as number / total) * 100);
+            return `${label}: ${value} (${percentage}%)`;
+          }
+        }
+      }
+    },
+    cutout: '70%',
+    animation: {
+      animateScale: true,
+      animateRotate: true
+    }
+  };
+
+  public quoteStatusChartData: ChartConfiguration<'pie'>['data'] = {
+    labels: ['En attente', 'Accepté', 'Rejeté', 'Expiré'],
+    datasets: [{
+      data: [0, 0, 0, 0],
+      backgroundColor: [
+        'rgba(59, 130, 246, 0.8)',  // Bleu pour En attente
+        'rgba(16, 185, 129, 0.8)',  // Vert pour Accepté
+        'rgba(239, 68, 68, 0.8)',   // Rouge pour Rejeté
+        'rgba(156, 163, 175, 0.8)',  // Gris pour Expiré
+      ],
+      borderColor: [
+        'rgba(59, 130, 246, 1)',
+        'rgba(16, 185, 129, 1)',
+        'rgba(239, 68, 68, 1)',
+        'rgba(156, 163, 175, 1)',
+      ],
+      borderWidth: 1,
+      hoverOffset: 4
+    }]
+  };
+
+  public quoteStatusChartOptions: ChartConfiguration<'pie'>['options'] = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: {
+          usePointStyle: true,
+          padding: 20,
+          font: {
+            size: 12
+          }
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        padding: 10,
+        cornerRadius: 4,
+        callbacks: {
+          label: function(context) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+            const percentage = Math.round((value as number / total) * 100);
+            return `${label}: ${value} (${percentage}%)`;
+          }
+        }
+      }
+    },
+    animation: {
+      animateScale: true,
+      animateRotate: true
+    }
+  };
+
+  public stockMovementChartData: ChartConfiguration<'line'>['data'] = {
+    labels: [], // Mois
+    datasets: [
+      { 
+        data: [], 
+        label: 'Entrées de stock',
+        borderColor: 'rgba(16, 185, 129, 1)',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        tension: 0.3,
+        fill: true,
+        pointBackgroundColor: 'rgba(16, 185, 129, 1)',
+        pointBorderColor: '#fff',
+        pointRadius: 4,
+        pointHoverRadius: 6
+      },
+      { 
+        data: [], 
+        label: 'Sorties de stock',
+        borderColor: 'rgba(239, 68, 68, 1)',
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        tension: 0.3,
+        fill: true,
+        pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+        pointBorderColor: '#fff',
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }
+    ],
+  };
+
+  public stockMovementChartOptions: ChartConfiguration<'line'>['options'] = {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top',
+        labels: {
+          usePointStyle: true,
+          padding: 20,
+          font: {
+            size: 12
+          }
+        }
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        padding: 10,
+        cornerRadius: 4
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false
+        }
+      },
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        },
+        ticks: {
+          precision: 0
+        }
+      }
+    }
   };
 
   constructor(
@@ -509,6 +910,17 @@ export class DashboardComponent implements OnInit {
         (i) => i.status === 'Unpaid'
       ).length;
 
+      // Calculer le revenu total
+      this.stats.totalRevenue = invoices.reduce((total, inv) => total + inv.totalAmount, 0);
+
+      // Charger les diagnostics
+      const diagnostics = await this.garageDataService.getAll<Diagnostic>('diagnostics');
+      this.stats.totalDiagnostics = diagnostics.length;
+
+      // Charger les données de stock
+      const stockItems = await this.garageDataService.getAll<StockModel>('stock');
+      this.stats.totalStock = stockItems.length;
+
       // Load recent items
       this.recentQuotes = quotes.slice(0, 5);
       this.recentInvoices = invoices.slice(0, 5);
@@ -516,6 +928,9 @@ export class DashboardComponent implements OnInit {
       // Aggregate data for charts
       let filteredInvoices = invoices;
       let filteredInterventions = interventions;
+      let filteredDiagnostics = diagnostics;
+      let filteredStock = stockItems;
+      let filteredQuotes = quotes;
 
       if (this.filterStartDate) {
         const start = new Date(this.filterStartDate);
@@ -524,6 +939,15 @@ export class DashboardComponent implements OnInit {
         );
         filteredInterventions = filteredInterventions.filter(
           (intv) => new Date(intv.createdAt) >= start
+        );
+        filteredDiagnostics = filteredDiagnostics.filter(
+          (diag) => new Date(diag.createdAt) >= start
+        );
+        filteredStock = filteredStock.filter(
+          (stock) => new Date(stock.createdAt) >= start
+        );
+        filteredQuotes = filteredQuotes.filter(
+          (q) => new Date(q.createdAt) >= start
         );
       }
       if (this.filterEndDate) {
@@ -534,21 +958,129 @@ export class DashboardComponent implements OnInit {
         filteredInterventions = filteredInterventions.filter(
           (intv) => new Date(intv.createdAt) <= end
         );
+        filteredDiagnostics = filteredDiagnostics.filter(
+          (diag) => new Date(diag.createdAt) <= end
+        );
+        filteredStock = filteredStock.filter(
+          (stock) => new Date(stock.createdAt) <= end
+        );
+        filteredQuotes = filteredQuotes.filter(
+          (q) => new Date(q.createdAt) <= end
+        );
       }
 
+      // Graphique des revenus
       const aggregatedRevenue = this.aggregateRevenueByMonth(filteredInvoices);
       this.revenueChartData.labels = Object.keys(aggregatedRevenue);
       this.revenueChartData.datasets[0].data = Object.values(aggregatedRevenue);
 
+      // Graphique des interventions clôturées
       const aggregatedClosed = this.aggregateClosedInterventionsByMonth(
         filteredInterventions
       );
       this.closedDiagChartData.labels = Object.keys(aggregatedClosed);
-      this.closedDiagChartData.datasets[0].data =
-        Object.values(aggregatedClosed);
-      this.closedDiagChartData.datasets[0].label = 'Interventions clôturées';
-      this.closedDiagChartData.datasets =
-        this.closedDiagChartData.datasets.slice(0, 1); // Un seul dataset
+      this.closedDiagChartData.datasets[0].data = Object.values(aggregatedClosed);
+      
+      // Ajouter un second dataset pour les entretiens si nécessaire
+      const maintenanceInterventions = filteredInterventions.filter(i => i.status === 'Completed' && i.tasks.some(t => t.description.toLowerCase().includes('entretien')));
+      const aggregatedMaintenance = this.aggregateClosedInterventionsByMonth(maintenanceInterventions);
+      
+      // S'assurer que les deux datasets ont les mêmes labels
+      const allLabels = [...new Set([...Object.keys(aggregatedClosed), ...Object.keys(aggregatedMaintenance)])];
+      this.closedDiagChartData.labels = allLabels;
+      
+      // Réorganiser les données pour qu'elles correspondent aux labels
+      const diagData = allLabels.map(label => aggregatedClosed[label] || 0);
+      const maintData = allLabels.map(label => aggregatedMaintenance[label] || 0);
+      
+      this.closedDiagChartData.datasets[0].data = diagData;
+      if (this.closedDiagChartData.datasets.length > 1) {
+        this.closedDiagChartData.datasets[1].data = maintData;
+      } else {
+        this.closedDiagChartData.datasets.push({
+          data: maintData,
+          label: 'Entretiens clôturés',
+          backgroundColor: 'rgba(16, 185, 129, 0.7)',
+          borderColor: 'rgba(16, 185, 129, 1)',
+          borderWidth: 1,
+          borderRadius: 4,
+          hoverBackgroundColor: 'rgba(16, 185, 129, 0.9)'
+        });
+      }
+
+      // Graphique de sévérité des diagnostics
+      const severityCounts = {
+        Critical: 0,
+        High: 0,
+        Medium: 0,
+        Low: 0
+      };
+
+      filteredDiagnostics.forEach(diagnostic => {
+        diagnostic.checks.forEach(check => {
+          switch(check.severityLevel) {
+            case 'Critical':
+              severityCounts.Critical++;
+              break;
+            case 'High':
+              severityCounts.High++;
+              break;
+            case 'Medium':
+              severityCounts.Medium++;
+              break;
+            case 'Low':
+              severityCounts.Low++;
+              break;
+          }
+        });
+      });
+
+      this.diagnosticSeverityChartData.datasets[0].data = [
+        severityCounts.Critical,
+        severityCounts.High,
+        severityCounts.Medium,
+        severityCounts.Low
+      ];
+
+      // Graphique des statuts de devis
+      const quoteStatusCounts = {
+        Pending: 0,
+        Accepted: 0,
+        Rejected: 0,
+        Expired: 0
+      };
+
+      filteredQuotes.forEach((quote: Quote) => {
+        switch(quote.status) {
+          case 'Pending':
+            quoteStatusCounts.Pending++;
+            break;
+          case 'Accepted':
+            quoteStatusCounts.Accepted++;
+            break;
+          case 'Rejected':
+            quoteStatusCounts.Rejected++;
+            break;
+          case 'Expired':
+            quoteStatusCounts.Expired++;
+            break;
+        }
+      });
+
+      this.quoteStatusChartData.datasets[0].data = [
+        quoteStatusCounts.Pending,
+        quoteStatusCounts.Accepted,
+        quoteStatusCounts.Rejected,
+        quoteStatusCounts.Expired
+      ];
+
+      // Graphique des mouvements de stock
+      const stockMovements = this.aggregateStockMovementsByMonth(filteredStock);
+      this.stockMovementChartData.labels = Object.keys(stockMovements.in);
+      
+      this.stockMovementChartData.datasets[0].data = Object.values(stockMovements.in);
+      this.stockMovementChartData.datasets[1].data = Object.values(stockMovements.out);
+
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       this.notificationService.showError(
@@ -618,6 +1150,34 @@ export class DashboardComponent implements OnInit {
       'déc',
     ];
     return `${mois[date.getMonth()]} ${date.getFullYear()}`;
+  }
+
+  private aggregateStockMovementsByMonth(stockItems: StockModel[]): { in: { [key: string]: number }, out: { [key: string]: number } } {
+    const aggregated = {
+      in: {} as { [key: string]: number },
+      out: {} as { [key: string]: number }
+    };
+
+    stockItems.forEach((item) => {
+      const date =
+        typeof (item.createdAt as any)?.toDate === 'function'
+          ? (item.createdAt as any).toDate()
+          : new Date(item.createdAt);
+      const monthLabel = this.getMonthLabel(date);
+
+      // Initialiser les compteurs si nécessaire
+      if (!aggregated.in[monthLabel]) aggregated.in[monthLabel] = 0;
+      if (!aggregated.out[monthLabel]) aggregated.out[monthLabel] = 0;
+
+      // Ajouter au compteur approprié selon le statut
+      if (item.status === 'entre') {
+        aggregated.in[monthLabel] += item.quantite;
+      } else if (item.status === 'sortie') {
+        aggregated.out[monthLabel] += item.quantite;
+      }
+    });
+
+    return aggregated;
   }
 
   getStatusClass(status: string): string {

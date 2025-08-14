@@ -402,11 +402,24 @@ export class InvoiceFormComponent implements OnInit {
         updatedAt: new Date()
       };
 
-      await this.garageDataService.create('invoices', invoiceData);
+      const invocieRef = await this.garageDataService.create('invoices', invoiceData);
+
+      // 2. Créer une notification associée au devis
+      const notification = {
+        title: 'Nouveau facture',
+        message: `Un nouveau facture (N° ${formValue.invoiceNumber}) est disponible.`,
+        read: false,
+        quoteId: invocieRef,
+        emailDesitnateur: this.client.email,
+        type: 'Facture'
+      };
+
+      await this.garageDataService.create('notifications', notification);
+
       this.notificationService.showSuccess('Invoice created successfully');
       this.router.navigate(['/invoices']);
     } catch (error) {
-      this.notificationService.showError('Failed to create invoice');
+      this.notificationService.showError('Failed to create invoice ' + error);
     } finally {
       this.isLoading = false;
     }

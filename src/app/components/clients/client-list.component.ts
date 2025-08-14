@@ -145,10 +145,14 @@ import { AuthService } from '../../services/auth.service';
   //   </div>
   // `,
   template: `
+    <!-- Loading State -->
     <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
-      <div
-        class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"
-      ></div>
+      <div class="animate-pulse flex flex-col items-center">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-500"
+        ></div>
+        <p class="mt-4 text-gray-600">Chargement de votre espace...</p>
+      </div>
     </div>
 
     <div *ngIf="!isLoading">
@@ -347,10 +351,11 @@ export class ClientListComponent implements OnInit {
       // this.filteredClients = [...this.clients]
       const sortedClients = [...this.clients]; // copie propre
       sortedClients.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
-    this.filteredClients = sortedClients;
+      this.filteredClients = sortedClients;
     } catch (error) {
       this.notificationService.showError('Failed to load clients ' + error);
     } finally {

@@ -1,4 +1,4 @@
-import { Component} from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -14,23 +14,25 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
   imports: [CommonModule, RouterModule, FirestoreDatePipe],
   template: `
     <nav class="bg-white shadow-lg border-b border-gray-200">
-      <div class="px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16 items-center">
+      <div class="px-3 sm:px-4 lg:px-6">
+        <div class="flex justify-between h-14 sm:h-16 items-center">
           <!-- Logo -->
           <div class="flex items-center">
-            <div class="text-2xl font-bold text-primary-600">
-              🚗 <span class="ml-1">GarageManager</span>
+            <div
+              class="text-lg sm:text-xl lg:text-2xl font-bold text-primary-600"
+            >
+              🚗 <span class="ml-1 hidden xs:inline">GarageManager</span>
             </div>
           </div>
 
           <!-- Burger menu (mobile only) -->
-          <div class="flex sm:hidden">
+          <div class="flex lg:hidden">
             <button
               (click)="toggleMobileMenu()"
-              class="text-gray-600 hover:text-primary-600 focus:outline-none"
+              class="text-gray-600 hover:text-primary-600 focus:outline-none p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <svg
-                class="h-6 w-6"
+                class="h-5 w-5 sm:h-6 sm:w-6"
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2"
@@ -45,16 +47,21 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
           </div>
 
           <!-- Desktop menu -->
-          <div class="hidden sm:flex items-center space-x-4">
+          <div class="hidden lg:flex items-center space-x-4">
             <!-- Notifications -->
             <div class="relative">
               <button
-                class="relative p-2 text-gray-600 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-full"
+                [ngClass]="{
+                  'relative p-2 text-gray-600 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-full transition-colors': true,
+                  'text-primary-600': unreadCount > 0,
+                  'animate-pulse': unreadCount > 0
+                }"
                 (click)="toggleNotifications()"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-6 w-6"
+                  [ngClass]="{'text-primary-600': unreadCount > 0}"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -70,7 +77,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                 <!-- Badge -->
                 <span
                   *ngIf="unreadCount > 0"
-                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full"
+                  class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full shadow-md"
                 >
                   {{ unreadCount }}
                 </span>
@@ -79,12 +86,21 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
               <!-- Dropdown de notifications -->
               <div
                 *ngIf="showNotifications"
-                class="absolute right-0 mt-2 w-72 bg-white rounded-md shadow-lg z-50 animate-slide-in-right border border-gray-200"
+                class="absolute right-0 mt-2 w-72 bg-white rounded-md shadow-lg z-50 border border-gray-200 transform transition-all duration-200 ease-out origin-top-right"
+                [ngClass]="{'scale-100 opacity-100': showNotifications, 'scale-95 opacity-0': !showNotifications}"
+                (mouseenter)="resetNotificationTimeout()"
+                (mousemove)="resetNotificationTimeout()"
+                (click)="resetNotificationTimeout()"
               >
                 <div
                   class="px-4 py-2 border-b font-semibold text-gray-800 flex justify-between items-center"
                 >
-                  Notifications
+                  <div class="flex items-center gap-2">
+                    Notifications non lues
+                    <span class="bg-red-500 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full">
+                      {{ unreadCount }}
+                    </span>
+                  </div>
                   <button
                     class="text-xs text-blue-500 hover:underline"
                     (click)="markAllAsRead()"
@@ -94,20 +110,14 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                 </div>
 
                 <div
-                  *ngFor="let notif of notifications"
-                  class="px-4 py-2 hover:bg-gray-50 text-sm text-gray-700 border-b"
+                  *ngFor="let notif of unreadNotifications"
+                  class="px-4 py-2 hover:bg-gray-50 text-sm text-gray-700 border-b cursor-pointer"
+                  (click)="markAsRead(notif)"
                 >
-                  <div
-                    [ngClass]="{
-                      'font-semibold text-primary-600': !notif.read
-                    }"
-                  >
+                  <div class="font-semibold text-primary-600">
                     {{ notif.title }}
                   </div>
-                  <div
-                    class="text-xs text-gray-500 mt-1 cursor-pointer"
-                    (click)="markAsRead(notif)"
-                  >
+                  <div class="text-xs text-gray-500 mt-1">
                     {{ notif.message }}
                   </div>
 
@@ -118,10 +128,16 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                 </div>
 
                 <div
-                  *ngIf="notifications.length === 0"
+                  *ngIf="unreadNotifications.length === 0"
                   class="px-4 py-2 text-center text-sm text-gray-500"
                 >
-                  Aucune notification
+                  Aucune notification non lue
+                </div>
+
+                <div class="px-4 py-2 border-t text-center">
+                  <a routerLink="/notifications" class="text-xs text-blue-500 hover:underline">
+                    Voir toutes les notifications
+                  </a>
                 </div>
               </div>
             </div>
@@ -226,6 +242,10 @@ export class NavbarComponent {
 
   notifications: NotificationModel[] = [];
 
+  get unreadNotifications(): NotificationModel[] {
+    return this.notifications.filter(notif => !notif.read);
+  }
+
   constructor(
     public readonly authService: AuthService,
     private readonly notifcationService: NotificationMessageService,
@@ -236,6 +256,43 @@ export class NavbarComponent {
 
   ngOnInit(): void {
     this.loadNotificationsOnInit();
+    // Rafraîchir les notifications toutes les 2 minutes
+    this.startNotificationRefreshInterval();
+  }
+
+  private startNotificationRefreshInterval(): void {
+    // Rafraîchir les notifications en arrière-plan toutes les 2 minutes
+    setInterval(async () => {
+      const user = this.authService.getCurrentUser();
+      if (!user) return;
+
+      const garageId = user.garageId;
+      const emailClient = user.role === 'Client' ? user.email : '';
+      const role: 'Client' | 'Garage' = user.role === 'Client' ? 'Client' : 'Garage';
+
+      // Récupérer les nouvelles notifications
+      const newNotifications = await this.notifcationService.getAllLatestNotifications(
+        emailClient,
+        garageId,
+        role,
+        15
+      );
+
+      // Vérifier s'il y a de nouvelles notifications non lues
+      const currentUnreadCount = this.unreadCount;
+      this.notifications = newNotifications;
+
+      // Si de nouvelles notifications non lues sont arrivées, ajouter une animation
+      if (this.unreadCount > currentUnreadCount && this.unreadCount > 0) {
+        const badge = document.querySelector('.notification-badge');
+        if (badge) {
+          badge.classList.add('animate-bounce');
+          setTimeout(() => {
+            badge.classList.remove('animate-bounce');
+          }, 2000);
+        }
+      }
+    }, 120000); // 2 minutes
   }
 
   private async loadNotificationsOnInit(): Promise<void> {
@@ -247,13 +304,28 @@ export class NavbarComponent {
     const role: 'Client' | 'Garage' =
       user.role === 'Client' ? 'Client' : 'Garage';
 
+    // Charger toutes les notifications (15 maximum)
     this.notifications =
       await this.notifcationService.getAllLatestNotifications(
         emailClient,
         garageId,
         role,
-        5
+        15
       );
+
+    // Si des notifications non lues sont présentes, ajouter une animation au badge
+    if (this.unreadCount > 0) {
+      // Animation subtile pour attirer l'attention sur les nouvelles notifications
+      setTimeout(() => {
+        const badge = document.querySelector('.notification-badge');
+        if (badge) {
+          badge.classList.add('animate-bounce');
+          setTimeout(() => {
+            badge.classList.remove('animate-bounce');
+          }, 2000);
+        }
+      }, 1000);
+    }
   }
 
   routerProfile() {
@@ -270,8 +342,41 @@ export class NavbarComponent {
     this.showDropdown = !this.showDropdown;
   }
 
+  private notificationTimeout: any = null;
+  private lastInteraction: number = 0;
+
+  resetNotificationTimeout(): void {
+    // Mettre à jour le timestamp de la dernière interaction
+    this.lastInteraction = Date.now();
+
+    // Annuler le timeout existant
+    if (this.notificationTimeout) {
+      clearTimeout(this.notificationTimeout);
+    }
+
+    // Définir un nouveau timeout si les notifications sont affichées
+    if (this.showNotifications) {
+      this.notificationTimeout = setTimeout(() => {
+        // Vérifier si l'utilisateur a interagi récemment (dans les 5 dernières secondes)
+        if (Date.now() - this.lastInteraction > 5000) {
+          this.showNotifications = false;
+        } else {
+          // Sinon, réessayer plus tard
+          this.resetNotificationTimeout();
+        }
+      }, 10000); // 10 secondes
+    }
+  }
+
   async toggleNotifications(): Promise<void> {
     this.showNotifications = !this.showNotifications;
+
+    // Annuler tout timeout existant
+    if (this.notificationTimeout) {
+      clearTimeout(this.notificationTimeout);
+      this.notificationTimeout = null;
+    }
+
     if (!this.showNotifications) return;
 
     const user: User | null = this.authService.getCurrentUser();
@@ -282,13 +387,26 @@ export class NavbarComponent {
     const role: 'Client' | 'Garage' =
       user.role === 'Client' ? 'Client' : 'Garage';
 
+    // Charger toutes les notifications (10 maximum)
     this.notifications =
       await this.notifcationService.getAllLatestNotifications(
         emailClient,
         garageId,
         role,
-        5
+        10
       );
+
+    // Si aucune notification non lue, fermer automatiquement après 2 secondes
+    if (this.unreadCount === 0) {
+      this.notificationTimeout = setTimeout(() => {
+        this.showNotifications = false;
+      }, 2000);
+    } else {
+      // Sinon, fermer automatiquement après 15 secondes d'inactivité
+      this.notificationTimeout = setTimeout(() => {
+        this.showNotifications = false;
+      }, 15000);
+    }
   }
 
   get unreadCount(): number {
@@ -304,6 +422,10 @@ export class NavbarComponent {
     if (!notification.read) {
       await this.notifcationService.markAsRead(notification.id);
       notification.read = true;
+      if (notification.type === 'Devis')
+        this.router.navigate(['/quotes', notification.quoteId])
+      if (notification.type === 'Facture')
+        this.router.navigate(['/invoices', notification.quoteId])
     }
   }
 

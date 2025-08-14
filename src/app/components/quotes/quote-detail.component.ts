@@ -697,18 +697,20 @@ export class QuoteDetailComponent implements OnInit {
   rejectionMessage = '';
 
   constructor(
-    private garageDataService: GarageDataService,
-    private notificationService: NotificationService,
-    private pdfService: PDFService,
-    private route: ActivatedRoute,
+    private readonly garageDataService: GarageDataService,
+    private readonly notificationService: NotificationService,
+    private readonly pdfService: PDFService,
+    private readonly route: ActivatedRoute,
     public authService: AuthService
   ) {}
 
-  async ngOnInit(): Promise<void> {
-    this.quoteId = this.route.snapshot.paramMap.get('id');
-    if (this.quoteId) {
-      await this.loadQuoteData();
-    }
+  ngOnInit(){
+    (async()=> {
+      this.quoteId = this.route.snapshot.paramMap.get('id');
+      if (this.quoteId) {
+        await this.loadQuoteData();
+      }
+    })()
   }
 
   private async loadQuoteData(): Promise<void> {
@@ -732,7 +734,7 @@ export class QuoteDetailComponent implements OnInit {
         ]);
       }
     } catch (error) {
-      this.notificationService.showError('Failed to load quote data');
+      this.notificationService.showError('Failed to load quote data ' +error);
     } finally {
       this.isLoading = false;
     }
@@ -752,6 +754,7 @@ export class QuoteDetailComponent implements OnInit {
         read: false,
         garageId: this.quote.garageId,
         emailDesitnateur: null, // ou undefined, car c'est le garage qui est notifié
+        type: 'Devis'
       });
 
       this.quote.status = status;
@@ -760,7 +763,7 @@ export class QuoteDetailComponent implements OnInit {
       );
     } catch (error) {
       this.notificationService.showError(
-        `Failed to ${status.toLowerCase()} quote`
+        `Failed to ${status.toLowerCase()} quote ${error}`
       );
     }
   }
@@ -796,18 +799,19 @@ export class QuoteDetailComponent implements OnInit {
 
       // Enregistrement d'une notification
       await this.garageDataService.create('notifications', {
-        title: 'Devis n°${this.quote.quoteNumber} rejeté',
+        title: `Devis n°${this.quote.quoteNumber} rejeté`,
         message: `${this.rejectionTitle} – ${this.rejectionMessage}`,
         read: false,
         quoteId: this.quoteId,
         emailDesitnateur: null,
+        type: 'Devis'
       });
 
       this.quote.status = 'Rejected'; // mise à jour locale
       this.notificationService.showSuccess('Le devis a été rejeté.');
       this.showRejectionModal = false;
     } catch (error) {
-      this.notificationService.showError('Erreur lors du rejet du devis.');
+      this.notificationService.showError('Erreur lors du rejet du devis. ' +error);
     }
   }
 
@@ -828,7 +832,7 @@ export class QuoteDetailComponent implements OnInit {
       );
       this.notificationService.showSuccess('PDF downloaded successfully');
     } catch (error) {
-      this.notificationService.showError('Failed to generate PDF');
+      this.notificationService.showError('Failed to generate PDF ' + error);
     }
   }
 

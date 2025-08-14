@@ -1,20 +1,193 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
   <head>
-    <title>Multi-Garage Management System</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <base href="/">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚗</text></svg>">
+    <meta charset="utf-8" />
+    <title>Multi-Garage - Gestion de Garage Automobile</title>
+    <base href="/" />
+
+    <!-- Métadonnées pour mobile -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Multi-Garage" />
+
+    <!-- PWA et manifest -->
+    <meta name="theme-color" content="#22c55e" />
+    <meta name="msapplication-TileColor" content="#22c55e" />
+    <meta name="msapplication-navbutton-color" content="#22c55e" />
+
+    <!-- Description et mots-clés -->
+    <meta
+      name="description"
+      content="Application de gestion complète pour garages automobiles. Gestion des clients, véhicules, interventions et facturation."
+    />
+    <meta
+      name="keywords"
+      content="garage, automobile, gestion, clients, véhicules, interventions, facturation"
+    />
+    <meta name="author" content="Multi-Garage" />
+
+    <!-- Open Graph pour les réseaux sociaux -->
+    <meta
+      property="og:title"
+      content="Multi-Garage - Gestion de Garage Automobile"
+    />
+    <meta
+      property="og:description"
+      content="Application de gestion complète pour garages automobiles"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://multi-garage.com" />
+    <meta property="og:image" content="/image/logo.png" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Multi-Garage - Gestion de Garage Automobile"
+    />
+    <meta
+      name="twitter:description"
+      content="Application de gestion complète pour garages automobiles"
+    />
+    <meta name="twitter:image" content="/image/logo.png" />
+
+    <!-- Favicon et icônes -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/image/logo.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/image/logo.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/image/logo.png" />
+
+    <!-- Préchargement des polices -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Préchargement des ressources critiques -->
+    <link rel="preload" href="global_styles.css" as="style" />
+    <link rel="preload" href="styles.scss" as="style" />
+
+    <!-- Manifest PWA -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Styles critiques inline pour améliorer le LCP -->
+    <style>
+      /* Styles de base pour éviter le FOUC (Flash of Unstyled Content) */
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, sans-serif;
+        background-color: #f9fafb;
+        color: #111827;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* Loading spinner */
+      .loading-spinner {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      }
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Optimisations mobile */
+      * {
+        box-sizing: border-box;
+      }
+
+      /* Amélioration du scroll sur mobile */
+      html {
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Prévention du zoom sur iOS */
+      input,
+      select,
+      textarea {
+        font-size: 16px;
+      }
+
+      /* Optimisation des boutons tactiles */
+      button,
+      a,
+      [role="button"] {
+        min-height: 44px;
+        min-width: 44px;
+      }
+    </style>
   </head>
   <body>
+    <!-- Loading spinner pendant le chargement de l'application -->
+    <div id="loading" class="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Application Angular -->
     <app-root>
-      <div class="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div class="text-center">
-          <div class="text-6xl mb-4">🚗</div>
-          <div class="text-xl font-semibold text-gray-700">Loading Garage Manager...</div>
-        </div>
+      <!-- Contenu de fallback si JavaScript est désactivé -->
+      <div class="fallback-content">
+        <h1>Multi-Garage</h1>
+        <p>Application de gestion de garage automobile</p>
+        <p>Veuillez activer JavaScript pour utiliser l'application.</p>
       </div>
     </app-root>
+
+    <!-- Script pour masquer le loading spinner -->
+    <script>
+      // Masquer le loading spinner une fois l'application chargée
+      window.addEventListener("load", function () {
+        const loading = document.getElementById("loading");
+        if (loading) {
+          loading.style.opacity = "0";
+          setTimeout(() => {
+            loading.style.display = "none";
+          }, 300);
+        }
+      });
+
+      // Masquer le loading spinner si l'application Angular est prête
+      if (window.angular) {
+        window.angular.element(document).ready(function () {
+          const loading = document.getElementById("loading");
+          if (loading) {
+            loading.style.opacity = "0";
+            setTimeout(() => {
+              loading.style.display = "none";
+            }, 300);
+          }
+        });
+      }
+    </script>
   </body>
 </html>
