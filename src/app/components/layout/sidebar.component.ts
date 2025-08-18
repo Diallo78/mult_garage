@@ -72,8 +72,8 @@ import { trigger, transition, style, animate } from '@angular/animations';
       class="fixed inset-y-0 left-0 z-40 w-72 bg-gray-800 dark:bg-gray-900 text-white transform transition-all duration-300 ease-in-out shadow-xl
              lg:relative lg:translate-x-0 lg:w-64 lg:min-h-screen lg:shadow-none"
       [class.-translate-x-full]="!isSidebarOpen"
-      @slideInOut
     >
+    <!--       @slideInOut -->
       <!-- Header du sidebar -->
       <div class="p-4 border-b border-gray-700 dark:border-gray-800">
         <div class="flex items-center justify-between">

@@ -23,7 +23,8 @@ import { db } from '../../../firebase.config';
   providedIn: 'root'
 })
 export class GarageDataService {
-  private garageId: string | null = null;
+  private readonly garageId: string | null = null;
+
 
   constructor() {
     // this.authService.currentUser$.subscribe(user => {

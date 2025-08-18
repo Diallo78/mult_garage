@@ -218,134 +218,134 @@ import { UserManagementService } from '../../services/user-management.service';
 // }
 // }
 
-template: `
+  template: `
 
-<div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
-    <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
-</div>
+  <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-primary-500 border-solid"></div>
+  </div>
 
-<div *ngIf="!isLoading">
-  <div class="space-y-6">
-  <div class="md:flex md:items-center md:justify-between">
-    <div class="flex-1 min-w-0">
-      <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-        {{ isEditMode ? 'Modifier le client' : 'Ajouter un nouveau client' }}
-      </h2>
+  <div *ngIf="!isLoading">
+    <div class="space-y-6">
+    <div class="md:flex md:items-center md:justify-between">
+      <div class="flex-1 min-w-0">
+        <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          {{ isEditMode ? 'Modifier le client' : 'Ajouter un nouveau client' }}
+        </h2>
+      </div>
+    </div>
+
+    <div class="card">
+      <form [formGroup]="clientForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="form-label">Prénom *</label>
+            <input
+              type="text"
+              formControlName="firstName"
+              class="form-input"
+              [class.border-red-500]="clientForm.get('firstName')?.invalid && clientForm.get('firstName')?.touched"
+              placeholder="Enter first name"
+            />
+            <div *ngIf="clientForm.get('firstName')?.invalid && clientForm.get('firstName')?.touched" class="mt-1 text-sm text-red-600">
+              First name is required
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">Nom de famille *</label>
+            <input
+              type="text"
+              formControlName="lastName"
+              class="form-input"
+              [class.border-red-500]="clientForm.get('lastName')?.invalid && clientForm.get('lastName')?.touched"
+              placeholder="Enter last name"
+            />
+            <div *ngIf="clientForm.get('lastName')?.invalid && clientForm.get('lastName')?.touched" class="mt-1 text-sm text-red-600">
+              Last name is required
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">Téléphone *</label>
+            <input
+              type="tel"
+              formControlName="phone"
+              class="form-input"
+              [class.border-red-500]="clientForm.get('phone')?.invalid && clientForm.get('phone')?.touched"
+              placeholder="Enter phone number"
+            />
+            <div *ngIf="clientForm.get('phone')?.invalid && clientForm.get('phone')?.touched" class="mt-1 text-sm text-red-600">
+              Phone number is required
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">E-mail *</label>
+            <input
+              type="email"
+              formControlName="email"
+              class="form-input"
+              [class.border-red-500]="clientForm.get('email')?.invalid && clientForm.get('email')?.touched"
+              placeholder="Enter email address"
+            />
+            <div *ngIf="clientForm.get('email')?.invalid && clientForm.get('email')?.touched" class="mt-1 text-sm text-red-600">
+              Please enter a valid email address
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Creation Option -->
+        <div class="border rounded-lg p-4 bg-blue-50" *ngIf="!isEditMode">
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              formControlName="createAccount"
+              id="createAccount"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+            />
+            <label for="createAccount" class="ml-2 text-sm text-gray-700">
+              Créer un compte utilisateur pour le client (recommandé)
+            </label>
+          </div>
+          <p class="mt-2 text-xs text-gray-600">
+            Cela créera un compte utilisateur permettant au client de consulter ses devis, factures et l'historique de
+            son véhicule en ligne. Un e-mail de réinitialisation du mot de passe lui sera envoyé..
+          </p>
+        </div>
+
+        <div>
+          <label class="form-label">Address</label>
+          <textarea
+            formControlName="address"
+            rows="3"
+            class="form-input"
+            placeholder="Enter full address"
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end space-x-4">
+          <button
+            type="button"
+            (click)="goBack()"
+            class="btn-outline"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            [disabled]="clientForm.invalid || isLoading"
+            class="btn-primary"
+          >
+            <span *ngIf="isLoading" class="mr-2">Saving...</span>
+            {{ isEditMode ? 'Modifier un Client' : 'Créer un Client' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
-
-  <div class="card">
-    <form [formGroup]="clientForm" (ngSubmit)="onSubmit()" class="space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="form-label">Prénom *</label>
-          <input
-            type="text"
-            formControlName="firstName"
-            class="form-input"
-            [class.border-red-500]="clientForm.get('firstName')?.invalid && clientForm.get('firstName')?.touched"
-            placeholder="Enter first name"
-          />
-          <div *ngIf="clientForm.get('firstName')?.invalid && clientForm.get('firstName')?.touched" class="mt-1 text-sm text-red-600">
-            First name is required
-          </div>
-        </div>
-
-        <div>
-          <label class="form-label">Nom de famille *</label>
-          <input
-            type="text"
-            formControlName="lastName"
-            class="form-input"
-            [class.border-red-500]="clientForm.get('lastName')?.invalid && clientForm.get('lastName')?.touched"
-            placeholder="Enter last name"
-          />
-          <div *ngIf="clientForm.get('lastName')?.invalid && clientForm.get('lastName')?.touched" class="mt-1 text-sm text-red-600">
-            Last name is required
-          </div>
-        </div>
-
-        <div>
-          <label class="form-label">Téléphone *</label>
-          <input
-            type="tel"
-            formControlName="phone"
-            class="form-input"
-            [class.border-red-500]="clientForm.get('phone')?.invalid && clientForm.get('phone')?.touched"
-            placeholder="Enter phone number"
-          />
-          <div *ngIf="clientForm.get('phone')?.invalid && clientForm.get('phone')?.touched" class="mt-1 text-sm text-red-600">
-            Phone number is required
-          </div>
-        </div>
-
-        <div>
-          <label class="form-label">E-mail *</label>
-          <input
-            type="email"
-            formControlName="email"
-            class="form-input"
-            [class.border-red-500]="clientForm.get('email')?.invalid && clientForm.get('email')?.touched"
-            placeholder="Enter email address"
-          />
-          <div *ngIf="clientForm.get('email')?.invalid && clientForm.get('email')?.touched" class="mt-1 text-sm text-red-600">
-            Please enter a valid email address
-          </div>
-        </div>
-      </div>
-
-      <!-- Account Creation Option -->
-      <div class="border rounded-lg p-4 bg-blue-50" *ngIf="!isEditMode">
-        <div class="flex items-center">
-          <input
-            type="checkbox"
-            formControlName="createAccount"
-            id="createAccount"
-            class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-          />
-          <label for="createAccount" class="ml-2 text-sm text-gray-700">
-            Créer un compte utilisateur pour le client (recommandé)
-          </label>
-        </div>
-        <p class="mt-2 text-xs text-gray-600">
-          Cela créera un compte utilisateur permettant au client de consulter ses devis, factures et l'historique de
-          son véhicule en ligne. Un e-mail de réinitialisation du mot de passe lui sera envoyé..
-        </p>
-      </div>
-
-      <div>
-        <label class="form-label">Address</label>
-        <textarea
-          formControlName="address"
-          rows="3"
-          class="form-input"
-          placeholder="Enter full address"
-        ></textarea>
-      </div>
-
-      <div class="flex justify-end space-x-4">
-        <button
-          type="button"
-          (click)="goBack()"
-          class="btn-outline"
-        >
-          Annuler
-        </button>
-        <button
-          type="submit"
-          [disabled]="clientForm.invalid || isLoading"
-          class="btn-primary"
-        >
-          <span *ngIf="isLoading" class="mr-2">Saving...</span>
-          {{ isEditMode ? 'Modifier un Client' : 'Créer un Client' }}
-        </button>
-      </div>
-    </form>
   </div>
-</div>
-</div>
 
-`
+  `
 })
 export class ClientFormComponent implements OnInit {
 clientForm: FormGroup;
@@ -355,12 +355,12 @@ clientId: string | null = null;
 createAccount = true;
 _garageId!: string
 constructor(
-private fb: FormBuilder,
-private garageDataService: GarageDataService,
-private userManagementService: UserManagementService,
-private notificationService: NotificationService,
-private router: Router,
-private route: ActivatedRoute
+private readonly fb: FormBuilder,
+private readonly garageDataService: GarageDataService,
+private readonly userManagementService: UserManagementService,
+private readonly notificationService: NotificationService,
+private readonly router: Router,
+private readonly route: ActivatedRoute
 ) {
 this.clientForm = this.fb.group({
   firstName: ['', Validators.required],
@@ -372,13 +372,15 @@ this.clientForm = this.fb.group({
 });
 }
 
-async ngOnInit(): Promise<void> {
-  this.clientId = this.route.snapshot.paramMap.get('id');
-  this.isEditMode = !!this.clientId;
+ngOnInit() {
+  (async()=>{
+    this.clientId = this.route.snapshot.paramMap.get('id');
+    this.isEditMode = !!this.clientId;
 
-  if (this.isEditMode && this.clientId) {
-    await this.loadClient();
-  }
+    if (this.isEditMode && this.clientId) {
+      await this.loadClient();
+    }
+  })()
 }
 
 private async loadClient(): Promise<void> {
@@ -388,7 +390,7 @@ private async loadClient(): Promise<void> {
       this.clientForm.patchValue(client);
     }
   } catch (error) {
-    this.notificationService.showError('Failed to load client data');
+    this.notificationService.showError('Échec du chargement des données client. Veuillez réessayer. ' + error);
   }
 }
 
@@ -415,7 +417,7 @@ try {
 
   this.router.navigate(['/clients']);
 } catch (error) {
-  this.notificationService.showError('Échec de sauvegarde du client');
+  this.notificationService.showError('Échec de sauvegarde du client ' + error);
 } finally {
   this.isLoading = false;
 }

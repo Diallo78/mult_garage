@@ -23,13 +23,11 @@ import { Client } from '../models/client.model';
 import { Personnel } from '../models/garage.model';
 import { firstValueFrom } from 'rxjs';
 import { auth, db } from '../../../firebase.config';
-import { User as FirebaseUser } from 'firebase/auth';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserManagementService {
-
 
   constructor(
     private readonly authService: AuthService,
@@ -98,10 +96,9 @@ export class UserManagementService {
 
       return { clientId, userId: firebaseUser.uid };
     } catch (error: any) {
-      this.notificationService.showError(`Échec de création du compte client: ${error.message}`);
-      console.log(`Échec de création du compte client: ${error.message}`);
-
-      throw error;
+      const friendlyError = this.transformErrorToUserFriendly(error);
+      this.notificationService.showError(friendlyError.message);
+      throw friendlyError;
     }
   }
 
@@ -164,10 +161,9 @@ export class UserManagementService {
 
       return { personnelId, userId: firebaseUser.uid };
     } catch (error: any) {
-      this.notificationService.showError(`Échec de création du compte employé: ${error.message}`);
-      console.log(`Échec de création du compte employé: ${error.message}`);
-
-      throw error;
+      const friendlyError = this.transformErrorToUserFriendly(error);
+      this.notificationService.showError(friendlyError.message);
+      throw friendlyError;
     }
   }
 
@@ -390,6 +386,20 @@ export class UserManagementService {
       console.error('Error getting personnel by userId:', error);
       return null;
     }
+  }
+
+  private transformErrorToUserFriendly(error: any): Error {
+    const errorMap: Record<string, string> = {
+      'auth/email-already-in-use': 'Cette adresse email est déjà utilisée par un autre compte.',
+      'auth/invalid-email': 'Adresse email invalide.',
+      'auth/operation-not-allowed': 'Opération non autorisée.',
+      'auth/weak-password': 'Le mot de passe temporaire généré est trop faible (erreur système).',
+      'auth/network-request-failed': 'Problème de connexion. Veuillez vérifier votre accès internet.'
+    };
+
+    const defaultMessage = error.message || 'Une erreur inattendue est survenue lors de la création du compte client.';
+
+    return new Error(errorMap[error.code] || defaultMessage);
   }
 
 }
