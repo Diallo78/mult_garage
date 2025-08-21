@@ -78,7 +78,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
       <div class="p-4 border-b border-gray-700 dark:border-gray-800">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2">
-            <!-- <img src="/assets/logo.png" alt="Logo" class="h-8 w-8" *ngIf="logoUrl" /> -->
+            <!-- <img src="/image/logo2.jpg" alt="Logo" class="h-8 w-8" *ngIf="logoUrl" /> -->
             <h2 class="text-lg sm:text-xl font-semibold text-white">
               <!-- Multi Garage -->
                Navigation
@@ -219,7 +219,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                 </svg>
               </div>
-              <span class="truncate">Visites</span>
+              <span class="truncate">DA/Visites</span>
             </div>
           </a>
 
@@ -268,7 +268,8 @@ import { trigger, transition, style, animate } from '@angular/animations';
           routerLinkActive="bg-primary-600 text-white dark:bg-primary-700"
           (click)="closeSidebarOnMobile()"
           class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 transition-all duration-200 ease-in-out text-sm group mt-1"
-        >
+          *ngIf="authService.canAccessInterventions"
+          >
           <div class="flex items-center">
             <div class="mr-3 flex items-center justify-center w-8 h-8 rounded-md bg-teal-500 bg-opacity-20 text-teal-500 group-hover:bg-opacity-30 transition-all duration-200">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

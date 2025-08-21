@@ -415,6 +415,15 @@ import { FormsModule } from '@angular/forms';
               </div>
               <div>
                 <label class="text-xs sm:text-sm font-medium text-gray-500"
+                  >Kilométrage</label
+                >
+                <p class="mt-1 text-xs sm:text-sm text-gray-900">
+                  {{ quote.kilometrage }} km/h
+                </p>
+
+              </div>
+              <div>
+                <label class="text-xs sm:text-sm font-medium text-gray-500"
                   >Valide jusqu'au</label
                 >
                 <p class="mt-1 text-xs sm:text-sm text-gray-900">

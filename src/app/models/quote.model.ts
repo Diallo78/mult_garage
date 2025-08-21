@@ -16,7 +16,8 @@ export interface Quote {
     clientSignature?: string;
     createdAt: Date;
     updatedAt: Date;
-    rejectionReason?: RejectionReason
+    rejectionReason?: RejectionReason,
+    kilometrage?: string
   }
 
   export interface QuoteItem {

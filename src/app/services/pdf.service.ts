@@ -4,6 +4,7 @@ import { Quote } from '../models/quote.model';
 import { Invoice } from '../models/invoice.model';
 import { Diagnostic } from '../models/diagnostic.model';
 import autoTable, { RowInput } from 'jspdf-autotable';
+import { FirestoreDatePipeTS } from '../pipe/firestore-date.pipe';
 
 @Injectable({
   providedIn: 'root'
@@ -21,17 +22,17 @@ export class PDFService {
     const pageHeight = doc.internal.pageSize.getHeight();
 
     // --- LOGO ---
-    const logoBase64 = await this.getBase64FromUrl('/image/logo1.png');
+    const logoBase64 = await this.getBase64FromUrl('/image/logo2.jpg');
     doc.addImage(logoBase64, 'PNG', pageWidth - 50, 10, 40, 20);
 
     // --- INFO ENTREPRISE ---
     doc.setFont('times', 'normal');
     doc.setFontSize(12);
     const companyInfo = [
-      "Garage AutoPro - Expert en diagnostic automobile",
-      "Adresse : Quartier XYZ, Conakry, Guinée",
-      "Téléphone : +224 620 00 00 00 / +224 655 00 00 00",
-      "Email : contact@autopro.gn / support@autopro.gn",
+      "GARAGE HERVE VINCENT G-H-V",
+      "Adresse : Lambayi Ccarrefoure, Conakry, Guinée",
+      "Téléphone : +224 620 61 63 48 / +224 655 00 00 00",
+      "Email : garagehervevincentguinee@gmail.com",
       "Agrément : N°12345/MT/DG/2023"
     ];
     let y = 15;
@@ -130,9 +131,9 @@ export class PDFService {
     doc.setFontSize(9);
     doc.setFont('times', 'normal');
     doc.setTextColor(0);
-    doc.text('GARAGE AUTO PRO S.A - Capital social : 50 000 000 000 GNF - RC : 123456789', pageWidth / 2, footerY + 5, { align: 'center' });
-    doc.text('Siège social : Yimbaya Km 17, Commune de Matoto - BP : 4885 CONAKRY', pageWidth / 2, footerY + 10, { align: 'center' });
-    doc.text('Tél : (+224) 612 12 19 19 / 622 12 19 19 - Email : contact@autopro.gn', pageWidth / 2, footerY + 15, { align: 'center' });
+    doc.text('GARAGE HERVE VINCENT - Capital social : 50 000 000 000 GNF - RC : 123456789', pageWidth / 2, footerY + 5, { align: 'center' });
+    doc.text('Siège social : Quartie Lambanyi, Conakry - BP : 1234 CONAKRY', pageWidth / 2, footerY + 10, { align: 'center' });
+    doc.text('Tél : (+224) 620 61 63 48 / 655 00 00 00 - Email : garagehervevincentguinee@gmail.com', pageWidth / 2, footerY + 15, { align: 'center' });
     doc.text('Site web : www.autopro.gn - SIRET : 12345678900012', pageWidth / 2, footerY + 20, { align: 'center' });
 
     doc.save(`rapport-diagnostic-${diagnostic.id}.pdf`);
@@ -144,17 +145,17 @@ export class PDFService {
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // --- LOGO ---
-    const logoBase64 = await this.getBase64FromUrl('/image/logo1.png');
+    const logoBase64 = await this.getBase64FromUrl('/image/logo2.jpg');
     doc.addImage(logoBase64, 'PNG', pageWidth - 50, 10, 40, 20);
 
     // --- ENTREPRISE ---
     doc.setFont('times', 'normal');
     doc.setFontSize(12);
     const companyInfo = [
-      "Garage AutoPro - Expert en diagnostic automobile",
-      "Adresse : Quartier XYZ, Conakry, Guinée",
-      "Téléphone : +224 620 00 00 00 / +224 655 00 00 00",
-      "Email : contact@autopro.gn / support@autopro.gn",
+      "GARAGE HERVE VINCENT G-H-V",
+      "Adresse : Lambanyi Ccarrefoure, Conakry, Guinée",
+      "Téléphone : +224 620 61 63 48 / +224 655 00 00 00",
+      "Email : garagehervevincentguinee@gmail.com",
       "Agrément : N°12345/MT/DG/2023"
     ];
     let y = 15;
@@ -167,6 +168,7 @@ export class PDFService {
     doc.setFont('times', 'bold');
     doc.setFontSize(18);
     doc.text('DEVIS', pageWidth / 2, 50, { align: 'center' });
+    const pipeDate = new FirestoreDatePipeTS();
 
     // --- INFOS CLIENT ---
     doc.setFontSize(12);
@@ -174,9 +176,11 @@ export class PDFService {
     y = 65;
     doc.text(`Devis N° : ${quote.quoteNumber}`, 15, y);
     doc.text(`Date : ${new Date(quote.createdAt).toLocaleDateString()}`, 15, y + 6);
-    doc.text(`Valide jusqu'au : ${new Date(quote.validUntil).toLocaleDateString()}`, 15, y + 12);
+    doc.text(`Valide jusqu'au : ${pipeDate.transform(quote.validUntil)}`, 15, y + 12);
     doc.text(`Client : ${clientName}`, 15, y + 18);
     doc.text(`Véhicule : ${vehicleInfo}`, 15, y + 24);
+    doc.text(`Kilométrage : ${quote.kilometrage} km/h`, 15, y + 30);
+
 
     // --- TABLEAU ITEMS ---
     autoTable(doc, {
@@ -257,9 +261,9 @@ export class PDFService {
     doc.setFontSize(9);
     doc.setFont('times', 'normal');
     doc.setTextColor(0);
-    doc.text('Garage AutoPro - Agrément : N°12345/MT/DG/2023', pageWidth / 2, footerY + 5, { align: 'center' });
-    doc.text('Siège social : Quartier XYZ, Conakry - BP : 1234 CONAKRY', pageWidth / 2, footerY + 10, { align: 'center' });
-    doc.text('Tél : (+224) 620 00 00 00 / 655 00 00 00 - Email : contact@autopro.gn', pageWidth / 2, footerY + 15, { align: 'center' });
+    doc.text('Garage Herve Vincent - Agrément : N°12345/MT/DG/2023', pageWidth / 2, footerY + 5, { align: 'center' });
+    doc.text('Siège social : Quartier Lambanyi, Conakry - BP : 1234 CONAKRY', pageWidth / 2, footerY + 10, { align: 'center' });
+    doc.text('Tél : (+224) 620 62 63 48 / 655 00 00 00 - Email : garagehervevincentguinee@gmail.com', pageWidth / 2, footerY + 15, { align: 'center' });
     doc.text('Site web : www.autopro.gn - RC : 123456789', pageWidth / 2, footerY + 20, { align: 'center' });
 
     doc.save(`devis-${quote.quoteNumber}.pdf`);
@@ -271,17 +275,17 @@ export class PDFService {
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // --- LOGO ---
-    const logoBase64 = await this.getBase64FromUrl('/image/logo1.png'); // Assure-toi que cette fonction existe
+    const logoBase64 = await this.getBase64FromUrl('/image/logo2.jpg'); // Assure-toi que cette fonction existe
     doc.addImage(logoBase64, 'PNG', pageWidth - 50, 10, 40, 20);
 
     // --- ENTREPRISE INFO ---
     doc.setFont('times', 'normal');
     doc.setFontSize(12);
     const entrepriseInfo = [
-      "Garage AutoPro - Expert en diagnostic automobile",
-      "Adresse : Quartier XYZ, Conakry, Guinée",
-      "Téléphone : +224 620 00 00 00 / +224 655 00 00 00",
-      "Email : contact@autopro.gn / support@autopro.gn",
+      "GARAGE HERVE VINCENT G-H-V",
+      "Adresse : Lambanyi Ccarrefoure, Conakry, Guinée",
+      "Téléphone : +224 620 61 63 48 / +224 655 00 00 00",
+      "Email : garagehervevincentguinee@gmail.com",
       "Agrément : N°12345/MT/DG/2023"
     ];
     let y = 15;
@@ -401,9 +405,9 @@ export class PDFService {
     doc.setFontSize(9);
     doc.setFont('times', 'normal');
     doc.setTextColor(0);
-    doc.text('Garage AutoPro - Agrément : N°12345/MT/DG/2023', pageWidth / 2, footerY + 5, { align: 'center' });
-    doc.text('Siège social : Quartier XYZ, Conakry - BP : 1234 CONAKRY', pageWidth / 2, footerY + 10, { align: 'center' });
-    doc.text('Tél : (+224) 620 00 00 00 / 655 00 00 00 - Email : contact@autopro.gn', pageWidth / 2, footerY + 15, { align: 'center' });
+    doc.text('Garage Herve Vincent : N°12345/MT/DG/2023', pageWidth / 2, footerY + 5, { align: 'center' });
+    doc.text('Siège social : Quartier Lambanyi, Conakry - BP : 1234 CONAKRY', pageWidth / 2, footerY + 10, { align: 'center' });
+    doc.text('Tél : (+224) 620 61 63 48 / 655 00 00 00 - Email : garagehervevincentguinee@gmail.com', pageWidth / 2, footerY + 15, { align: 'center' });
     doc.text('Site web : www.autopro.gn - RC : 123456789', pageWidth / 2, footerY + 20, { align: 'center' });
 
     doc.save(`facture-${invoice.invoiceNumber}.pdf`);
@@ -415,7 +419,7 @@ export class PDFService {
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // ✅ Logo à droite
-    const logoBase64 = await this.getBase64FromUrl('/image/logo.png');
+    const logoBase64 = await this.getBase64FromUrl('/image/logo2.jpg');
     const logoWidth = 35;
     const logoHeight = 20;
     doc.addImage(logoBase64, 'PNG', pageWidth - logoWidth - 20, 10, logoWidth, logoHeight);
@@ -424,10 +428,10 @@ export class PDFService {
     doc.setFont('times', 'normal');
     doc.setFontSize(11);
     const companyInfo = [
-      "Garage AutoPro - Expert en diagnostic automobile",
-      "Adresse : Quartier XYZ, Conakry, Guinée",
-      "Téléphone : +224 620 00 00 00 / +224 655 00 00 00",
-      "Email : contact@autopro.gn / support@autopro.gn",
+      "GARAGE HERVE VINCENT G-H-V",
+      "Adresse : Lambanyi Ccarrefoure, Conakry, Guinée",
+      "Téléphone : +224 620 61 63 48 / +224 655 00 00 00",
+      "Email : garagehervevincentguinee@gmail.com",
       "Agrément : N°12345/MT/DG/2023"
     ];
     let y = 15;
@@ -502,9 +506,9 @@ export class PDFService {
     doc.setFontSize(9);
     doc.setFont('times', 'normal');
     doc.setTextColor(0);
-    doc.text('GARAGE EXPERT AUTO S.A - Capital social : 50 000 000 000 GNF - RC : 123456789', pageWidth / 2, footerY - 10, { align: 'center' });
-    doc.text('Siège social : Yimbaya Km 17, Commune de Matoto - BP : 4885 CONAKRY', pageWidth / 2, footerY - 5, { align: 'center' });
-    doc.text('Tél : (+224) 612 12 19 19 / 622 12 19 19 - Email : contact@garage-expert.com', pageWidth / 2, footerY, { align: 'center' });
+    doc.text('GARAGE HERVE VINCENT - Capital social : 50 000 000 000 GNF - RC : 123456789', pageWidth / 2, footerY - 10, { align: 'center' });
+    doc.text('Siège social : Quartier Lambanyi, Conakry - BP : 4885 CONAKRY', pageWidth / 2, footerY - 5, { align: 'center' });
+    doc.text('Tél : (+224) 620 61 63 48 / 655 00 00 00 - Email : garagehervevincentguinee@gmail.com', pageWidth / 2, footerY, { align: 'center' });
     doc.text('Site web : www.garage-expert.com - SIRET : 12345678900012', pageWidth / 2, footerY + 5, { align: 'center' });
 
     doc.save(`recu-${payment.id}.pdf`);

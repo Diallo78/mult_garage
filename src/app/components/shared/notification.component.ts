@@ -112,7 +112,7 @@ export class NotificationComponent implements OnInit {
     this.notifications$ = this.notificationService.notifications$;
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void { }
 
   removeNotification(id: string): void {
     this.notificationService.removeNotification(id);

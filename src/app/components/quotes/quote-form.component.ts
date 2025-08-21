@@ -20,7 +20,7 @@ import { firstValueFrom } from 'rxjs';
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
           <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Create Quote
+          Créer un devis
           </h2>
           <p class="text-lg text-gray-600">
             {{ vehicle.brand }} {{ vehicle.model }} - {{ client.firstName }} {{ client.lastName }}
@@ -31,9 +31,9 @@ import { firstValueFrom } from 'rxjs';
       <div class="card">
         <form [formGroup]="quoteForm" (ngSubmit)="onSubmit()" class="space-y-6">
           <!-- Quote Details -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label class="form-label">Quote Number</label>
+              <label class="form-label">Numéro de devis</label>
               <input
                 type="text"
                 formControlName="quoteNumber"
@@ -42,7 +42,7 @@ import { firstValueFrom } from 'rxjs';
               />
             </div>
             <div>
-              <label class="form-label">Valid Until *</label>
+              <label class="form-label">Date de validité *</label>
               <input
                 type="date"
                 formControlName="validUntil"
@@ -50,21 +50,29 @@ import { firstValueFrom } from 'rxjs';
                 [class.border-red-500]="quoteForm.get('validUntil')?.invalid && quoteForm.get('validUntil')?.touched"
               />
               <div *ngIf="quoteForm.get('validUntil')?.invalid && quoteForm.get('validUntil')?.touched" class="mt-1 text-sm text-red-600">
-                Valid until date is required
+                Date de validité est requise
               </div>
+            </div>
+            <div>
+              <label class="form-label">Kilométrage du véhicule</label>
+              <input
+                type="number"
+                formControlName="kilometrage"
+                class="form-input"
+              />
             </div>
           </div>
 
           <!-- Quote Items -->
           <div>
             <div class="flex items-center justify-between mb-4">
-              <label class="form-label">Quote Items *</label>
+              <label class="form-label">Détails du devis *</label>
               <button
                 type="button"
                 (click)="addItem()"
                 class="btn-secondary text-sm"
               >
-                Add Item
+                Ajouter un détail
               </button>
             </div>
 
@@ -114,7 +122,7 @@ import { firstValueFrom } from 'rxjs';
 
 
                   <div>
-                    <label class="form-label">Quantity *</label>
+                    <label class="form-label">Quantité *</label>
                     <input
                       type="number"
                       formControlName="quantity"
@@ -126,7 +134,7 @@ import { firstValueFrom } from 'rxjs';
                   </div>
 
                   <div>
-                    <label class="form-label">Unit Price *</label>
+                    <label class="form-label">Prix unitaire *</label>
                     <input
                       type="number"
                       formControlName="unitPrice"
@@ -140,7 +148,7 @@ import { firstValueFrom } from 'rxjs';
 
                 <div class="mt-3 flex items-center justify-between">
                   <div class="text-sm font-medium text-gray-900">
-                    Subtotal: \${{ getItemSubtotal(i).toFixed(2) }}
+                    Subtotal: GNF {{ getItemSubtotal(i).toFixed(2) }}
                   </div>
                   <button
                     type="button"
@@ -148,7 +156,7 @@ import { firstValueFrom } from 'rxjs';
                     class="text-red-600 hover:text-red-900 text-sm"
                     [disabled]="itemsArray.length === 1"
                   >
-                    Remove Item
+                    Retirer le détail
                   </button>
                 </div>
               </div>
@@ -158,7 +166,7 @@ import { firstValueFrom } from 'rxjs';
           <!-- VAT Rate -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label class="form-label">VAT Rate (%)</label>
+              <label class="form-label">Taux TVA (%)</label>
               <input
                 type="number"
                 formControlName="vatRate"
@@ -175,16 +183,16 @@ import { firstValueFrom } from 'rxjs';
           <div class="border-t pt-6">
             <div class="space-y-2 text-right">
               <div class="flex justify-between">
-                <span class="text-sm text-gray-600">Subtotal:</span>
-                <span class="text-sm font-medium">\${{ subtotal.toFixed(2) }}</span>
+                <span class="text-sm text-gray-600">Sous-total:</span>
+                <span class="text-sm font-medium">GNF {{ subtotal.toFixed(2) }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-sm text-gray-600">VAT ({{ quoteForm.get('vatRate')?.value }}%):</span>
-                <span class="text-sm font-medium">\${{ vatAmount.toFixed(2) }}</span>
+                <span class="text-sm text-gray-600">TVA ({{ quoteForm.get('vatRate')?.value }}%):</span>
+                <span class="text-sm font-medium">GNF {{ vatAmount.toFixed(2) }}</span>
               </div>
               <div class="flex justify-between text-lg font-bold">
                 <span>Total:</span>
-                <span>\${{ total.toFixed(2) }}</span>
+                <span>GNF {{ total.toFixed(2) }}</span>
               </div>
             </div>
           </div>
@@ -195,18 +203,18 @@ import { firstValueFrom } from 'rxjs';
               (click)="goBack()"
               class="btn-outline"
             >
-              Cancel
+              Annuler
             </button>
             <button
               type="submit"
               [disabled]="quoteForm.invalid || isLoading || !canEdit"
               class="btn-primary"
             >
-              <span *ngIf="isLoading" class="mr-2">Creating...</span>
-              Create Quote
+              <span *ngIf="isLoading" class="mr-2">Création en cours...</span>
+              Créer le devis
             </button>
             <div *ngIf="!canEdit" class="text-sm text-red-600">
-              You don't have permission to create/edit quotes
+              Vous n'avez pas les permissions pour créer/modifier des devis
             </div>
           </div>
         </form>
@@ -242,6 +250,7 @@ export class QuoteFormComponent implements OnInit {
     this.quoteForm = this.fb.group({
       quoteNumber: [''],
       validUntil: ['', Validators.required],
+      kilometrage: [''],
       vatRate: [18],
       items: this.fb.array([this.createItemGroup()])
     });
@@ -251,24 +260,24 @@ export class QuoteFormComponent implements OnInit {
     return this.quoteForm.get('items') as FormArray;
   }
 
-  ngOnInit(){
-    (async() => {
+  ngOnInit() {
+    (async () => {
       this.diagnosticId = this.route.snapshot.paramMap.get('diagnosticId');
-    if (this.diagnosticId) {
-      await this.loadDiagnosticData();
-      await this.loadStockParts(); //
-      this.generateQuoteNumber();
-      this.setDefaultValidUntil();
-      await this.checkEditPermissions();
-    }
+      if (this.diagnosticId) {
+        await this.loadDiagnosticData();
+        await this.loadStockParts(); //
+        this.generateQuoteNumber();
+        this.setDefaultValidUntil();
+        await this.checkEditPermissions();
+      }
     })()
   }
 
   private async checkEditPermissions(): Promise<void> {
-    const currentUser = await firstValueFrom(this.authService.currentUser$) ;
+    const currentUser = await firstValueFrom(this.authService.currentUser$);
     if (currentUser) {
       this.canEdit = this.userManagementService.hasPermission(currentUser.role, 'quotes:write') ||
-                     this.userManagementService.hasPermission(currentUser.role, 'quotes:approve');
+        this.userManagementService.hasPermission(currentUser.role, 'quotes:approve');
     }
   }
 
@@ -287,7 +296,7 @@ export class QuoteFormComponent implements OnInit {
         }
       }
     } catch (error) {
-      this.notificationService.showError('Failed to load diagnostic data ' + error);
+      this.notificationService.showError('Impossible de charger les données du diagnostic ' + error);
     }
   }
 
@@ -405,6 +414,7 @@ export class QuoteFormComponent implements OnInit {
         total: this.total,
         status: 'Pending',
         validUntil: new Date(formValue.validUntil),
+        kilometrage: formValue.kilometrage,
         revisionHistory: [],
         createdAt: new Date(),
         updatedAt: new Date()
@@ -420,7 +430,7 @@ export class QuoteFormComponent implements OnInit {
       // 2. Créer une notification associée au devis
       const notification = {
         title: 'Nouveau devis disponible',
-        message: `Un nouveau devis (N° ${formValue.quoteNumber}) est disponible.`,
+        message: `Un nouveau devis N° ${formValue.quoteNumber} est disponible.`,
         read: false,
         quoteId: quoteId,
         emailDesitnateur: this.client.email,
@@ -433,7 +443,7 @@ export class QuoteFormComponent implements OnInit {
 
       this.router.navigate(['/quotes']);
     } catch (error) {
-      this.notificationService.showError('Failed to create quote ' + error);
+      this.notificationService.showError('Impossible de créer le devis ' + error);
     } finally {
       this.isLoading = false;
     }

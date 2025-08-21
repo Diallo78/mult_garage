@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } fr
 import { Router, ActivatedRoute } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
-import { Invoice, InvoiceItem } from '../../models/invoice.model';
+import { Invoice } from '../../models/invoice.model';
 import { Intervention } from '../../models/intervention.model';
 import { Quote } from '../../models/quote.model';
 import { Client, Vehicle } from '../../models/client.model';
@@ -18,7 +18,7 @@ import { Client, Vehicle } from '../../models/client.model';
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
           <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Create Invoice
+          Créer une facture
           </h2>
           <p class="text-lg text-gray-600">
             {{ vehicle.brand }} {{ vehicle.model }} - {{ client.firstName }} {{ client.lastName }}
@@ -31,7 +31,7 @@ import { Client, Vehicle } from '../../models/client.model';
           <!-- Invoice Details -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label class="form-label">Invoice Number</label>
+              <label class="form-label">Numéro de facture</label>
               <input
                 type="text"
                 formControlName="invoiceNumber"
@@ -40,7 +40,7 @@ import { Client, Vehicle } from '../../models/client.model';
               />
             </div>
             <div>
-              <label class="form-label">Due Date *</label>
+              <label class="form-label">Date d'échéance *</label>
               <input
                 type="date"
                 formControlName="dueDate"
@@ -48,7 +48,7 @@ import { Client, Vehicle } from '../../models/client.model';
                 [class.border-red-500]="invoiceForm.get('dueDate')?.invalid && invoiceForm.get('dueDate')?.touched"
               />
               <div *ngIf="invoiceForm.get('dueDate')?.invalid && invoiceForm.get('dueDate')?.touched" class="mt-1 text-sm text-red-600">
-                Due date is required
+                Date d'échéance est requise
               </div>
             </div>
           </div>
@@ -56,13 +56,13 @@ import { Client, Vehicle } from '../../models/client.model';
           <!-- Invoice Items -->
           <div>
             <div class="flex items-center justify-between mb-4">
-              <label class="form-label">Invoice Items</label>
+              <label class="form-label">Items de la facture</label>
               <button
                 type="button"
                 (click)="addItem()"
                 class="btn-secondary text-sm"
               >
-                Add Item
+                Ajouter un item
               </button>
             </div>
 
@@ -91,7 +91,7 @@ import { Client, Vehicle } from '../../models/client.model';
                   </div>
 
                   <div>
-                    <label class="form-label">Quantity *</label>
+                    <label class="form-label">Quantité *</label>
                     <input
                       type="number"
                       formControlName="quantity"
@@ -103,7 +103,7 @@ import { Client, Vehicle } from '../../models/client.model';
                   </div>
 
                   <div>
-                    <label class="form-label">Unit Price *</label>
+                    <label class="form-label">Prix unitaire *</label>
                     <input
                       type="number"
                       formControlName="unitPrice"
@@ -117,7 +117,7 @@ import { Client, Vehicle } from '../../models/client.model';
 
                 <div class="mt-3 flex items-center justify-between">
                   <div class="text-sm font-medium text-gray-900">
-                    Subtotal: \${{ getItemSubtotal(i).toFixed(2) }}
+                    Subtotal: GNF {{ getItemSubtotal(i).toFixed(2) }}
                   </div>
                   <button
                     type="button"
@@ -125,7 +125,7 @@ import { Client, Vehicle } from '../../models/client.model';
                     class="text-red-600 hover:text-red-900 text-sm"
                     [disabled]="itemsArray.length === 1"
                   >
-                    Remove Item
+                    Supprimer l'item
                   </button>
                 </div>
               </div>
@@ -135,7 +135,7 @@ import { Client, Vehicle } from '../../models/client.model';
           <!-- Discount and VAT -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label class="form-label">Discount Amount</label>
+              <label class="form-label">Montant de remise</label>
               <input
                 type="number"
                 formControlName="discountAmount"
@@ -146,7 +146,7 @@ import { Client, Vehicle } from '../../models/client.model';
               />
             </div>
             <div>
-              <label class="form-label">VAT Rate (%)</label>
+              <label class="form-label">Taux de TVA (%)</label>
               <input
                 type="number"
                 formControlName="vatRate"
@@ -163,20 +163,20 @@ import { Client, Vehicle } from '../../models/client.model';
           <div class="border-t pt-6">
             <div class="space-y-2 text-right">
               <div class="flex justify-between">
-                <span class="text-sm text-gray-600">Subtotal:</span>
-                <span class="text-sm font-medium">\${{ subtotal.toFixed(2) }}</span>
+                <span class="text-sm text-gray-600">Sous-total:</span>
+                <span class="text-sm font-medium">GNF {{ subtotal.toFixed(2) }}</span>
               </div>
               <div class="flex justify-between" *ngIf="discountAmount > 0">
-                <span class="text-sm text-gray-600">Discount:</span>
-                <span class="text-sm font-medium">-\${{ discountAmount.toFixed(2) }}</span>
+                <span class="text-sm text-gray-600">Remise:</span>
+                <span class="text-sm font-medium">-GNF {{ discountAmount.toFixed(2) }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-sm text-gray-600">VAT ({{ invoiceForm.get('vatRate')?.value }}%):</span>
-                <span class="text-sm font-medium">\${{ vatAmount.toFixed(2) }}</span>
+                <span class="text-sm text-gray-600">TVA ({{ invoiceForm.get('vatRate')?.value }}%):</span>
+                <span class="text-sm font-medium">GNF {{ vatAmount.toFixed(2) }}</span>
               </div>
               <div class="flex justify-between text-lg font-bold">
                 <span>Total:</span>
-                <span>\${{ totalAmount.toFixed(2) }}</span>
+                <span>GNF {{ totalAmount.toFixed(2) }}</span>
               </div>
             </div>
           </div>
@@ -187,15 +187,15 @@ import { Client, Vehicle } from '../../models/client.model';
               (click)="goBack()"
               class="btn-outline"
             >
-              Cancel
+              Annuler
             </button>
             <button
               type="submit"
               [disabled]="invoiceForm.invalid || isLoading"
               class="btn-primary"
             >
-              <span *ngIf="isLoading" class="mr-2">Creating...</span>
-              Create Invoice
+              <span *ngIf="isLoading" class="mr-2">Création en cours...</span>
+              Créer la facture
             </button>
           </div>
         </form>
@@ -218,11 +218,11 @@ export class InvoiceFormComponent implements OnInit {
   totalAmount = 0;
 
   constructor(
-    private fb: FormBuilder,
-    private garageDataService: GarageDataService,
-    private notificationService: NotificationService,
-    private router: Router,
-    private route: ActivatedRoute
+    private readonly fb: FormBuilder,
+    private readonly garageDataService: GarageDataService,
+    private readonly notificationService: NotificationService,
+    private readonly router: Router,
+    private readonly route: ActivatedRoute
   ) {
     this.invoiceForm = this.fb.group({
       invoiceNumber: [''],
@@ -237,14 +237,16 @@ export class InvoiceFormComponent implements OnInit {
     return this.invoiceForm.get('items') as FormArray;
   }
 
-  async ngOnInit(): Promise<void> {
-    this.interventionId = this.route.snapshot.paramMap.get('interventionId');
-    if (this.interventionId) {
-      await this.loadInterventionData();
-      this.generateInvoiceNumber();
-      this.setDefaultDueDate();
-      this.populateItemsFromIntervention();
-    }
+  ngOnInit() {
+    (async () => {
+      this.interventionId = this.route.snapshot.paramMap.get('interventionId');
+      if (this.interventionId) {
+        await this.loadInterventionData();
+        this.generateInvoiceNumber();
+        this.setDefaultDueDate();
+        this.populateItemsFromIntervention();
+      }
+    })()
   }
 
   private async loadInterventionData(): Promise<void> {
@@ -416,10 +418,10 @@ export class InvoiceFormComponent implements OnInit {
 
       await this.garageDataService.create('notifications', notification);
 
-      this.notificationService.showSuccess('Invoice created successfully');
+      this.notificationService.showSuccess('Facture créée avec succès');
       this.router.navigate(['/invoices']);
     } catch (error) {
-      this.notificationService.showError('Failed to create invoice ' + error);
+      this.notificationService.showError('Échec de la création de la facture ' + error);
     } finally {
       this.isLoading = false;
     }

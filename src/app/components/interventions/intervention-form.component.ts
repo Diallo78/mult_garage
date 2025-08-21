@@ -20,7 +20,7 @@ import { Personnel } from '../../models/garage.model';
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
           <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Create Intervention
+            Créer une intervention
           </h2>
           <p class="text-lg text-gray-600">
             {{ vehicle.brand }} {{ vehicle.model }} - {{ client.firstName }} {{ client.lastName }}
@@ -33,7 +33,7 @@ import { Personnel } from '../../models/garage.model';
           <!-- Basic Information -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label class="form-label">Start Date *</label>
+              <label class="form-label">Date de début *</label>
               <input
                 type="datetime-local"
                 formControlName="startDate"
@@ -41,11 +41,11 @@ import { Personnel } from '../../models/garage.model';
                 [class.border-red-500]="interventionForm.get('startDate')?.invalid && interventionForm.get('startDate')?.touched"
               />
               <div *ngIf="interventionForm.get('startDate')?.invalid && interventionForm.get('startDate')?.touched" class="mt-1 text-sm text-red-600">
-                Start date is required
+                Date de début est requise
               </div>
             </div>
             <div>
-              <label class="form-label">Estimated Duration (hours) *</label>
+              <label class="form-label">Durée estimée (heures) *</label>
               <input
                 type="number"
                 formControlName="estimatedDuration"
@@ -55,7 +55,7 @@ import { Personnel } from '../../models/garage.model';
                 [class.border-red-500]="interventionForm.get('estimatedDuration')?.invalid && interventionForm.get('estimatedDuration')?.touched"
               />
               <div *ngIf="interventionForm.get('estimatedDuration')?.invalid && interventionForm.get('estimatedDuration')?.touched" class="mt-1 text-sm text-red-600">
-                Estimated duration is required
+                Durée estimée est requise
               </div>
             </div>
           </div>
@@ -63,7 +63,7 @@ import { Personnel } from '../../models/garage.model';
           <!-- Intervenants -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label class="form-label">Technicians *</label>
+              <label class="form-label">Techniciens *</label>
               <select
                 formControlName="technicians"
                 class="form-input"
@@ -74,23 +74,23 @@ import { Personnel } from '../../models/garage.model';
                 </option>
               </select>
               <div *ngIf="interventionForm.get('technicians')?.invalid && interventionForm.get('technicians')?.touched" class="text-red-500 text-sm">
-                At least one technician is required
+                Au moins un technicien est requis
               </div>
             </div>
 
             <div>
-              <label class="form-label">Group Leader *</label>
+              <label class="form-label">Chef d'équipe *</label>
               <select
                 formControlName="groupLeader"
                 class="form-input"
               >
-                <option value="">-- Select Group Leader --</option>
+                <option value="">-- Sélectionner le chef d'équipe --</option>
                 <option *ngFor="let tech of technicianList" [value]="tech.id">
                   {{ tech.name }}
                 </option>
               </select>
               <div *ngIf="interventionForm.get('groupLeader')?.invalid && interventionForm.get('groupLeader')?.touched" class="text-red-500 text-sm">
-                Group leader is required
+                Chef d'équipe est requis
               </div>
             </div>
           </div>
@@ -99,13 +99,13 @@ import { Personnel } from '../../models/garage.model';
           <!-- Tasks -->
           <div>
             <div class="flex items-center justify-between mb-4">
-              <label class="form-label">Intervention Tasks *</label>
+              <label class="form-label">Tâches d'intervention *</label>
               <button
                 type="button"
                 (click)="addTask()"
                 class="btn-secondary text-sm"
               >
-                Add Task
+                Ajouter une tâche
               </button>
             </div>
 
@@ -115,17 +115,17 @@ import { Personnel } from '../../models/garage.model';
                    class="border rounded-lg p-4 bg-gray-50">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div class="md:col-span-2">
-                    <label class="form-label">Task Description *</label>
+                    <label class="form-label">Description de la tâche *</label>
                     <input
                       type="text"
                       formControlName="description"
                       class="form-input"
-                      placeholder="Describe the task to be performed"
+                      placeholder="Décrire la tâche à effectuer"
                     />
                   </div>
 
                   <div>
-                    <label class="form-label">Estimated Time (hours)</label>
+                    <label class="form-label">Durée estimée (heures)</label>
                     <input
                       type="number"
                       formControlName="estimatedTime"
@@ -141,7 +141,7 @@ import { Personnel } from '../../models/garage.model';
                       formControlName="notes"
                       rows="2"
                       class="form-input"
-                      placeholder="Additional notes for this task"
+                      placeholder="Noter la tâche"
                     ></textarea>
                   </div>
                 </div>
@@ -153,7 +153,7 @@ import { Personnel } from '../../models/garage.model';
                     class="text-red-600 hover:text-red-900 text-sm"
                     [disabled]="tasksArray.length === 1"
                   >
-                    Remove Task
+                    Supprimer la tâche
                   </button>
                 </div>
               </div>
@@ -163,13 +163,13 @@ import { Personnel } from '../../models/garage.model';
           <!-- Used Parts -->
           <div>
             <div class="flex items-center justify-between mb-4">
-              <label class="form-label">Used Parts (Optional)</label>
+              <label class="form-label">Composants utilisés (facultatif)</label>
               <button
                 type="button"
                 (click)="addPart()"
                 class="btn-secondary text-sm"
               >
-                Add Part
+                Ajouter un composant
               </button>
             </div>
 
@@ -179,7 +179,7 @@ import { Personnel } from '../../models/garage.model';
                    class="border rounded-lg p-4 bg-gray-50">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
-                    <label class="form-label">Part Name</label>
+                    <label class="form-label">Nom du composant</label>
                     <input
                       type="text"
                       formControlName="partName"
@@ -189,7 +189,7 @@ import { Personnel } from '../../models/garage.model';
                   </div>
 
                   <div>
-                    <label class="form-label">Quantity</label>
+                    <label class="form-label">Quantité</label>
                     <input
                       type="number"
                       formControlName="quantity"
@@ -200,7 +200,7 @@ import { Personnel } from '../../models/garage.model';
                   </div>
 
                   <div>
-                    <label class="form-label">Unit Cost</label>
+                    <label class="form-label">Coût unitaire</label>
                     <input
                       type="number"
                       formControlName="unitCost"
@@ -212,7 +212,7 @@ import { Personnel } from '../../models/garage.model';
                   </div>
 
                   <div>
-                    <label class="form-label">Total Cost</label>
+                    <label class="form-label">Coût total</label>
                     <input
                       type="number"
                       formControlName="totalCost"
@@ -228,7 +228,7 @@ import { Personnel } from '../../models/garage.model';
                     (click)="removePart(i)"
                     class="text-red-600 hover:text-red-900 text-sm"
                   >
-                    Remove Part
+                    Supprimer le composant
                   </button>
                 </div>
               </div>
@@ -237,12 +237,12 @@ import { Personnel } from '../../models/garage.model';
 
           <!-- Status -->
           <div>
-            <label class="form-label">Status</label>
+            <label class="form-label">Statut</label>
             <select formControlName="status" class="form-input">
-              <option value="Scheduled">Scheduled</option>
-              <option value="InProgress">In Progress</option>
-              <option value="Completed">Completed</option>
-              <option value="OnHold">On Hold</option>
+              <option value="Scheduled">Planifiée</option>
+              <option value="InProgress">En cours</option>
+              <option value="Completed">Complétée</option>
+              <option value="OnHold">En pause</option>
             </select>
           </div>
 
@@ -252,15 +252,15 @@ import { Personnel } from '../../models/garage.model';
               (click)="goBack()"
               class="btn-outline"
             >
-              Cancel
+              Annuler
             </button>
             <button
               type="submit"
               [disabled]="interventionForm.invalid || isLoading"
               class="btn-primary"
             >
-              <span *ngIf="isLoading" class="mr-2">Creating...</span>
-              Create Intervention
+              <span *ngIf="isLoading" class="mr-2">Création en cours...</span>
+              Créer une intervention
             </button>
           </div>
         </form>
@@ -293,7 +293,7 @@ export class InterventionFormComponent implements OnInit {
       usedParts: this.fb.array([]),
       status: ['Scheduled'],
 
-       // 👇 Ajout pour les techniciens
+      // 👇 Ajout pour les techniciens
       technicians: [[], Validators.required],
       groupLeader: ['', Validators.required]
     });
@@ -335,7 +335,7 @@ export class InterventionFormComponent implements OnInit {
   }
 
   private async loadTechnicians(): Promise<void> {
-  const pers = await this.garageDataService.getAll<Personnel>('personnel');
+    const pers = await this.garageDataService.getAll<Personnel>('personnel');
     this.technicianList = pers
       .filter(p => p.role === 'Technician')
       .map(p => ({

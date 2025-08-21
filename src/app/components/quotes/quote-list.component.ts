@@ -37,6 +37,11 @@ import { AuthService } from '../../services/auth.service';
               Devis
             </h2>
           </div>
+          <div class="mt-4 flex md:mt-0 md:ml-4">
+            <button *ngIf="authService.canccessDashboard" routerLink="/quotes/new" class="btn-primary">
+              Créer un devis
+            </button>
+          </div>
         </div>
 
         <!-- Search and Filter -->
@@ -210,7 +215,7 @@ export class QuoteListComponent implements OnInit {
     private readonly garageDataService: GarageDataService,
     private readonly notificationService: NotificationService,
     public authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit() {
     (async () => {

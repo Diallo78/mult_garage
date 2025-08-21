@@ -21,7 +21,12 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
             <div
               class="text-lg sm:text-xl lg:text-2xl font-bold text-primary-600"
             >
-              🚗 <span class="ml-1 hidden xs:inline">GarageManager</span>
+              <!-- 🚗 <span class="ml-1 hidden xs:inline">GarageManager</span> -->
+              <img
+                src="/image/logo2.jpg"
+                alt="logo"
+                class="ml-2 h-10 w-45"
+              />
             </div>
           </div>
 

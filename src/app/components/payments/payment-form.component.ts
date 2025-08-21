@@ -39,7 +39,7 @@ import { Client, Vehicle } from '../../models/client.model';
               >Montant total</label
             >
             <p class="mt-1 text-lg font-bold text-gray-900">
-              \GNF {{ invoice.totalAmount.toFixed(2) }}
+              GNF {{ invoice.totalAmount.toFixed(2) }}
             </p>
           </div>
           <div>
@@ -47,13 +47,13 @@ import { Client, Vehicle } from '../../models/client.model';
               >Montant payé</label
             >
             <p class="mt-1 text-lg font-bold text-green-600">
-              \GNF {{ invoice.amountPaid.toFixed(2) }}
+              GNF {{ invoice.amountPaid.toFixed(2) }}
             </p>
           </div>
           <div>
             <label class="text-sm font-medium text-gray-500">Montant dû</label>
             <p class="mt-1 text-lg font-bold text-red-600">
-              \GNF {{ invoice.amountDue.toFixed(2) }}
+              GNF {{ invoice.amountDue.toFixed(2) }}
             </p>
           </div>
           <div>
@@ -111,7 +111,7 @@ import { Client, Vehicle } from '../../models/client.model';
                 >
               </div>
               <div class="mt-1 text-sm text-gray-500">
-                Maximum : \GNF {{ invoice.amountDue.toFixed(2) }}
+                Maximum : GNF {{ invoice.amountDue.toFixed(2) }}
               </div>
             </div>
 
@@ -196,7 +196,7 @@ import { Client, Vehicle } from '../../models/client.model';
                 <div class="flex justify-between">
                   <span class="text-sm text-gray-600">Montant dû actuel :</span>
                   <span class="text-sm font-medium"
-                    >\GNF {{ invoice.amountDue.toFixed(2) }}</span
+                    >GNF {{ invoice.amountDue.toFixed(2) }}</span
                   >
                 </div>
                 <div class="flex justify-between">
@@ -204,7 +204,7 @@ import { Client, Vehicle } from '../../models/client.model';
                     >Montant du paiement :</span
                   >
                   <span class="text-sm font-medium"
-                    >\GNF {{
+                    >GNF {{
                       (paymentForm.get('amount')?.value || 0).toFixed(2)
                     }}</span
                   >
@@ -219,7 +219,7 @@ import { Client, Vehicle } from '../../models/client.model';
                           : 'text-red-600'
                       "
                     >
-                      \GNF {{ getRemainingBalance().toFixed(2) }}
+                      GNF {{ getRemainingBalance().toFixed(2) }}
                     </span>
                   </div>
                 </div>

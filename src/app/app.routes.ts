@@ -167,6 +167,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'quotes/new',
+        loadComponent: () =>
+          import('./components/quotes/quote-form-new.component').then(
+            (m) => m.QuoteFormNewComponent
+          ),
+      },
+      {
         path: 'quotes/create/:diagnosticId',
         loadComponent: () =>
           import('./components/quotes/quote-form.component').then(
