@@ -38,9 +38,11 @@ import { AuthService } from '../../services/auth.service';
             </h2>
           </div>
           <div class="mt-4 flex md:mt-0 md:ml-4">
-            <button *ngIf="authService.canccessDashboard" routerLink="/quotes/new" class="btn-primary">
+          @if(this.authService.canBtnAccessInterventions){
+            <button  routerLink="/quotes/new" class="btn-primary">
               Créer un devis
             </button>
+          }
           </div>
         </div>
 

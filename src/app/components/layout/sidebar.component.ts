@@ -401,8 +401,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   currentUser$: Observable<User | null>;
   isSidebarOpen = false;
   isDarkTheme = false;
-  logoUrl = '/assets/logo.png';
-  private destroy$ = new Subject<void>();
+
+  private readonly destroy$ = new Subject<void>();
 
   // Notification counters
   notificationCount = {

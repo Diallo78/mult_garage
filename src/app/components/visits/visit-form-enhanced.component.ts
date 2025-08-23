@@ -473,7 +473,7 @@ export class VisitFormEnhancedComponent implements OnInit {
         this.garageDataService.getAll<Vehicle>('vehicles'),
       ]);
     } catch (error) {
-      this.notificationService.showError('Échec du chargement des données.');
+      this.notificationService.showError('Échec du chargement des données. ' + error);
       console.log('Échec du chargement des données ' + error);
     } finally {
       this.isLoading = false;
@@ -689,7 +689,7 @@ export class VisitFormEnhancedComponent implements OnInit {
 
       this.router.navigate(['/visits']);
     } catch (error) {
-      this.notificationService.showError('Failed to save visit');
+      this.notificationService.showError('Failed to save visit ' + error);
     } finally {
       this.isLoading = false;
     }

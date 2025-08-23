@@ -24,7 +24,7 @@ import { NotificationService } from '../../services/notification.service';
         <!-- Form Section -->
         <div class="w-full lg:w-1/2 bg-white p-8 sm:p-12 space-y-8">
           <div class="flex items-center space-x-3">
-            <img src="image/logo1.png" alt="Logo" class="h-10 w-auto" />
+            <img src="/image/logo2.jpg" alt="Logo" class="h-10 w-auto" />
             <span class="text-2xl font-bold text-gray-700"
               >GuiDev -  Multi-Garage</span
             >

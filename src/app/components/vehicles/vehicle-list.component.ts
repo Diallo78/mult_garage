@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -482,7 +482,7 @@ export class VehicleListComponent implements OnInit {
         this.filterVehicles();
         this.notificationService.showSuccess('Vehicle deleted successfully');
       } catch (error) {
-        this.notificationService.showError('Failed to delete vehicle');
+        this.notificationService.showError('Failed to delete vehicle ' +error);
       }
     }
   }
