@@ -186,8 +186,9 @@ export class VehicleFormComponent implements OnInit {
     });
   }
 
-  async ngOnInit(): Promise<void> {
+ ngOnInit() {
 
+    (async() =>{
       this.vehicleId = this.route.snapshot.paramMap.get('id');
       this.isEditMode = !!this.vehicleId;
       await this.loadClients();
@@ -201,6 +202,7 @@ export class VehicleFormComponent implements OnInit {
       if (this.isEditMode && this.vehicleId) {
         await this.loadVehicle();
       }
+    })()
 
   }
 

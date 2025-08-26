@@ -7,6 +7,8 @@ import { StorageService } from '../../services/storage.service';
 import { NotificationService } from '../../services/notification.service';
 import { Visit, Client, Vehicle } from '../../models/client.model';
 import { FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
+import { AuthService } from '../../services/auth.service';
+import { UserManagementService } from '../../services/user-management.service';
 
 interface VisitDocument {
   id: string;
@@ -22,7 +24,7 @@ interface VisitDocument {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
-    <div *ngIf="_isLoading" class="flex justify-center items-center h-[60vh]">
+    <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
       <div class="animate-pulse flex flex-col items-center">
         <div
           class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-500"
@@ -31,7 +33,7 @@ interface VisitDocument {
       </div>
     </div>
 
-    <div *ngIf="!_isLoading">
+    <div *ngIf="!isLoading">
       <div class="space-y-6">
         <div class="md:flex md:items-center md:justify-between">
           <div class="flex-1 min-w-0">
@@ -416,7 +418,10 @@ export class VisitFormEnhancedComponent implements OnInit {
     private readonly storageService: StorageService,
     private readonly notificationService: NotificationService,
     private readonly router: Router,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly authService: AuthService,
+    private readonly userManagementService: UserManagementService,
+
   ) {
     this.visitForm = this.fb.group({
       visitDate: ['', Validators.required],
@@ -438,14 +443,17 @@ export class VisitFormEnhancedComponent implements OnInit {
   }
 
   ngOnInit() {
-    this._isLoading = true;
     (async () => {
+
       this.visitId = this.route.snapshot.paramMap.get('id');
       this.isEditMode = !!this.visitId;
 
-      await this.loadData();
+      if (this.authService.isClient)
+        {await this.loadDataClient();}
+      else
+        {await this.loadDataGarage();}
 
-      // Pre-select client and vehicle if provided in query params
+      // Présélectionnez le client et le véhicule si fournis dans les paramètres de requête
       const clientId = this.route.snapshot.queryParamMap.get('clientId');
       const vehicleId = this.route.snapshot.queryParamMap.get('vehicleId');
 
@@ -462,10 +470,38 @@ export class VisitFormEnhancedComponent implements OnInit {
         await this.loadVisit();
       }
     })();
-    this._isLoading = false;
   }
 
-  private async loadData(): Promise<void> {
+  private async loadDataClient(): Promise<void> {
+    this.isLoading = true;
+    try {
+      const currentUser = this.authService.getCurrentUser();
+      if (currentUser) {
+        // Utiliser le service de gestion des utilisateurs
+        const client = (await this.userManagementService.getClientByUserId(
+          currentUser.uid
+        )) as Client;
+        console.log(client);
+
+        if (client) {
+          // Étape 1 : récupérer les véhicules du client
+          this.vehicles = await this.garageDataService.getWithFilter<Vehicle>(
+            'vehicles',
+            [{ field: 'clientId', operator: '==', value: client.id }]
+          );
+          this.clients.push(client);
+        }
+      }
+
+    } catch (error) {
+      this.notificationService.showError('Échec du chargement des données. ' + error);
+      console.log('Échec du chargement des données ' + error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  private async loadDataGarage(): Promise<void> {
     this.isLoading = true;
     try {
       [this.clients, this.vehicles] = await Promise.all([

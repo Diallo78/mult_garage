@@ -2,8 +2,10 @@ import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ThemeService } from '../../services/theme.service';
 import { User } from '../../models/user.model';
 import { Observable, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { trigger, transition, style, animate } from '@angular/animations';
 
 @Component({
@@ -415,20 +417,18 @@ export class SidebarComponent implements OnInit, OnDestroy {
     stockDashboard: 2
   };
 
-  constructor(public authService: AuthService) {
+  constructor(
+    public authService: AuthService,
+    public themeService: ThemeService
+  ) {
     this.currentUser$ = this.authService.currentUser$;
   }
 
   ngOnInit(): void {
-    // Check for saved theme preference
-    const savedTheme = localStorage.getItem('theme');
-    this.isDarkTheme = savedTheme === 'dark';
-    this.applyTheme();
-
-    // Subscribe to theme changes if needed
-    // this.themeService.isDarkTheme$.pipe(takeUntil(this.destroy$)).subscribe(isDark => {
-    //   this.isDarkTheme = isDark;
-    // });
+    // Subscribe to theme changes
+    this.themeService.isDarkTheme$.pipe(takeUntil(this.destroy$)).subscribe(isDark => {
+      this.isDarkTheme = isDark;
+    });
   }
 
   ngOnDestroy(): void {
@@ -437,17 +437,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   toggleTheme(): void {
-    this.isDarkTheme = !this.isDarkTheme;
-    localStorage.setItem('theme', this.isDarkTheme ? 'dark' : 'light');
-    this.applyTheme();
-  }
-
-  applyTheme(): void {
-    if (this.isDarkTheme) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    this.themeService.toggleTheme();
   }
 
   toggleSidebar(): void {

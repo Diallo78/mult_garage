@@ -34,6 +34,7 @@ export class AppComponent implements OnInit {
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
       // Auto-redirect logic can be added here
+     
     });
   }
 

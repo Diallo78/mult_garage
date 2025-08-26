@@ -5,6 +5,8 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Client, Vehicle, Visit } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
+import { AuthService } from '../../services/auth.service';
+import { UserManagementService } from '../../services/user-management.service';
 
 
 @Component({
@@ -191,7 +193,9 @@ export class VisitFormComponent implements OnInit {
     private garageDataService: GarageDataService,
     private notificationService: NotificationService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private readonly authService: AuthService,
+    private readonly userManagementService: UserManagementService,
   ) {
     this.visitForm = this.fb.group({
       visitDate: ['', Validators.required],
@@ -211,41 +215,84 @@ export class VisitFormComponent implements OnInit {
     return this.visitForm.get('reportedIssues') as FormArray;
   }
 
-  async ngOnInit(): Promise<void> {
-    this.visitId = this.route.snapshot.paramMap.get('id');
-    this.isEditMode = !!this.visitId;
+  ngOnInit() {
+    (async () => {
 
-    await this.loadData();
+      this.visitId = this.route.snapshot.paramMap.get('id');
+      this.isEditMode = !!this.visitId;
 
-    // Pre-select client and vehicle if provided in query params
-    const clientId = this.route.snapshot.queryParamMap.get('clientId');
-    const vehicleId = this.route.snapshot.queryParamMap.get('vehicleId');
+      if (this.authService.isClient)
+        await this.loadDataClient();
+      else
+        await this.loadDataGarage();
 
-    if (clientId) {
-      this.visitForm.patchValue({ clientId });
-      this.onClientChange();
-    }
+      // Présélectionnez le client et le véhicule si fournis dans les paramètres de requête
+      const clientId = this.route.snapshot.queryParamMap.get('clientId');
+      const vehicleId = this.route.snapshot.queryParamMap.get('vehicleId');
 
-    if (vehicleId) {
-      this.visitForm.patchValue({ vehicleId });
-    }
+      if (clientId) {
+        this.visitForm.patchValue({ clientId });
+        this.onClientChange();
+      }
 
-    if (this.isEditMode && this.visitId) {
-      await this.loadVisit();
+      if (vehicleId) {
+        this.visitForm.patchValue({ vehicleId });
+      }
+
+      if (this.isEditMode && this.visitId) {
+        await this.loadVisit();
+      }
+    })();
+  }
+
+  private async loadDataClient(): Promise<void> {
+    this.isLoading = true;
+    try {
+      const currentUser = this.authService.getCurrentUser();
+      if (currentUser) {
+        // Utiliser le service de gestion des utilisateurs
+        const client = (await this.userManagementService.getClientByUserId(
+          currentUser.uid
+        )) as Client;
+        console.log(client);
+
+
+        if (client) {
+          // Étape 1 : récupérer les véhicules du client
+          this.vehicles = await this.garageDataService.getWithFilter<Vehicle>(
+            'vehicles',
+            [{ field: 'clientId', operator: '==', value: client.id }]
+          );
+          this.clients.push(client);
+        }
+      }
+
+      [this.clients, this.vehicles] = await Promise.all([
+        this.garageDataService.getAll<Client>('clients'),
+        this.garageDataService.getAll<Vehicle>('vehicles'),
+      ]);
+    } catch (error) {
+      this.notificationService.showError('Échec du chargement des données. ' + error);
+      console.log('Échec du chargement des données ' + error);
+    } finally {
+      this.isLoading = false;
     }
   }
 
-  private async loadData(): Promise<void> {
+  private async loadDataGarage(): Promise<void> {
+    this.isLoading = true;
     try {
       [this.clients, this.vehicles] = await Promise.all([
         this.garageDataService.getAll<Client>('clients'),
-        this.garageDataService.getAll<Vehicle>('vehicles')
+        this.garageDataService.getAll<Vehicle>('vehicles'),
       ]);
     } catch (error) {
-      this.notificationService.showError('Failed to load data');
+      this.notificationService.showError('Échec du chargement des données. ' + error);
+      console.log('Échec du chargement des données ' + error);
+    } finally {
+      this.isLoading = false;
     }
   }
-
   private async loadVisit(): Promise<void> {
     try {
       const visit = await this.garageDataService.getById<Visit>('visits', this.visitId!);

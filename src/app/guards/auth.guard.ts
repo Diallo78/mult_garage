@@ -13,10 +13,18 @@ export class AuthGuard {
   ) {}
 
   canActivate() {
+    // Vérifier d'abord si un garageId existe dans localStorage
+    // Ce qui indique qu'un utilisateur était connecté précédemment
+    const garageId = localStorage.getItem('garageId');
+    
     return this.authService.currentUser$.pipe(
       take(1),
       map(user => {
         if (user) {
+          return true;
+        } else if (garageId) {
+          // Si garageId existe mais l'utilisateur n'est pas encore chargé,
+          // permettre l'accès et laisser le service d'authentification gérer l'état
           return true;
         } else {
           this.router.navigate(['/login']);

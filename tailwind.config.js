@@ -69,6 +69,7 @@ module.exports = {
           "Arial",
           '"Noto Sans"',
           "sans-serif",
+          'Poppins', 'sans-serif'
         ],
         serif: [
           // Garde tes polices serif pour desktop
