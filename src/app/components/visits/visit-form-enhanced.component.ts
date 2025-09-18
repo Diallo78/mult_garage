@@ -1,6 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  FormArray,
+  Validators,
+  ReactiveFormsModule,
+  FormsModule,
+} from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { StorageService } from '../../services/storage.service';
@@ -9,6 +16,7 @@ import { Visit, Client, Vehicle } from '../../models/client.model';
 import { FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 import { AuthService } from '../../services/auth.service';
 import { UserManagementService } from '../../services/user-management.service';
+import { DiagnosticCategory } from '../../models/diagnostic.model';
 
 interface VisitDocument {
   id: string;
@@ -211,38 +219,143 @@ interface VisitDocument {
               <div
                 *ngIf="visitForm.get('declarationMethod')?.value === 'manual'"
               >
-                <div class="flex items-center justify-between mb-4">
-                  <label class="form-label">Problèmes signalés *</label>
-                  <button
-                    type="button"
-                    (click)="addIssue()"
-                    class="btn-secondary text-sm"
+                <div class="mb-6">
+                  <label class="form-label"
+                    >Sélectionnez les problèmes signalés *</label
                   >
-                    Ajouter un problème
-                  </button>
+                  <p class="text-sm text-gray-600 mb-4">
+                    Choisissez parmi les catégories de problèmes prédéfinis ou
+                    ajoutez des problèmes personnalisés.
+                  </p>
+
+                  <!-- Accordéons pour les catégories de problèmes -->
+                  <div class="space-y-3">
+                    <div
+                      *ngFor="let groupName of Object.keys(groupedCategories)"
+                      class="border border-gray-200 rounded-lg"
+                    >
+                      <!-- En-tête de l'accordéon -->
+                      <button
+                        type="button"
+                        (click)="toggleGroup(groupName)"
+                        class="w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset rounded-lg flex items-center justify-between"
+                      >
+                        <div class="flex items-center space-x-3">
+                          <svg
+                            class="w-5 h-5 text-gray-500 transition-transform duration-200"
+                            [class.rotate-90]="expandedGroups[groupName]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                          <span class="font-medium text-gray-900">{{
+                            groupName
+                          }}</span>
+                          <span class="text-sm text-gray-500">
+                            ({{
+                              groupedCategories[groupName].length
+                            }}
+                            problème{{
+                              groupedCategories[groupName].length > 1
+                                ? 's'
+                                : ''
+                            }})
+                          </span>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                          {{
+                            expandedGroups[groupName] ? 'Masquer' : 'Afficher'
+                          }}
+                        </div>
+                      </button>
+
+                      <!-- Contenu de l'accordéon -->
+                      <div
+                        *ngIf="expandedGroups[groupName]"
+                        class="px-4 py-3 bg-white border-t border-gray-200"
+                      >
+                        <div class="space-y-2">
+                          <div
+                            *ngFor="
+                              let category of groupedCategories[groupName]
+                            "
+                            class="flex items-start space-x-3"
+                          >
+                            <input
+                              type="checkbox"
+                              [id]="'problem-' + category.id"
+                              [checked]="isProblemSelected(category.id)"
+                              (change)="
+                                onProblemCheckboxChange(
+                                  category.id,
+                                  $any($event.target).checked
+                                )
+                              "
+                              class="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                            />
+                            <label
+                              [for]="'problem-' + category.id"
+                              class="flex-1 cursor-pointer"
+                            >
+                              <div class="font-medium text-gray-900">
+                                {{ category.categorie }}
+                              </div>
+                              <div
+                                *ngIf="category.description"
+                                class="text-sm text-gray-600 mt-1"
+                              >
+                                {{ category.description }}
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div formArrayName="reportedIssues" class="space-y-3">
-                  <div
-                    *ngFor="
-                      let issue of reportedIssuesArray.controls;
-                      let i = index
-                    "
-                    class="flex items-center space-x-3"
-                  >
-                    <input
-                      type="text"
-                      [formControlName]="i"
-                      class="form-input flex-1"
-                      placeholder="Describe the issue"
-                    />
+
+                <!-- Problèmes personnalisés -->
+                <div class="mt-6">
+                  <div class="flex items-center justify-between mb-4">
+                    <label class="form-label">Problèmes personnalisés</label>
                     <button
                       type="button"
-                      (click)="removeIssue(i)"
-                      class="text-red-600 hover:text-red-900"
-                      [disabled]="reportedIssuesArray.length === 1"
+                      (click)="addIssue()"
+                      class="btn-secondary text-sm"
                     >
-                      Retirer
+                      Ajouter un problème
                     </button>
+                  </div>
+                  <div formArrayName="reportedIssues" class="space-y-3">
+                    <div
+                      *ngFor="
+                        let issue of reportedIssuesArray.controls;
+                        let i = index
+                      "
+                      class="flex items-center space-x-3"
+                    >
+                      <input
+                        type="text"
+                        [formControlName]="i"
+                        class="form-input flex-1"
+                        placeholder="Décrivez le problème personnalisé"
+                      />
+                      <button
+                        type="button"
+                        (click)="removeIssue(i)"
+                        class="text-red-600 hover:text-red-900 px-2 py-1"
+                        [disabled]="reportedIssuesArray.length === 1"
+                      >
+                        Retirer
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -420,8 +533,7 @@ export class VisitFormEnhancedComponent implements OnInit {
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly authService: AuthService,
-    private readonly userManagementService: UserManagementService,
-
+    private readonly userManagementService: UserManagementService
   ) {
     this.visitForm = this.fb.group({
       visitDate: ['', Validators.required],
@@ -442,45 +554,15 @@ export class VisitFormEnhancedComponent implements OnInit {
     return this.visitForm.get('reportedIssues') as FormArray;
   }
 
-  ngOnInit() {
-    (async () => {
-
-      this.visitId = this.route.snapshot.paramMap.get('id');
-      this.isEditMode = !!this.visitId;
-
-      if (this.authService.isClient)
-        {await this.loadDataClient();}
-      else
-        {await this.loadDataGarage();}
-
-      // Présélectionnez le client et le véhicule si fournis dans les paramètres de requête
-      const clientId = this.route.snapshot.queryParamMap.get('clientId');
-      const vehicleId = this.route.snapshot.queryParamMap.get('vehicleId');
-
-      if (clientId) {
-        this.visitForm.patchValue({ clientId });
-        this.onClientChange();
-      }
-
-      if (vehicleId) {
-        this.visitForm.patchValue({ vehicleId });
-      }
-
-      if (this.isEditMode && this.visitId) {
-        await this.loadVisit();
-      }
-    })();
-  }
-
   private async loadDataClient(): Promise<void> {
     this.isLoading = true;
     try {
       const currentUser = this.authService.getCurrentUser();
       if (currentUser) {
         // Utiliser le service de gestion des utilisateurs
-        const client = (await this.userManagementService.getClientByUserId(
+        const client = await this.userManagementService.getClientByUserId(
           currentUser.uid
-        )) as Client;
+        );
         console.log(client);
 
         if (client) {
@@ -492,9 +574,10 @@ export class VisitFormEnhancedComponent implements OnInit {
           this.clients.push(client);
         }
       }
-
     } catch (error) {
-      this.notificationService.showError('Échec du chargement des données. ' + error);
+      this.notificationService.showError(
+        'Échec du chargement des données. ' + error
+      );
       console.log('Échec du chargement des données ' + error);
     } finally {
       this.isLoading = false;
@@ -509,7 +592,9 @@ export class VisitFormEnhancedComponent implements OnInit {
         this.garageDataService.getAll<Vehicle>('vehicles'),
       ]);
     } catch (error) {
-      this.notificationService.showError('Échec du chargement des données. ' + error);
+      this.notificationService.showError(
+        'Échec du chargement des données. ' + error
+      );
       console.log('Échec du chargement des données ' + error);
     } finally {
       this.isLoading = false;
@@ -530,11 +615,8 @@ export class VisitFormEnhancedComponent implements OnInit {
 
         // Add issues from visit
         if (visit.reportedIssues && visit.reportedIssues.length > 0) {
-          visit.reportedIssues.forEach((issue) => {
-            this.reportedIssuesArray.push(
-              this.fb.control(issue, Validators.required)
-            );
-          });
+          // Charger les problèmes existants dans les checkboxes
+          this.loadExistingProblems(visit.reportedIssues);
           this.visitForm.patchValue({ declarationMethod: 'manual' });
         } else {
           // Load documents if no manual issues
@@ -736,6 +818,304 @@ export class VisitFormEnhancedComponent implements OnInit {
   }
 
   private generateId(): string {
-    return Math.random().toString(36).substr(2, 9);
+    return Math.random().toString(36).substring(2, 11);
+  }
+
+  // Système d'accordéons pour les problèmes signalés
+  allDiagnosticCategories: DiagnosticCategory[] = [];
+  groupedCategories: { [key: string]: DiagnosticCategory[] } = {};
+  selectedProblems: string[] = [];
+  expandedGroups: { [key: string]: boolean } = {};
+
+  // Méthode pour accéder à Object.keys dans le template
+  Object = Object;
+
+  ngOnInit() {
+    (async () => {
+      this.visitId = this.route.snapshot.paramMap.get('id');
+      this.isEditMode = !!this.visitId;
+
+      // Charger et grouper les catégories de diagnostic au démarrage
+      await this.loadAndGroupDiagnosticCategories();
+
+      if (this.authService.isClient) {
+        await this.loadDataClient();
+      } else {
+        await this.loadDataGarage();
+      }
+
+      // Présélectionnez le client et le véhicule si fournis dans les paramètres de requête
+      const clientId = this.route.snapshot.queryParamMap.get('clientId');
+      const vehicleId = this.route.snapshot.queryParamMap.get('vehicleId');
+
+      if (clientId) {
+        this.visitForm.patchValue({ clientId });
+        this.onClientChange();
+      }
+
+      if (vehicleId) {
+        this.visitForm.patchValue({ vehicleId });
+      }
+
+      if (this.isEditMode && this.visitId) {
+        await this.loadVisit();
+      }
+    })();
+  }
+
+  private async loadAndGroupDiagnosticCategories(): Promise<void> {
+    try {
+      this.allDiagnosticCategories =
+        await this.garageDataService.getAll<DiagnosticCategory>(
+          'diagnosticCategory'
+        );
+
+      // Si aucune catégorie n'est trouvée, créer des données de test
+      if (this.allDiagnosticCategories.length === 0) {
+        console.log(
+          'Aucune catégorie de diagnostic trouvée. Création de données de test...'
+        );
+        await this.createTestDiagnosticCategories();
+        this.allDiagnosticCategories =
+          await this.garageDataService.getAll<DiagnosticCategory>(
+            'diagnosticCategory'
+          );
+      }
+
+      // Grouper les catégories par nom principal
+      this.groupedCategories = this.groupCategoriesByMainCategory(
+        this.allDiagnosticCategories
+      );
+
+      // Initialiser l'état des accordéons (tous fermés par défaut)
+      Object.keys(this.groupedCategories).forEach((key) => {
+        this.expandedGroups[key] = false;
+      });
+    } catch (error) {
+      console.error(
+        'Erreur lors du chargement des catégories de diagnostic:',
+        error
+      );
+    }
+  }
+
+  private async createTestDiagnosticCategories(): Promise<void> {
+    const testCategories: Omit<
+      DiagnosticCategory,
+      'id' | 'createdAt' | 'updatedAt'
+    >[] = [
+      // Problèmes Mécaniques
+      {
+        name: 'Problèmes Mécaniques',
+        categorie: 'Problème moteur - Bruit anormal',
+        description: 'Bruit anormal du moteur au ralenti ou en accélération',
+        garageId: '',
+      },
+      {
+        name: 'Problèmes Mécaniques',
+        categorie: 'Problème moteur - Perte de puissance',
+        description: "Perte de puissance moteur, difficultés d'accélération",
+        garageId: '',
+      },
+      {
+        name: 'Problèmes Mécaniques',
+        categorie: 'Problème freinage - Pédale molle',
+        description: "Pédale de frein molle ou qui s'enfonce",
+        garageId: '',
+      },
+      {
+        name: 'Problèmes Mécaniques',
+        categorie: 'Problème transmission - Grincement',
+        description: 'Grincement lors du changement de vitesse',
+        garageId: '',
+      },
+      {
+        name: 'Problèmes Mécaniques',
+        categorie: 'Problème suspension - Bruit de roulement',
+        description: 'Bruit de roulement dans les suspensions',
+        garageId: '',
+      },
+
+      // Problèmes Électriques
+      {
+        name: 'Problèmes Électriques',
+        categorie: 'Problème batterie - Décharge rapide',
+        description: 'Batterie qui se décharge rapidement',
+        garageId: '',
+      },
+      {
+        name: 'Problèmes Électriques',
+        categorie: 'Problème alternateur - Charge insuffisante',
+        description: 'Alternateur ne charge pas correctement la batterie',
+        garageId: '',
+      },
+      {
+        name: 'Problèmes Électriques',
+        categorie: 'Problème éclairage - Phare défaillant',
+        description: 'Phares qui ne fonctionnent pas correctement',
+        garageId: '',
+      },
+
+      // Carrosserie
+      {
+        name: 'Carrosserie',
+        categorie: 'Problème carrosserie - Rayure',
+        description: 'Rayures sur la carrosserie',
+        garageId: '',
+      },
+      {
+        name: 'Carrosserie',
+        categorie: 'Problème carrosserie - Bosse',
+        description: 'Bosses sur la carrosserie',
+        garageId: '',
+      },
+
+      // Pneumatique
+      {
+        name: 'Pneumatique',
+        categorie: 'Problème pneu - Usure anormale',
+        description: 'Usure anormale des pneus',
+        garageId: '',
+      },
+      {
+        name: 'Pneumatique',
+        categorie: 'Problème pneu - Crevaison',
+        description: 'Pneu crevé',
+        garageId: '',
+      },
+    ];
+
+    // Créer les catégories de test
+    for (const category of testCategories) {
+      try {
+        await this.garageDataService.create('diagnosticCategory', {
+          ...category,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      } catch (error) {
+        console.error(
+          'Erreur lors de la création de la catégorie de test:',
+          error
+        );
+      }
+    }
+  }
+
+  // Méthodes pour gérer les accordéons et les sélections
+  toggleGroup(groupName: string): void {
+    this.expandedGroups[groupName] = !this.expandedGroups[groupName];
+  }
+
+  onProblemCheckboxChange(problemId: string, isChecked: boolean): void {
+    if (isChecked) {
+      if (!this.selectedProblems.includes(problemId)) {
+        this.selectedProblems.push(problemId);
+      }
+    } else {
+      this.selectedProblems = this.selectedProblems.filter(
+        (id) => id !== problemId
+      );
+    }
+
+    // Mettre à jour le formulaire avec les problèmes sélectionnés
+    this.updateReportedIssuesFromSelection();
+  }
+
+  isProblemSelected(problemId: string): boolean {
+    return this.selectedProblems.includes(problemId);
+  }
+
+  private updateReportedIssuesFromSelection(): void {
+    // Vider le FormArray
+    while (this.reportedIssuesArray.length > 0) {
+      this.reportedIssuesArray.removeAt(0);
+    }
+
+    // Ajouter les problèmes sélectionnés
+    this.selectedProblems.forEach((problemId) => {
+      const category = this.allDiagnosticCategories.find(
+        (cat) => cat.id === problemId
+      );
+      if (category) {
+        this.reportedIssuesArray.push(
+          this.fb.control(category.categorie, Validators.required)
+        );
+      }
+    });
+
+    // S'assurer qu'il y a au moins un champ vide pour la saisie manuelle
+    if (this.reportedIssuesArray.length === 0) {
+      this.reportedIssuesArray.push(this.fb.control('', Validators.required));
+    }
+  }
+
+  private loadExistingProblems(reportedIssues: string[]): void {
+    // Vider les sélections existantes
+    this.selectedProblems = [];
+
+    // Pour chaque problème signalé, essayer de le matcher avec une catégorie existante
+    reportedIssues.forEach((issue) => {
+      const matchingCategory = this.allDiagnosticCategories.find(
+        (cat) =>
+          cat.categorie.toLowerCase() === issue.toLowerCase() ||
+          cat.name.toLowerCase() === issue.toLowerCase()
+      );
+
+      if (matchingCategory) {
+        // Si on trouve une correspondance, l'ajouter aux sélections
+        this.selectedProblems.push(matchingCategory.id);
+      } else {
+        // Sinon, l'ajouter comme problème personnalisé
+        this.reportedIssuesArray.push(
+          this.fb.control(issue, Validators.required)
+        );
+      }
+    });
+
+    // S'assurer qu'il y a au moins un champ vide pour la saisie manuelle
+    if (this.reportedIssuesArray.length === 0) {
+      this.reportedIssuesArray.push(this.fb.control('', Validators.required));
+    }
+  }
+
+  private groupCategoriesByMainCategory(categories: DiagnosticCategory[]): {
+    [key: string]: DiagnosticCategory[];
+  } {
+    const grouped: { [key: string]: DiagnosticCategory[] } = {};
+
+    categories.forEach((category) => {
+      // Utiliser le champ 'name' pour le groupement principal
+      const mainCategory =
+        category.name || this.extractMainCategoryName(category.categorie);
+
+      if (!grouped[mainCategory]) {
+        grouped[mainCategory] = [];
+      }
+      grouped[mainCategory].push(category);
+    });
+
+    // Trier chaque groupe par nom de catégorie
+    Object.keys(grouped).forEach((key) => {
+      grouped[key].sort((a, b) => a.categorie.localeCompare(b.categorie));
+    });
+
+    return grouped;
+  }
+
+  private extractMainCategoryName(categoryName: string): string {
+    // Extraire le nom principal avant les tirets, parenthèses ou autres séparateurs
+    const separators = [' - ', ' (', ' -', ' –', ' —'];
+    let mainName = categoryName;
+
+    for (const separator of separators) {
+      const index = mainName.indexOf(separator);
+      if (index !== -1) {
+        mainName = mainName.substring(0, index).trim();
+        break;
+      }
+    }
+
+    return mainName;
   }
 }

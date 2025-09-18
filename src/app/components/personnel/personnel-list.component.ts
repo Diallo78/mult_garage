@@ -387,7 +387,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
           </div>
         </div>
       </div>
-     
+
   `,
 })
 export class PersonnelListComponent implements OnInit {

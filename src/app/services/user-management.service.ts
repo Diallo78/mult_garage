@@ -163,6 +163,8 @@ export class UserManagementService {
     } catch (error: any) {
       const friendlyError = this.transformErrorToUserFriendly(error);
       this.notificationService.showError(friendlyError.message);
+      console.log(error);
+      
       throw friendlyError;
     }
   }

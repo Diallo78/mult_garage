@@ -27,9 +27,6 @@ export class GarageDataService {
 
 
   constructor() {
-    // this.authService.currentUser$.subscribe(user => {
-    //   this.garageId = user?.garageId || null;
-    // });
     this.garageId = localStorage.getItem('garageId');
   }
 
@@ -53,7 +50,8 @@ export class GarageDataService {
     const docRef = doc(db, collectionName, id);
     await updateDoc(docRef, {
       ...updates,
-      updatedAt: new Date()
+      garageId: this.garageId,
+      updatedAt: new Date(),
     });
   }
 

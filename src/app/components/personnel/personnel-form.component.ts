@@ -466,7 +466,7 @@ export class PersonnelFormComponent implements OnInit {
 
       this.router.navigate(['/personnel']);
     } catch (error) {
-      this.notificationService.showError("Échec de sauvegarde de l'employé");
+      this.notificationService.showError("Échec de sauvegarde de l'employé " + error);
     } finally {
       this.isLoading = false;
     }
