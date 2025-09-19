@@ -327,6 +327,35 @@ export const routes: Routes = [
             (m) => m.StockDashboardComponent
           ),
       },
+      // Exam routes
+      {
+        path: 'exams',
+        loadComponent: () =>
+          import('./components/exame/exame-list.component').then(
+            (m) => m.ExameListComponent
+          ),
+      },
+      {
+        path: 'exams/new',
+        loadComponent: () =>
+          import('./components/exame/exame-form.component').then(
+            (m) => m.ExameFormComponent
+          ),
+      },
+      {
+        path: 'exams/:id',
+        loadComponent: () =>
+          import('./components/exame/exame-detail.component').then(
+            (m) => m.ExameDetailComponent
+          ),
+      },
+      {
+        path: 'exams/:id/edit',
+        loadComponent: () =>
+          import('./components/exame/exame-form.component').then(
+            (m) => m.ExameFormComponent
+          ),
+      },
     ],
   },
   {
