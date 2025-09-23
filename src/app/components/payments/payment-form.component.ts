@@ -360,7 +360,7 @@ export class PaymentFormComponent implements OnInit {
         ]);
       }
     } catch (error) {
-      this.notificationService.showError('Failed to load invoice data');
+      this.notificationService.showError('Failed to load invoice data ' +error);
     }
   }
 
@@ -478,6 +478,6 @@ export class PaymentFormComponent implements OnInit {
   }
 
   private generateId(): string {
-    return Math.random().toString(36).substr(2, 9);
+    return Math.random().toString(36).substring(2, 9);
   }
 }

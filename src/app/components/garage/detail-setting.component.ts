@@ -197,7 +197,7 @@ import { Garage, GarageStatistics } from '../../models/garage.model';
         <!-- Boutons d'action -->
         <div class="flex flex-wrap gap-4">
           <button
-      
+
             routerLink="/garage/liste"
             class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-6 rounded-lg flex items-center transition-all duration-200 transform hover:scale-105 hover:shadow-md">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -239,7 +239,7 @@ export class DetailSettingComponent implements OnInit {
     carsInService: 0
   };
 
-  constructor(private readonly route: ActivatedRoute) {}
+  constructor(private readonly route: ActivatedRoute) { }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -301,10 +301,10 @@ export class DetailSettingComponent implements OnInit {
       this.statistics.totalCars = vehiclesSnap.size;
 
       // Compter les véhicules en intervention
-      const servicesRef = collection(db, 'services');
+      const servicesRef = collection(db, 'interventions');
       const activeServicesQuery = query(servicesRef,
         where('garageId', '==', garageId),
-        where('status', '==', 'in_progress')
+        where('status', '==', 'InProgress')
       );
       const activeServicesSnap = await getDocs(activeServicesQuery);
       this.statistics.carsInService = activeServicesSnap.size;
@@ -326,7 +326,7 @@ export class DetailSettingComponent implements OnInit {
 
       invoicesSnap.forEach(doc => {
         const invoice = doc.data();
-        if (invoice['status'] === 'paid') {
+        if (invoice['status'] === 'Paid') {
           paidCount++;
           totalRevenue += invoice['totalAmount'] || 0;
         } else {
@@ -357,8 +357,8 @@ export class DetailSettingComponent implements OnInit {
     }
   }
 
-//   retoure(){
-//     alert("Retour au menu principal")
-//     // this.router.navigate(['/garage']);
-//   }
+  //   retoure(){
+  //     alert("Retour au menu principal")
+  //     // this.router.navigate(['/garage']);
+  //   }
 }
