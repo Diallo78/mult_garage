@@ -190,7 +190,7 @@ import { EmailService } from '../../services/email.service';
               <div class="flex justify-between" *ngIf="discountAmount > 0">
                 <span class="text-sm text-gray-600">Remise:</span>
                 <span class="text-sm font-medium"
-                  >-GNF {{ discountAmount.toFixed(2) }}</span
+                  >GNF {{ discountAmount.toFixed(2) }}</span
                 >
               </div>
               <div class="flex justify-between">

@@ -658,6 +658,36 @@ import { trigger, transition, style, animate } from '@angular/animations';
           </a>
 
           <a
+            routerLink="/garage"
+            routerLinkActive="bg-primary-600 text-white dark:bg-primary-700"
+            (click)="closeSidebarOnMobile()"
+            class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 transition-all duration-200 ease-in-out text-sm group mt-1"
+            *ngIf="authService.canAccessPersonnel"
+          >
+            <div class="flex items-center">
+              <div
+                class="mr-3 flex items-center justify-center w-8 h-8 rounded-md bg-blue-500 bg-opacity-20 text-blue-500 group-hover:bg-opacity-30 transition-all duration-200"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  ></path>
+                </svg>
+              </div>
+              <span class="truncate">Garages</span>
+            </div>
+          </a>
+
+          <a
             routerLink="/garage-setup"
             routerLinkActive="bg-primary-600 text-white dark:bg-primary-700"
             (click)="closeSidebarOnMobile()"

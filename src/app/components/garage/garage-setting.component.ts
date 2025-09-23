@@ -2,11 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
-import { AuthService } from '../../services/auth.service';
-import { firstValueFrom } from 'rxjs';
-import { Garage, GarageSettings } from '../../models/user.model';
+import { GarageSettings } from '../../models/user.model';
 import { UserManagementService } from '../../services/user-management.service';
 
 @Component({
@@ -224,16 +221,6 @@ export class GarageSetupComponent implements OnInit {
   garageForm: FormGroup;
   isLoading = false;
 
-  // weekDays = [
-  //   { key: 'monday', label: 'Monday' },
-  //   { key: 'tuesday', label: 'Tuesday' },
-  //   { key: 'wednesday', label: 'Wednesday' },
-  //   { key: 'thursday', label: 'Thursday' },
-  //   { key: 'friday', label: 'Friday' },
-  //   { key: 'saturday', label: 'Saturday' },
-  //   { key: 'sunday', label: 'Sunday' }
-  // ];
-
   weekDays = [
     { key: 'lundi', label: 'Lundi' },
     { key: 'mardi', label: 'Mardi' },
@@ -312,6 +299,7 @@ export class GarageSetupComponent implements OnInit {
       const password = garageFormValue.password; // à ajouter dans le formulaire !
       const firstName = garageFormValue.firstName; // à ajouter dans le formulaire !
       const lastName = garageFormValue.lastName; // à ajouter dans le formulaire !
+      const role = 'AdminGarage';
 
       // Construire les horaires
       const workingHours: any = {};
@@ -339,21 +327,22 @@ export class GarageSetupComponent implements OnInit {
       };
 
       // Appel à la méthode de création
-      const { garageId, userId } = await this.userManagementService.createGarageAccount({
-        name: garageFormValue.name,
-        address: garageFormValue.address,
-        phone: garageFormValue.phone,
-        email: garageFormValue.email,
-        website: garageFormValue.website,
-        siret: garageFormValue.siret,
-        vatNumber: garageFormValue.vatNumber,
-        settings,
-        ownerId: '', // sera mis à jour dans le service
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        password,
-        firstName,
-        lastName
+        await this.userManagementService.createGarageAccount({
+          name: garageFormValue.name,
+          address: garageFormValue.address,
+          phone: garageFormValue.phone,
+          email: garageFormValue.email,
+          website: garageFormValue.website,
+          siret: garageFormValue.siret,
+          vatNumber: garageFormValue.vatNumber,
+          settings,
+          ownerId: '', // sera mis à jour dans le service
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          password,
+          firstName,
+          lastName,
+          role
       });
 
       // Optionnel : mettre à jour le profil utilisateur courant si besoin

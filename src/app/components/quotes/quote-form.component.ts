@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
@@ -10,11 +10,12 @@ import { Visit, Client, Vehicle } from '../../models/client.model';
 import { UserManagementService } from '../../services/user-management.service';
 import { AuthService } from '../../services/auth.service';
 import { firstValueFrom } from 'rxjs';
+import { EmailService } from '../../services/email.service';
 
 @Component({
   selector: 'app-quote-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
     <div class="space-y-6" *ngIf="diagnostic && client && vehicle">
       <div class="md:flex md:items-center md:justify-between">
@@ -197,6 +198,71 @@ import { firstValueFrom } from 'rxjs';
             </div>
           </div>
 
+              <!-- Options d'envoi -->
+              <div class="border rounded-lg p-4 bg-blue-50">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+              Options d'envoi
+            </h3>
+            <div class="space-y-3">
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="sendWhatsApp"
+                  [(ngModel)]="sendWhatsApp"
+                  [ngModelOptions]="{ standalone: true }"
+                  class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+                <label for="sendWhatsApp" class="ml-2 text-sm text-gray-700">
+                  📱 Envoyer instantanément par WhatsApp
+                </label>
+              </div>
+              <div class="flex items-center">
+                <input
+                  disabled="true"
+                  type="checkbox"
+                  id="sendEmail"
+                  [(ngModel)]="sendEmail"
+                  [ngModelOptions]="{ standalone: true }"
+                  class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+                <label for="sendEmail" class="ml-2 text-sm text-gray-700">
+                  📧 Envoyer par email au client
+                </label>
+              </div>
+              <div class="flex items-center">
+                <input
+                  disabled="true"
+                  type="checkbox"
+                  id="sendSMS"
+                  [(ngModel)]="sendSMS"
+                  [ngModelOptions]="{ standalone: true }"
+                  class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+                <label for="sendSMS" class="ml-2 text-sm text-gray-700">
+                  💬 Envoyer par SMS
+                </label>
+              </div>
+            </div>
+
+            <!-- Statut d'envoi en temps réel -->
+            <div
+              *ngIf="isLoading"
+              class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
+            >
+              <div class="flex items-center">
+                <div
+                  class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"
+                ></div>
+                <span class="text-sm text-yellow-800">Envoi en cours...</span>
+              </div>
+              <div class="mt-2 text-xs text-yellow-700">
+                <div *ngIf="sendWhatsApp">• Ouverture de WhatsApp...</div>
+                <div *ngIf="sendEmail">• Envoi de l'email...</div>
+                <div *ngIf="sendSMS">• Envoi du SMS...</div>
+              </div>
+            </div>
+          </div>
+
           <div class="flex justify-end space-x-4">
             <button
               type="button"
@@ -236,6 +302,11 @@ export class QuoteFormComponent implements OnInit {
   vatAmount = 0;
   total = 0;
 
+  // Options d'envoi
+  sendWhatsApp = true;
+  sendEmail = false;
+  sendSMS = false;
+
   stockParts: { designation: string, prixUnitaire: number }[] = [];
 
   constructor(
@@ -245,7 +316,8 @@ export class QuoteFormComponent implements OnInit {
     private readonly userManagementService: UserManagementService,
     private readonly notificationService: NotificationService,
     private readonly router: Router,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly emailService: EmailService
   ) {
     this.quoteForm = this.fb.group({
       quoteNumber: [''],
@@ -428,16 +500,14 @@ export class QuoteFormComponent implements OnInit {
       const quoteId = quoteRef;
 
       // 2. Créer une notification associée au devis
-      const notification = {
-        title: 'Nouveau devis disponible',
-        message: `Un nouveau devis N° ${formValue.quoteNumber} est disponible.`,
-        read: false,
-        quoteId: quoteId,
-        emailDesitnateur: this.client.email,
-        type: 'Devis'
-      };
-
-      await this.garageDataService.create('notifications', notification);
+      if (this.client) {
+        // Envoyer les notifications selon les options sélectionnées
+        await this.sendQuoteNotifications(
+          this.client,
+          formValue.quoteNumber,
+          quoteId
+        );
+      }
 
       this.notificationService.showSuccess('Devis créé avec succès');
 
@@ -454,6 +524,119 @@ export class QuoteFormComponent implements OnInit {
   }
 
   private generateId(): string {
-    return Math.random().toString(36).substr(2, 9);
+    return Math.random().toString(36).substring(2, 9);
   }
+
+  // SEND NOTIFICATION
+  private async sendQuoteNotifications(
+    client: Client,
+    quoteNumber: string,
+    quoteId: string
+  ): Promise<void> {
+    try {
+      // Envoi par WhatsApp
+      if (this.sendWhatsApp && client.phone) {
+        await this.sendWhatsAppNotification(client, quoteNumber, quoteId);
+      }
+
+      // Envoi par Email
+      if (this.sendEmail && client.email) {
+        await this.sendEmailNotification(client, quoteNumber, quoteId);
+      }
+
+      // Envoi par SMS
+      if (this.sendSMS && client.phone) {
+        await this.sendSMSNotification(client, quoteNumber, quoteId);
+      }
+
+      // Notification interne
+      await this.createInternalNotification(client, quoteNumber, quoteId);
+    } catch (error) {
+      console.error("Erreur lors de l'envoi des notifications:", error);
+      this.notificationService.showError(
+        "Erreur lors de l'envoi des notifications"
+      );
+    }
+  }
+
+  private async sendWhatsAppNotification(
+    client: Client,
+    quoteNumber: string,
+    quoteId: string
+  ): Promise<void> {
+    try {
+      const message = `Bonjour ${client.firstName},\n\nVotre devis N° ${quoteNumber} est prêt !\n\nVous pouvez le consulter en cliquant sur le lien suivant :\n${window.location.origin}/quotes/${quoteId}\n\nMerci de votre confiance !`;
+
+      await this.emailService.sendWhatsAppMessage(client.phone, message);
+      this.notificationService.showSuccess(
+        'WhatsApp ouvert avec le message pré-rempli'
+      );
+    } catch (error) {
+      console.error('Erreur WhatsApp:', error);
+    }
+  }
+
+  private async sendEmailNotification(
+    client: Client,
+    quoteNumber: string,
+    quoteId: string
+  ): Promise<void> {
+    try {
+      const formValue = this.quoteForm.value;
+      const emailData = {
+        clientName: `${client.firstName} ${client.lastName}`,
+        quoteNumber: quoteNumber,
+        quoteId: quoteId,
+        total: this.total,
+        validUntil: new Date(formValue.validUntil),
+        items: formValue.items,
+      };
+
+      await this.emailService.sendQuoteEmail(emailData);
+      this.notificationService.showSuccess('Email de notification envoyé');
+    } catch (error) {
+      console.error('Erreur email:', error);
+    }
+  }
+
+  private async sendSMSNotification(
+    client: Client,
+    quoteNumber: string,
+    quoteId: string
+  ): Promise<void> {
+    try {
+      // Ici vous pouvez intégrer avec un service SMS comme Twilio, etc.
+      // Pour l'instant, on simule l'envoi
+      console.log(
+        `SMS envoyé à ${client.phone}: Devis ${quoteNumber} disponible`
+      );
+      this.notificationService.showSuccess('SMS envoyé au client');
+    } catch (error) {
+      console.error('Erreur SMS:', error);
+    }
+  }
+
+  private async createInternalNotification(
+    client: Client,
+    quoteNumber: string,
+    quoteId: string
+  ): Promise<void> {
+    try {
+      const notification = {
+        title: 'Nouveau devis disponible',
+        message: `Devis N° ${quoteNumber} créé pour ${client.firstName} ${client.lastName}`,
+        read: false,
+        quoteId: quoteId,
+        type: 'Devis',
+        clientId: client.id,
+        createdAt: new Date(),
+        emailDesitnateur: client.email,
+      };
+
+      await this.garageDataService.create('notifications', notification);
+    } catch (error) {
+      console.error('Erreur notification interne:', error);
+    }
+  }
+
 }

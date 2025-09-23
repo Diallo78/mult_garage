@@ -389,10 +389,11 @@ export class QuoteFormNewComponent implements OnInit {
   }
 
   ngOnInit() {
-    console.log(this.route.snapshot.queryParams);
+    // console.log(this.route.snapshot.queryParams);
 
     (async () => {
       await this.loadClients(); // mode libre
+      await this.loadStockParts();
       this.generateQuoteNumber();
       this.setDefaultValidUntil();
       await this.checkEditPermissions();
@@ -410,6 +411,17 @@ export class QuoteFormNewComponent implements OnInit {
     } finally {
       this.isLoading = false;
     }
+  }
+
+
+  private async loadStockParts(): Promise<void> {
+    const stockItems = await this.garageDataService.getAll<any>('stock');
+    this.stockParts = stockItems
+      .filter(item => item.status === 'entre')
+      .map(item => ({
+        designation: item.designation,
+        prixUnitaire: item.prixUnitaire
+      }));
   }
 
   private async checkEditPermissions(): Promise<void> {

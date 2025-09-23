@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { Client, Vehicle, Visit } from '../../models/client.model';
@@ -126,6 +126,7 @@ import { Personnel } from '../../models/garage.model';
                 <span>Veuillez sélectionner un titre dans la liste</span>
               </div>
             </div>
+
             <!-- <div>
               <label class="form-label">Titre *</label>
               <select
@@ -242,15 +243,34 @@ import { Personnel } from '../../models/garage.model';
                     <!-- Category for each check -->
                     <div>
                       <label class="form-label">Catégorie *</label>
-                      <select formControlName="category" class="form-input">
-                        <option value="">Sélectionner une catégorie</option>
-                        <option
-                          *ngFor="let ctg of diagnosticCategory"
-                          value="ctg.categorie"
-                        >
-                          {{ ctg.categorie }}
-                        </option>
-                      </select>
+                      
+                      <!-- Hidden field to track if "other" was selected -->
+                      <input type="hidden" [formControlName]="'categoryType'" />
+                      
+                      <!-- Input field shown when "other" is selected -->
+                      <div *ngIf="check.get('categoryType')?.value === 'other'">
+                        <span class="text-red-600">Veuillez saisir la catégorie</span>
+                        <input
+                          type="text"
+                          formControlName="category"
+                          class="form-input w-full"
+                          placeholder="Entrer la catégorie"
+                        />
+                      </div>
+                      
+                      <!-- Select shown when "other" is not selected -->
+                      <div *ngIf="check.get('categoryType')?.value !== 'other'">
+                        <select (change)="onCategoryChange($event, check)" formControlName="category" class="form-input w-full">
+                            <option value="">Sélectionner une catégorie</option>
+                            <option
+                              *ngFor="let ctg of diagnosticCategory"
+                              [value]="ctg.categorie"
+                            >
+                              {{ ctg.categorie }}
+                            </option>
+                            <option value="other">autre</option>
+                        </select>
+                      </div>
                     </div>
                     <div class="md:col-span-2">
                       <label class="form-label">Description *</label>
@@ -263,7 +283,7 @@ import { Personnel } from '../../models/garage.model';
                     </div>
 
                     <div>
-                      <label class="form-label">Compliant</label>
+                      <label class="form-label">Conforme</label>
                       <select formControlName="compliant" class="form-input">
                         <option [value]="true">Oui - Conforme</option>
                         <option [value]="false">Non - Non conforme</option>
@@ -271,20 +291,20 @@ import { Personnel } from '../../models/garage.model';
                     </div>
 
                     <div>
-                      <label class="form-label">Severity Level</label>
+                      <label class="form-label">Niveau de gravité</label>
                       <select
                         formControlName="severityLevel"
                         class="form-input"
                       >
-                        <option value="Low">Low</option>
-                        <option value="Medium">Medium</option>
-                        <option value="High">High</option>
-                        <option value="Critical">Critical</option>
+                        <option value="Low">Faible</option>
+                        <option value="Medium">Moyen</option>
+                        <option value="High">Haut</option>
+                        <option value="Critical">Critique</option>
                       </select>
                     </div>
 
                     <div>
-                      <label class="form-label">Quantity</label>
+                      <label class="form-label">Quantité</label>
                       <input
                         type="number"
                         formControlName="quantity"
@@ -294,7 +314,7 @@ import { Personnel } from '../../models/garage.model';
                     </div>
 
                     <div>
-                      <label class="form-label">Post-Repair Verification</label>
+                      <label class="form-label">Vérification après réparation</label>
                       <select
                         formControlName="postRepairVerification"
                         class="form-input"
@@ -551,6 +571,7 @@ export class DiagnosticFormComponent implements OnInit {
     return this.fb.group({
       id: [this.generateId()],
       category: ['', Validators.required], // <-- nouveau champ obligatoire
+      categoryType: [''], // <-- champ pour suivre si "other" est sélectionné
       description: ['', Validators.required],
       compliant: [true],
       quantity: [1],
@@ -558,6 +579,16 @@ export class DiagnosticFormComponent implements OnInit {
       postRepairVerification: [false],
       comments: [''],
     });
+  }
+  
+  onCategoryChange(event: any, check: AbstractControl): void {
+    const selectedValue = event.target.value;
+    if (selectedValue === 'other') {
+      check.get('categoryType')?.setValue('other');
+      check.get('category')?.setValue(''); // Réinitialiser la valeur pour la saisie
+    } else {
+      check.get('categoryType')?.setValue('');
+    }
   }
 
   addCheck(): void {

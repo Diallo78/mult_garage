@@ -164,12 +164,12 @@ export class UserManagementService {
       const friendlyError = this.transformErrorToUserFriendly(error);
       this.notificationService.showError(friendlyError.message);
       console.log(error);
-      
+
       throw friendlyError;
     }
   }
 
-  async createGarageAccount(garageData: Omit<Garage, 'id'> & { password: string, firstName: string, lastName: string }): Promise<{ garageId: string, userId: string }> {
+  async createGarageAccount(garageData: Omit<Garage, 'id'> & { password: string, firstName: string, lastName: string, role: string}): Promise<{ garageId: string, userId: string }> {
     // 1. Créer le compte utilisateur
     const userCredential = await createUserWithEmailAndPassword(auth, garageData.email, garageData.password);
     const firebaseUser = userCredential.user;
@@ -189,7 +189,7 @@ export class UserManagementService {
       email: garageData.email,
       displayName: `${garageData.firstName} ${garageData.lastName}`,
       garageId: garageId,
-      role: 'AdminGarage' as UserRole,
+      role: garageData.role as UserRole,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -287,75 +287,141 @@ export class UserManagementService {
 
   private getRolePermissions(role: UserRole): string[] {
     const permissions: { [key in UserRole]: string[] } = {
-      'AdminGarage': [
-        'clients:read', 'clients:write', 'clients:delete',
-        'vehicles:read', 'vehicles:write', 'vehicles:delete',
-        'visits:read', 'visits:write', 'visits:delete',
-        'diagnostics:read', 'diagnostics:write', 'diagnostics:delete',
-        'quotes:read', 'quotes:write', 'quotes:delete', 'quotes:approve',
-        'interventions:read', 'interventions:write', 'interventions:delete',
-        'invoices:read', 'invoices:write', 'invoices:delete',
-        'payments:read', 'payments:write', 'payments:delete',
-        'reports:read', 'reports:export',
-        'personnel:read', 'personnel:write', 'personnel:delete',
-        'settings:read', 'settings:write'
-      ],
-      'Manager': [
-        'clients:read', 'clients:write',
-        'vehicles:read', 'vehicles:write',
-        'visits:read', 'visits:write',
-        'diagnostics:read', 'diagnostics:write',
-        'quotes:read', 'quotes:write', 'quotes:approve',
-        'interventions:read', 'interventions:write',
-        'invoices:read', 'invoices:write',
-        'payments:read', 'payments:write',
-        'reports:read', 'reports:export',
-        'personnel:read', 'personnel:write'
-      ],
-      'Technician': [
+      AdminGarage: [
         'clients:read',
+        'clients:write',
+        'clients:delete',
         'vehicles:read',
-        'visits:read', 'visits:write',
-        'diagnostics:read', 'diagnostics:write',
-        'interventions:read', 'interventions:write'
-      ],
-      'Receptionist': [
-        'clients:read', 'clients:write',
-        'vehicles:read', 'vehicles:write',
-        'visits:read', 'visits:write',
+        'vehicles:write',
+        'vehicles:delete',
+        'visits:read',
+        'visits:write',
+        'visits:delete',
+        'diagnostics:read',
+        'diagnostics:write',
+        'diagnostics:delete',
         'quotes:read',
+        'quotes:write',
+        'quotes:delete',
+        'quotes:approve',
+        'interventions:read',
+        'interventions:write',
+        'interventions:delete',
         'invoices:read',
-        'payments:read', 'payments:write'
+        'invoices:write',
+        'invoices:delete',
+        'payments:read',
+        'payments:write',
+        'payments:delete',
+        'reports:read',
+        'reports:export',
+        'personnel:read',
+        'personnel:write',
+        'personnel:delete',
+        'settings:read',
+        'settings:write',
       ],
-      'Accountant': [
+      Manager: [
+        'clients:read',
+        'clients:write',
+        'vehicles:read',
+        'vehicles:write',
+        'visits:read',
+        'visits:write',
+        'diagnostics:read',
+        'diagnostics:write',
+        'quotes:read',
+        'quotes:write',
+        'quotes:approve',
+        'interventions:read',
+        'interventions:write',
+        'invoices:read',
+        'invoices:write',
+        'payments:read',
+        'payments:write',
+        'reports:read',
+        'reports:export',
+        'personnel:read',
+        'personnel:write',
+      ],
+      Technician: [
         'clients:read',
         'vehicles:read',
         'visits:read',
-        'quotes:read', 'quotes:write', 'quotes:approve',
-        'invoices:read', 'invoices:write',
-        'payments:read', 'payments:write',
-        'reports:read', 'reports:export'
+        'visits:write',
+        'diagnostics:read',
+        'diagnostics:write',
+        'interventions:read',
+        'interventions:write',
       ],
-      'Client': [
+      Receptionist: [
+        'clients:read',
+        'clients:write',
+        'vehicles:read',
+        'vehicles:write',
+        'visits:read',
+        'visits:write',
+        'quotes:read',
+        'invoices:read',
+        'payments:read',
+        'payments:write',
+      ],
+      Accountant: [
+        'clients:read',
+        'vehicles:read',
+        'visits:read',
+        'quotes:read',
+        'quotes:write',
+        'quotes:approve',
+        'invoices:read',
+        'invoices:write',
+        'payments:read',
+        'payments:write',
+        'reports:read',
+        'reports:export',
+      ],
+      Client: [
         'own-data:read',
-        'own-quotes:read', 'own-quotes:approve',
+        'own-quotes:read',
+        'own-quotes:approve',
         'own-invoices:read',
         'own-vehicles:read',
-        'own-visits:read'
+        'own-visits:read',
       ],
-      'SuperAdmin': [
-        'clients:read', 'clients:write', 'clients:delete',
-        'vehicles:read', 'vehicles:write', 'vehicles:delete',
-        'visits:read', 'visits:write', 'visits:delete',
-        'diagnostics:read', 'diagnostics:write', 'diagnostics:delete',
-        'quotes:read', 'quotes:write', 'quotes:delete', 'quotes:approve',
-        'interventions:read', 'interventions:write', 'interventions:delete',
-        'invoices:read', 'invoices:write', 'invoices:delete',
-        'payments:read', 'payments:write', 'payments:delete',
-        'reports:read', 'reports:export',
-        'personnel:read', 'personnel:write', 'personnel:delete',
-        'settings:read', 'settings:write'
-      ]
+      SuperAdmin: [
+        'clients:read',
+        'clients:write',
+        'clients:delete',
+        'vehicles:read',
+        'vehicles:write',
+        'vehicles:delete',
+        'visits:read',
+        'visits:write',
+        'visits:delete',
+        'diagnostics:read',
+        'diagnostics:write',
+        'diagnostics:delete',
+        'quotes:read',
+        'quotes:write',
+        'quotes:delete',
+        'quotes:approve',
+        'interventions:read',
+        'interventions:write',
+        'interventions:delete',
+        'invoices:read',
+        'invoices:write',
+        'invoices:delete',
+        'payments:read',
+        'payments:write',
+        'payments:delete',
+        'reports:read',
+        'reports:export',
+        'personnel:read',
+        'personnel:write',
+        'personnel:delete',
+        'settings:read',
+        'settings:write',
+      ],
     };
 
     return permissions[role] || [];

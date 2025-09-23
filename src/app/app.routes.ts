@@ -48,6 +48,44 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'garage',
+        children: [
+          {
+            path: 'liste',
+            loadComponent: () =>
+              import('./components/garage/liste-setting.component').then(
+                (m) => m.ListeSettingComponent
+              ),
+          },
+          {
+            path: 'detail/:id',
+            loadComponent: () =>
+              import('./components/garage/detail-setting.component').then(
+                (m) => m.DetailSettingComponent
+              ),
+          },
+          {
+            path: '',
+            redirectTo: 'liste',
+            pathMatch: 'full',
+          },
+        ],
+      },
+      {
+        path: 'garage-setup',
+        loadComponent: () =>
+          import('./components/garage/garage-setting.component').then(
+            (m) => m.GarageSetupComponent
+          ),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./components/settings/garage-setup.component').then(
+            (m) => m.GarageSetupComponent
+          ),
+      },
+      {
         path: 'clients',
         loadComponent: () =>
           import('./components/clients/client-list.component').then(
@@ -278,20 +316,7 @@ export const routes: Routes = [
             (m) => m.PersonnelDetailComponent
           ),
       },
-      {
-        path: 'garage-setup',
-        loadComponent: () =>
-          import('./components/garage/garage-setting.component').then(
-            (m) => m.GarageSetupComponent
-          ),
-      },
-      {
-        path: 'settings',
-        loadComponent: () =>
-          import('./components/settings/garage-setup.component').then(
-            (m) => m.GarageSetupComponent
-          ),
-      },
+
       {
         path: 'profile/:email/edit',
         loadComponent: () =>
