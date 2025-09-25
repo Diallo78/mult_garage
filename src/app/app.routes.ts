@@ -72,10 +72,17 @@ export const routes: Routes = [
         ],
       },
       {
-        path: 'garage-setup',
+        path: 'garage-setup/new',
         loadComponent: () =>
-          import('./components/garage/garage-setting.component').then(
-            (m) => m.GarageSetupComponent
+          import('./components/garage/form-garage-setting.component').then(
+            (m) => m.FormGarageSetupComponent
+          ),
+      },
+      {
+        path: 'garage-setup/:id/edit',
+        loadComponent: () =>
+          import('./components/garage/form-garage-setting.component').then(
+            (m) => m.FormGarageSetupComponent
           ),
       },
       {

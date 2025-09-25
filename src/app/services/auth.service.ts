@@ -8,13 +8,18 @@ import {
   updatePassword
 } from 'firebase/auth';
 import {
+  collection,
   doc,
+  documentId,
   getDoc,
+  getDocs,
+  query,
   setDoc,
-  updateDoc
+  updateDoc,
+  where
 } from 'firebase/firestore';
 import { BehaviorSubject } from 'rxjs';
-import { User, UserRole } from '../models/user.model';
+import { Garage, User, UserRole } from '../models/user.model';
 import { auth, db } from '../../../firebase.config';
 import { Router } from '@angular/router';
 
@@ -146,6 +151,7 @@ export class AuthService {
       this.currentUserSubject.next(null);
 
       localStorage.removeItem('garageId');
+      localStorage.removeItem('garageInfo');
 
       this.router.navigate(['/login']);
     } catch (error) {
@@ -181,6 +187,30 @@ export class AuthService {
       throw error;
     }
   }
+
+  async getGarageByUserIdV1(garageID: string): Promise<Garage | null> {
+    const ref = collection(db, 'garages');
+    const q = query(ref, where('id', '==', garageID));
+    const snapshot = await getDocs(q);
+
+    if (!snapshot.empty) {
+      return snapshot.docs[0].data() as Garage;
+    }
+    return null;
+  }
+
+  async getGarageByUserId(garageID: string): Promise<Garage | null> {
+    const ref = collection(db, 'garages');
+    const q = query(ref, where(documentId(), '==', garageID));
+    const snapshot = await getDocs(q);
+
+    if (!snapshot.empty) {
+      const docSnap = snapshot.docs[0];
+      return { id: docSnap.id, ...docSnap.data() } as Garage;
+    }
+    return null;
+  }
+
 
   hasRole(role: UserRole): boolean {
     const user = this.currentUserSubject.value;

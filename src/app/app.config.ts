@@ -5,8 +5,8 @@ import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideStorage, getStorage } from '@angular/fire/storage';
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
-import { ApplicationConfig, provideZoneChangeDetection, importProvidersFrom } from '@angular/core';
-import { IMAGE_CONFIG, provideImageKitLoader, registerLocaleData } from '@angular/common';
+import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { IMAGE_CONFIG, registerLocaleData } from '@angular/common';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import localeFr from '@angular/common/locales/fr';
 

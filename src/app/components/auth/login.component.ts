@@ -193,7 +193,7 @@ export class LoginComponent {
     });
   }
 
-  async onSubmit(): Promise<void> {
+  async onSubmitv1(): Promise<void> {
     if (this.loginForm.invalid) {
       this.notificationService.showError(
         'Veuillez remplir tous les champs correctement'
@@ -235,4 +235,76 @@ export class LoginComponent {
       this.isLoading = false;
     }
   }
+
+  async onSubmit(): Promise<void> {
+    if (this.loginForm.invalid) {
+      this.notificationService.showError(
+        'Veuillez remplir tous les champs correctement'
+      );
+      return;
+    }
+
+    this.isLoading = true;
+
+    try {
+      const { email, password } = this.loginForm.value;
+      await this.authService.signIn(email, password);
+
+      // Récupérer l'utilisateur connecté
+      const user = this.authService.getCurrentUser();
+      if (!user) {
+        throw new Error('Utilisateur non connecté');
+      }
+
+      // Charger les infos du garage associé
+      const garage = await this.authService.getGarageByUserId(user.garageId);
+
+      if (garage) {
+        // Stocker dans le localStorage
+        localStorage.setItem(
+          'garageInfo',
+          JSON.stringify({
+            id: garage.id,
+            name: garage.name,
+            address: garage.address,
+            phone: garage.phone,
+            email: garage.email,
+            logo: garage.logo || null,
+            currency: garage.settings.currency || 'EUR',
+            footer: garage.footer || null,
+            website: garage.website,
+            siret: garage.siret || null,
+            vatNumber: garage.vatNumber || null,
+          })
+        );
+      }
+
+      this.notificationService.showSuccess('Connexion réussie !');
+      this.router.navigate(['/dashboard']);
+    } catch (error: any) {
+      switch (error.code) {
+        case 'auth/invalid-email':
+          this._message = "Format d'email invalide";
+          break;
+        case 'auth/user-disabled':
+          this._message = 'Compte désactivé';
+          break;
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+          this._message = 'Email ou mot de passe incorrect';
+          break;
+        case 'auth/too-many-requests':
+          this._message = 'Trop de tentatives. Réessayez plus tard';
+          break;
+        case 'auth/network-request-failed':
+          this._message = 'Problème de connexion internet';
+          break;
+        default:
+          this._message = error.message || 'Erreur inconnue';
+      }
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
 }

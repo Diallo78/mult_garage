@@ -196,16 +196,14 @@ import { Garage, GarageStatistics } from '../../models/garage.model';
 
         <!-- Boutons d'action -->
         <div class="flex flex-wrap gap-4">
-          <button
-
-            routerLink="/garage/liste"
+          <button routerLink="/garage/liste"
             class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-6 rounded-lg flex items-center transition-all duration-200 transform hover:scale-105 hover:shadow-md">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Retour
           </button>
-          <button
+          <button [routerLink]="['/garage-setup', garage.id, 'edit']"
             class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg flex items-center transition-all duration-200 transform hover:scale-105 hover:shadow-md">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

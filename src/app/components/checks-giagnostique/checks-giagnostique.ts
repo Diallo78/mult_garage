@@ -260,7 +260,7 @@ export class ChecksFiagnostique {
       }
     } catch (error) {
       this.notificationService.showError(
-        'Failed to create diagnostic categorie report'
+        'Failed to create diagnostic categorie report' + error
       );
     }
   }

@@ -1,17 +1,27 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NotificationService } from '../../services/notification.service';
-import { GarageSettings } from '../../models/user.model';
+import { Garage, GarageSettings } from '../../models/user.model';
 import { UserManagementService } from '../../services/user-management.service';
+import { GarageDataService } from '../../services/garage-data.service';
 
 @Component({
   selector: 'app-garage-setup',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
+      <div class="animate-pulse flex flex-col items-center">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-500"
+        ></div>
+        <p class="mt-4 text-gray-600">Chargement de votre espace...</p>
+      </div>
+    </div>
+
+    <div *ngIf="!isLoading" class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div class="max-w-4xl mx-auto">
         <div class="text-center mb-8">
           <h1 class="text-3xl font-bold text-gray-900">Setup Your Garage</h1>
@@ -87,6 +97,26 @@ import { UserManagementService } from '../../services/user-management.service';
                     placeholder="Mot de passe (min. 6 caractères)"
                   />
                 </div>
+
+                                <!-- Logo Upload -->
+                <div>
+                  <label class="form-label">Logo du garage</label>
+                  <input
+                    type="file"
+                    (change)="onLogoSelected($event)"
+                    accept="image/*"
+                    class="form-input"
+                  />
+                </div>
+
+                <!-- Prévisualisation du logo -->
+                <div *ngIf="previewLogo" class="mt-4">
+                  <p class="text-sm text-gray-600 mb-2">Aperçu :</p>
+                  <img [src]="previewLogo" alt="Logo preview" class="h-24 rounded shadow" />
+                </div>
+
+
+
                 <div class="md:col-span-2">
                   <label class="form-label">Address *</label>
                   <textarea
@@ -94,6 +124,17 @@ import { UserManagementService } from '../../services/user-management.service';
                     rows="3"
                     class="form-input"
                     placeholder="Complete address"
+                  ></textarea>
+                </div>
+
+                <!-- un edit footer -->
+                <div class="md:col-span-2">
+                  <label class="form-label">Footer</label>
+                  <textarea
+                    formControlName="footer"
+                    rows="3"
+                    class="form-input"
+                    placeholder="Footer(Pied de page)"
                   ></textarea>
                 </div>
               </div>
@@ -208,7 +249,7 @@ import { UserManagementService } from '../../services/user-management.service';
                 class="btn-primary"
               >
                 <span *ngIf="isLoading" class="mr-2">Creating...</span>
-                Create Garage
+                {{ isEditMode ? 'Update' : 'Create' }} Garage
               </button>
             </div>
           </form>
@@ -217,9 +258,11 @@ import { UserManagementService } from '../../services/user-management.service';
     </div>
   `
 })
-export class GarageSetupComponent implements OnInit {
+export class FormGarageSetupComponent implements OnInit {
   garageForm: FormGroup;
   isLoading = false;
+  isEditMode = false;
+  garageId: string | null = null;;
 
   weekDays = [
     { key: 'lundi', label: 'Lundi' },
@@ -235,7 +278,9 @@ export class GarageSetupComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly notificationService: NotificationService,
     private readonly router: Router,
-    private readonly userManagementService: UserManagementService
+    private readonly userManagementService: UserManagementService,
+    private readonly route: ActivatedRoute,
+    private readonly garageDataService: GarageDataService,
   ) {
     this.garageForm = this.fb.group({
       name: ['', Validators.required],
@@ -243,6 +288,7 @@ export class GarageSetupComponent implements OnInit {
       phone: ['', Validators.required],
       address: ['', Validators.required],
       website: [''],
+      footer: [''],
       siret: [''],
       vatNumber: [''],
       currency: ['GNF'],
@@ -284,7 +330,31 @@ export class GarageSetupComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.garageId = this.route.snapshot.paramMap.get('id');
+    this.isEditMode = !!this.garageId;
+
+    if (this.isEditMode && this.garageId) {
+      this.loadGarage();
+    }
+   }
+
+   private async loadGarage(): Promise<void> {
+    this.isLoading = true;
+    if (!this.garageId) return;
+    try {
+      const garage = await this.garageDataService.getById<Garage>('garages', this.garageId);
+      if (garage) {
+        this.garageForm.patchValue(garage);
+        this.logoBase64 = garage.logo || null;
+        this.previewLogo = this.logoBase64 ? this.logoBase64 : null;
+      }
+    } catch (error) {
+      this.notificationService.showError('Échec du chargement des données garage. Veuillez réessayer ' + error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
 
   async onSubmit(): Promise<void> {
     if (this.garageForm.invalid) return;
@@ -295,38 +365,52 @@ export class GarageSetupComponent implements OnInit {
       // Récupérer les valeurs du formulaire
       const garageFormValue = this.garageForm.value;
 
-      // Demander à l'utilisateur de saisir un mot de passe, prénom, nom, ou les récupérer d'un autre formulaire
-      const password = garageFormValue.password; // à ajouter dans le formulaire !
-      const firstName = garageFormValue.firstName; // à ajouter dans le formulaire !
-      const lastName = garageFormValue.lastName; // à ajouter dans le formulaire !
-      const role = 'AdminGarage';
 
-      // Construire les horaires
-      const workingHours: any = {};
-      this.weekDays.forEach(day => {
-        workingHours[day.key] = {
-          isOpen: garageFormValue[day.key + 'IsOpen'],
-          openTime: garageFormValue[day.key + 'OpenTime'] || '',
-          closeTime: garageFormValue[day.key + 'CloseTime'] || ''
+      if (this.isEditMode && this.garageId) {
+        console.log(garageFormValue);
+
+        await this.garageDataService.update<Garage>('garages', this.garageId, {
+          ...garageFormValue,
+          logo: this.logoBase64 || '' // <= mettre à jour le logo
+        });
+
+        this.notificationService.showSuccess('Garage updated successfully');
+        this.router.navigate(['/garage/liste']);
+      }
+      else {
+
+        // Demander à l'utilisateur de saisir un mot de passe, prénom, nom, ou les récupérer d'un autre formulaire
+        const password = garageFormValue.password; // à ajouter dans le formulaire !
+        const firstName = garageFormValue.firstName; // à ajouter dans le formulaire !
+        const lastName = garageFormValue.lastName; // à ajouter dans le formulaire !
+        const role = 'AdminGarage';
+
+        // Construire les horaires
+        const workingHours: any = {};
+        this.weekDays.forEach(day => {
+          workingHours[day.key] = {
+            isOpen: garageFormValue[day.key + 'IsOpen'],
+            openTime: garageFormValue[day.key + 'OpenTime'] || '',
+            closeTime: garageFormValue[day.key + 'CloseTime'] || ''
+          };
+        });
+
+        // Construire les settings
+        const settings: GarageSettings = {
+          currency: garageFormValue.currency,
+          defaultVatRate: garageFormValue.defaultVatRate,
+          invoicePrefix: garageFormValue.invoicePrefix,
+          quotePrefix: 'QT',
+          workingHours,
+          notifications: {
+            emailNotifications: true,
+            smsNotifications: false,
+            appointmentReminders: true,
+            paymentReminders: true
+          }
         };
-      });
 
-      // Construire les settings
-      const settings: GarageSettings = {
-        currency: garageFormValue.currency,
-        defaultVatRate: garageFormValue.defaultVatRate,
-        invoicePrefix: garageFormValue.invoicePrefix,
-        quotePrefix: 'QT',
-        workingHours,
-        notifications: {
-          emailNotifications: true,
-          smsNotifications: false,
-          appointmentReminders: true,
-          paymentReminders: true
-        }
-      };
-
-      // Appel à la méthode de création
+        // Appel à la méthode de création
         await this.userManagementService.createGarageAccount({
           name: garageFormValue.name,
           address: garageFormValue.address,
@@ -336,20 +420,21 @@ export class GarageSetupComponent implements OnInit {
           siret: garageFormValue.siret,
           vatNumber: garageFormValue.vatNumber,
           settings,
+          footer: garageFormValue.footer,
           ownerId: '', // sera mis à jour dans le service
           createdAt: new Date(),
           updatedAt: new Date(),
           password,
           firstName,
           lastName,
-          role
-      });
+          role,
+          logo: this.logoBase64 || '' // <= ajout du logo
+        });
 
-      // Optionnel : mettre à jour le profil utilisateur courant si besoin
-      // await this.authService.updateUserProfile({ garageId });
+        this.notificationService.showSuccess('Garage créé avec succès !');
+        this.router.navigate(['/login']);
+      }
 
-      this.notificationService.showSuccess('Garage créé avec succès !');
-      this.router.navigate(['/login']);
     } catch (error: any) {
       this.notificationService.showError(error?.message || 'Erreur lors de la création du garage');
     } finally {
@@ -360,4 +445,24 @@ export class GarageSetupComponent implements OnInit {
   goBack(): void {
     this.router.navigate(['/login']);
   }
+
+  previewLogo: string | null = null; // pour l’aperçu
+  logoBase64: string | null = null;  // pour l’envoi à Firestore
+
+  onLogoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+
+    const file = input.files[0];
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      this.logoBase64 = reader.result as string;
+      this.previewLogo = this.logoBase64; // pour afficher l’aperçu
+    };
+
+    reader.readAsDataURL(file); // Convertit en Base64
+  }
+
+
 }

@@ -49,8 +49,10 @@ export interface Garage {
   logo?: string;
   ownerId: string;
   settings: GarageSettings;
+  footer?: string;
   createdAt: Date;
   updatedAt: Date;
+  garageId?: string;
 }
 
 export interface GarageSettings {

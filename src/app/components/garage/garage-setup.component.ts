@@ -284,6 +284,7 @@ export class GarageSetupComponent implements OnInit {
         }
       };
 
+
       const garageData: Omit<Garage, 'id'> = {
         name: formValue.name,
         address: formValue.address,
@@ -306,7 +307,7 @@ export class GarageSetupComponent implements OnInit {
       this.notificationService.showSuccess('Garage created successfully!');
       this.router.navigate(['/dashboard']);
     } catch (error) {
-      this.notificationService.showError('Failed to create garage');
+      this.notificationService.showError('Failed to create garage ' + error);
     } finally {
       this.isLoading = false;
     }

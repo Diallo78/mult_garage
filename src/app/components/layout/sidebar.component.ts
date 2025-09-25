@@ -688,7 +688,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
           </a>
 
           <a
-            routerLink="/garage-setup"
+            routerLink="/garage-setup/new"
             routerLinkActive="bg-primary-600 text-white dark:bg-primary-700"
             (click)="closeSidebarOnMobile()"
             class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 transition-all duration-200 ease-in-out text-sm group mt-1"

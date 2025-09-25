@@ -133,11 +133,13 @@ export class ClientDetailComponent implements OnInit {
     public authService: AuthService
   ) {}
 
-  async ngOnInit(): Promise<void> {
-    this.clientId = this.route.snapshot.paramMap.get('id');
-    if (this.clientId) {
-      await this.loadClientData();
-    }
+  ngOnInit() {
+   (async() =>{
+     this.clientId = this.route.snapshot.paramMap.get('id');
+     if (this.clientId) {
+       await this.loadClientData();
+     }
+   })()
   }
 
   private async loadClientData(): Promise<void> {
@@ -159,7 +161,7 @@ export class ClientDetailComponent implements OnInit {
         this.recentVisits = this.recentVisits.slice(0, 5); // Show only 5 recent visits
       }
     } catch (error) {
-      this.notificationService.showError('Failed to load client data');
+      this.notificationService.showError('Échec du chargement des données client. Veuillez réessaye ' + error);
     }finally {
       this.isLoading = false;
     }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -7,6 +7,8 @@ import { AuthService } from '../../services/auth.service';
 import { NotificationMessageService } from '../../services/notification-message.service';
 import { NotificationModel } from '../../models/notification';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+import { GarageDtoModel } from '../../models/garage-dto.model';
+import { GarageDtoFunction } from '../../services/fonction/garageDto-function';
 
 @Component({
   selector: 'app-navbar',
@@ -21,12 +23,22 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
             <div
               class="text-lg sm:text-xl lg:text-2xl font-bold text-primary-600"
             >
-              <!-- 🚗 <span class="ml-1 hidden xs:inline">GarageManager</span> -->
+              <!-- 🚗 <span class="ml-1 hidden xs:inline">Garage</span> -->
               <img
-                src="/image/logo2.jpg"
+                *ngIf="garageInfo?.logo; else defaultLogo"
+                [src]="garageInfo?.logo"
                 alt="logo"
                 class="ml-2 h-10 w-45"
               />
+
+              <ng-template #defaultLogo>
+                <img
+                  src="/image/logo2.jpg"
+                  alt="default logo"
+                  class="ml-2 h-10 w-45"
+                />
+              </ng-template>
+
             </div>
           </div>
 
@@ -240,12 +252,13 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
     </nav>
   `,
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit {
   currentUser$: Observable<User | null>;
   showDropdown = false;
   showNotifications = false;
 
   notifications: NotificationModel[] = [];
+  garageInfo: GarageDtoModel | null = null;
 
   get unreadNotifications(): NotificationModel[] {
     return this.notifications.filter(notif => !notif.read);
@@ -259,10 +272,12 @@ export class NavbarComponent {
     this.currentUser$ = this.authService.currentUser$;
   }
 
-  ngOnInit(): void {
+  ngOnInit() {
     this.loadNotificationsOnInit();
     // Rafraîchir les notifications toutes les 2 minutes
     this.startNotificationRefreshInterval();
+
+    this.garageInfo = GarageDtoFunction.garageDto();
   }
 
   private startNotificationRefreshInterval(): void {
