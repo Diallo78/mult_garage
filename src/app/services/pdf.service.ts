@@ -12,13 +12,8 @@ import { GarageDtoFunction } from './fonction/garageDto-function';
   providedIn: 'root',
 })
 export class PDFService {
+
   garageInfo: GarageDtoModel | null = null;
-
-  constructor() {
-
-    console.log('Garage info:', this.garageInfo);
-
-  }
 
   // Diagnostic
   async generateDiagnosticReportPDF(
@@ -50,7 +45,7 @@ export class PDFService {
         // `Adresse : ${this.garageInfo.address}`,
         `Téléphone : ${this.garageInfo.phone}`,
         `E-mail : ${this.garageInfo.email}`,
-        'Agrément : N°12345/MT/DG/2023',
+        `Agrément : N°${this.garageInfo.agrement || 'N/A'}`,
       ];
 
       let y = 15;
@@ -166,7 +161,7 @@ export class PDFService {
       doc.setFont('times', 'normal');
       doc.setTextColor(0);
       doc.text(
-        `${this.garageInfo.name} - Capital social : 50 000 000 000 GNF - RC : ${this.garageInfo.vatNumber}`,
+        `${this.garageInfo.name} - Capital social : ${this.formatAmount(this.garageInfo.capitalSocial || 0)}  - RC : ${this.garageInfo.rc || this.garageInfo.siret}`,
         pageWidth / 2,
         footerY + 5,
         { align: 'center' }
@@ -184,7 +179,7 @@ export class PDFService {
         { align: 'center' }
       );
       doc.text(
-        `Site web : ${this.garageInfo.website} - SIRET : ${this.garageInfo.siret}`,
+        `Site web : ${this.garageInfo.website} - SIRET : ${this.garageInfo.siret || 'N/A'}`,
         pageWidth / 2,
         footerY + 20,
         { align: 'center' }
@@ -211,7 +206,7 @@ export class PDFService {
         doc.addImage(logoBase64, 'PNG', pageWidth - 50, 10, 40, 20);
       }
       else {
-        const logoBase64 = await this.getBase64FromUrl('/image/logo2.jpg');
+        const logoBase64 = await this.getBase64FromUrl('/image/logo3.jpg');
         doc.addImage(logoBase64, 'PNG', pageWidth - 50, 10, 40, 20);
       }
       // --- ENTREPRISE ---
@@ -219,10 +214,10 @@ export class PDFService {
       doc.setFontSize(12);
       const companyInfo = [
         this.garageInfo.name,
-        // 'Adresse : Lambanyi Ccarrefoure, Conakry, Guinée',
-        `Téléphone : ${this.garageInfo.phone} / +224 655 00 00 00`,
+        `Adresse : ${this.garageInfo.address}`,
+        `Téléphone : ${this.garageInfo.phone}`,
         `Email : ${this.garageInfo.email}`,
-        `Agrément : N°${this.garageInfo.siret}`,
+        `Agrément : N°${this.garageInfo.agrement || 'N/A'}`,
       ];
       let y = 15;
       companyInfo.forEach((line) => {
@@ -258,7 +253,7 @@ export class PDFService {
       // --- TABLEAU ITEMS ---
       autoTable(doc, {
         startY: y + 35,
-        head: [['Désignation', 'Quantité', 'Prix unitaire (GNF)', 'Total (GNF)']],
+        head: [['Désignation', 'Quantité', `Prix unitaire (${this.garageInfo.currency}), Total (${this.garageInfo.currency})`]],
         body: quote.items.map((item) => [
           item.designation,
           item.quantity.toString(),
@@ -327,20 +322,18 @@ export class PDFService {
       doc.setFontSize(10);
       doc.setTextColor(0);
 
-      // Signature client (gauche)
-      // doc.text('Signature client :', 20, signaturesY);
-      // Signature garage (droite)
-      doc.text('Signature Garage AutoPro :', pageWidth - 70, signaturesY);
+
+      doc.text(`Signature ${this.garageInfo.name} :`, pageWidth - 70, signaturesY);
 
       // Ajouter l'image de la signature (juste en dessous du texte)
-      const signatureBase64 = await this.getBase64FromUrl('/image/signature.png');
+      const signatureBase64 = this.garageInfo.signature || await this.getBase64FromUrl('/image/signature.png');
       doc.addImage(
         signatureBase64,
         'PNG',
-        pageWidth - 70,
+        pageWidth - 65, // defult 70
         signaturesY + 5,
-        40,
-        20
+        45, // defult 40
+        22 // deful 20
       );
 
       // Pied de page remonté
@@ -359,7 +352,7 @@ export class PDFService {
       doc.setFont('times', 'normal');
       doc.setTextColor(0);
       doc.text(
-        `${this.garageInfo.name} - Capital social : 50 000 000 000 GNF - RC : ${this.garageInfo.vatNumber}`,
+        `${this.garageInfo.name} - Capital social : ${this.formatAmount(this.garageInfo.capitalSocial || 0)}  - RC : ${this.garageInfo.rc || this.garageInfo.siret}`,
         pageWidth / 2,
         footerY + 5,
         { align: 'center' }
@@ -377,7 +370,7 @@ export class PDFService {
         { align: 'center' }
       );
       doc.text(
-        `Site web : ${this.garageInfo.website} - SIRET : ${this.garageInfo.siret}`,
+        `Site web : ${this.garageInfo.website} - SIRET : ${this.garageInfo.siret || 'N/A'}`,
         pageWidth / 2,
         footerY + 20,
         { align: 'center' }
@@ -392,208 +385,217 @@ export class PDFService {
     clientName: string,
     vehicleInfo: string
   ): Promise<void> {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
+    this.garageInfo = GarageDtoFunction.garageDto();
+    if (this.garageInfo) {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
 
-    // --- LOGO ---
-    const logoBase64 = await this.getBase64FromUrl('/image/logo2.jpg'); // Assure-toi que cette fonction existe
-    doc.addImage(logoBase64, 'PNG', pageWidth - 50, 10, 40, 20);
+      // --- LOGO ---
+      if (this.garageInfo.logo) {
+        const logoBase64 = this.garageInfo.logo;
+        doc.addImage(logoBase64, 'PNG', pageWidth - 50, 10, 40, 20);
+      }
+      else {
+        const logoBase64 = await this.getBase64FromUrl('/image/logo3.jpg');
+        doc.addImage(logoBase64, 'PNG', pageWidth - 50, 10, 40, 20);
+      }
 
-    // --- ENTREPRISE INFO ---
-    doc.setFont('times', 'normal');
-    doc.setFontSize(12);
-    const entrepriseInfo = [
-      'GARAGE HERVE VINCENT G-H-V',
-      'Adresse : Lambanyi Ccarrefoure, Conakry, Guinée',
-      'Téléphone : +224 620 61 63 48 / +224 655 00 00 00',
-      'Email : garagehervevincentguinee@gmail.com',
-      'Agrément : N°12345/MT/DG/2023',
-    ];
-    let y = 15;
-    entrepriseInfo.forEach((line) => {
-      doc.text(line, 15, y);
-      y += 6;
-    });
+      // --- ENTREPRISE INFO ---
+      doc.setFont('times', 'normal');
+      doc.setFontSize(12);
+      const entrepriseInfo = [
+        this.garageInfo.name,
+        `Adresse : ${this.garageInfo.address}`,
+        `Téléphone : ${this.garageInfo.phone}`,
+        `Email : ${this.garageInfo.email}`,
+        `Agrément : N°${this.garageInfo.agrement || 'N/A'}`,
+      ];
+      let y = 15;
+      entrepriseInfo.forEach((line) => {
+        doc.text(line, 15, y);
+        y += 6;
+      });
 
-    // --- TITRE ---
-    doc.setFontSize(18);
-    doc.setFont('times', 'bold');
-    doc.text('FACTURE', pageWidth / 2, 50, { align: 'center' });
+      // --- TITRE ---
+      doc.setFontSize(18);
+      doc.setFont('times', 'bold');
+      doc.text('FACTURE', pageWidth / 2, 50, { align: 'center' });
 
-    // --- INFOS FACTURE ---
-    doc.setFontSize(12);
-    y = 65;
-    doc.setFont('times', 'normal');
-    doc.text(`N° Facture : ${invoice.invoiceNumber}`, 15, y);
-    doc.text(
-      `Date : ${new Date(invoice.createdAt).toLocaleDateString()}`,
-      15,
-      y + 6
-    );
-    doc.text(
-      `Échéance : ${new Date(invoice.dueDate).toLocaleDateString()}`,
-      15,
-      y + 12
-    );
-
-    // --- INFOS CLIENT ---
-    y += 24;
-    doc.text(`Client : ${clientName}`, 15, y);
-    doc.text(`Véhicule : ${vehicleInfo}`, 15, y + 6);
-
-    // --- TABLEAU DES ARTICLES ---
-    const tableData: RowInput[] = invoice.items.map((item) => ({
-      description: item.description,
-      quantity: item.quantity,
-      unitPrice: {
-        content: this.formatAmount(item.unitPrice),
-        styles: { halign: 'right' as const },
-      },
-      total: {
-        content: this.formatAmount(item.subtotal),
-        styles: {
-          halign: 'right' as const,
-          fontStyle: 'bold' as const,
-        },
-      },
-    }));
-
-    const columns = [
-      { header: 'Description', dataKey: 'description' },
-      { header: 'Quantité', dataKey: 'quantity' },
-      { header: 'Prix unitaire', dataKey: 'unitPrice' },
-      { header: 'Total', dataKey: 'total' },
-    ];
-
-    autoTable(doc, {
-      startY: y + 20,
-      columns: columns,
-      body: tableData,
-      styles: {
-        font: 'helvetica',
-        fontSize: 10,
-        cellPadding: 4,
-        lineColor: [200, 200, 200],
-        lineWidth: 0.2,
-      },
-      headStyles: {
-        fillColor: [22, 160, 133],
-        textColor: 255,
-        fontStyle: 'bold',
-        halign: 'center',
-        cellPadding: 6,
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245],
-      },
-      columnStyles: {
-        0: { cellWidth: 'auto', halign: 'left' },
-        1: { cellWidth: 'auto', halign: 'center' },
-        2: { cellWidth: 'auto', halign: 'right' },
-        3: { cellWidth: 'auto', halign: 'right' },
-      },
-    });
-
-    // --- TOTAUX ---
-    let finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(12);
-    doc.text(
-      `Sous-total : ${this.formatAmount(invoice.subtotal)}`,
-      140,
-      finalY
-    );
-    if (invoice.discountAmount > 0) {
-      finalY += 6;
+      // --- INFOS FACTURE ---
+      doc.setFontSize(12);
+      y = 65;
+      doc.setFont('times', 'normal');
+      doc.text(`N° Facture : ${invoice.invoiceNumber}`, 15, y);
       doc.text(
-        `Remise : -${this.formatAmount(invoice.discountAmount)}`,
+        `Date : ${new Date(invoice.createdAt).toLocaleDateString()}`,
+        15,
+        y + 6
+      );
+      doc.text(
+        `Échéance : ${new Date(invoice.dueDate).toLocaleDateString()}`,
+        15,
+        y + 12
+      );
+
+      // --- INFOS CLIENT ---
+      y += 24;
+      doc.text(`Client : ${clientName}`, 15, y);
+      doc.text(`Véhicule : ${vehicleInfo}`, 15, y + 6);
+
+      // --- TABLEAU DES ARTICLES ---
+      const tableData: RowInput[] = invoice.items.map((item) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: {
+          content: this.formatAmount(item.unitPrice),
+          styles: { halign: 'right' as const },
+        },
+        total: {
+          content: this.formatAmount(item.subtotal),
+          styles: {
+            halign: 'right' as const,
+            fontStyle: 'bold' as const,
+          },
+        },
+      }));
+
+      const columns = [
+        { header: 'Description', dataKey: 'description' },
+        { header: 'Quantité', dataKey: 'quantity' },
+        { header: 'Prix unitaire', dataKey: 'unitPrice' },
+        { header: 'Total', dataKey: 'total' },
+      ];
+
+      autoTable(doc, {
+        startY: y + 20,
+        columns: columns,
+        body: tableData,
+        styles: {
+          font: 'helvetica',
+          fontSize: 10,
+          cellPadding: 4,
+          lineColor: [200, 200, 200],
+          lineWidth: 0.2,
+        },
+        headStyles: {
+          fillColor: [22, 160, 133],
+          textColor: 255,
+          fontStyle: 'bold',
+          halign: 'center',
+          cellPadding: 6,
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+        columnStyles: {
+          0: { cellWidth: 'auto', halign: 'left' },
+          1: { cellWidth: 'auto', halign: 'center' },
+          2: { cellWidth: 'auto', halign: 'right' },
+          3: { cellWidth: 'auto', halign: 'right' },
+        },
+      });
+
+      // --- TOTAUX ---
+      let finalY = (doc as any).lastAutoTable.finalY + 10;
+      doc.setFontSize(12);
+      doc.text(
+        `Sous-total : ${this.formatAmount(invoice.subtotal)}`,
         140,
         finalY
       );
+      if (invoice.discountAmount > 0) {
+        finalY += 6;
+        doc.text(
+          `Remise : -${this.formatAmount(invoice.discountAmount)}`,
+          140,
+          finalY
+        );
+      }
+      finalY += 6;
+      doc.text(
+        `Montant TVA : ${this.formatAmount(invoice.vatAmount)}`,
+        140,
+        finalY
+      );
+      finalY += 6;
+      doc.setFont('times', 'bold');
+      doc.text(
+        `Total TTC : ${this.formatAmount(invoice.totalAmount)}`,
+        140,
+        finalY
+      );
+      finalY += 6;
+      doc.text(
+        `Montant dû : ${this.formatAmount(invoice.amountDue)}`,
+        140,
+        finalY
+      );
+
+      // --- PIED DE PAGE ---
+      // Calcul des positions
+      const footerYY = doc.internal.pageSize.getHeight() - 15;
+      const signaturesY = footerYY - 60;
+
+      // Section signatures
+      doc.setFontSize(10);
+      doc.setTextColor(0);
+
+      // Signature client (gauche)
+      doc.text('Signature client :', 20, signaturesY);
+      // Signature garage (droite)
+      doc.text(`Signature ${this.garageInfo.name} :`, pageWidth - 70, signaturesY);
+      // Ajouter l'image de la signature (juste en dessous du texte)
+      const signatureBase64 = this.garageInfo.signature || await this.getBase64FromUrl('/image/signature.png');
+      doc.addImage(
+        signatureBase64,
+        'PNG',
+        pageWidth - 65, // defult 70
+        signaturesY + 5,
+        45, // defult 40
+        22 // deful 20
+      );
+      // Pied de page remonté
+      const footerY = doc.internal.pageSize.getHeight() - 25;
+      doc.setFontSize(8);
+      doc.setFont('times', 'italic');
+      doc.setTextColor(100);
+      doc.text(
+        `Document généré le ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString()}`,
+        pageWidth / 2,
+        footerY,
+        { align: 'center' }
+      );
+
+      doc.setFontSize(9);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(0);
+      doc.text(
+        `${this.garageInfo.name} - Capital social : ${this.formatAmount(this.garageInfo.capitalSocial || 0)}  - RC : ${this.garageInfo.rc || this.garageInfo.siret}`,
+        pageWidth / 2,
+        footerY + 5,
+        { align: 'center' }
+      );
+      doc.text(
+        'Siège social : ' + this.garageInfo.address,
+        pageWidth / 2,
+        footerY + 10,
+        { align: 'center' }
+      );
+      doc.text(
+        `Tél : ${this.garageInfo.phone} - Email : ${this.garageInfo.email}`,
+        pageWidth / 2,
+        footerY + 15,
+        { align: 'center' }
+      );
+      doc.text(
+        `Site web : ${this.garageInfo.website} - SIRET : ${this.garageInfo.siret || 'N/A'}`,
+        pageWidth / 2,
+        footerY + 20,
+        { align: 'center' }
+      );
+
+      doc.save(`facture-${invoice.invoiceNumber}.pdf`);
     }
-    finalY += 6;
-    doc.text(
-      `Montant TVA : ${this.formatAmount(invoice.vatAmount)}`,
-      140,
-      finalY
-    );
-    finalY += 6;
-    doc.setFont('times', 'bold');
-    doc.text(
-      `Total TTC : ${this.formatAmount(invoice.totalAmount)}`,
-      140,
-      finalY
-    );
-    finalY += 6;
-    doc.text(
-      `Montant dû : ${this.formatAmount(invoice.amountDue)}`,
-      140,
-      finalY
-    );
-
-    // --- PIED DE PAGE ---
-    // Calcul des positions
-    const footerYY = doc.internal.pageSize.getHeight() - 15;
-    const signaturesY = footerYY - 40;
-
-    // Section signatures
-    doc.setFontSize(10);
-    doc.setTextColor(0);
-
-    // Signature client (gauche)
-    doc.text('Signature client :', 20, signaturesY);
-    // Signature garage (droite)
-    doc.text('Signature Garage AutoPro :', pageWidth - 70, signaturesY);
-    // Ajouter l'image de la signature (juste en dessous du texte)
-    const signatureBase64 = await this.getBase64FromUrl('/image/signature.png');
-    doc.addImage(
-      signatureBase64,
-      'PNG',
-      pageWidth - 70,
-      signaturesY + 5,
-      40,
-      20
-    );
-    // Pied de page remonté
-    const footerY = doc.internal.pageSize.getHeight() - 25;
-    doc.setFontSize(8);
-    doc.setFont('times', 'italic');
-    doc.setTextColor(100);
-    doc.text(
-      `Document généré le ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString()}`,
-      pageWidth / 2,
-      footerY,
-      { align: 'center' }
-    );
-
-    doc.setFontSize(9);
-    doc.setFont('times', 'normal');
-    doc.setTextColor(0);
-    doc.text(
-      'Garage Herve Vincent : N°12345/MT/DG/2023',
-      pageWidth / 2,
-      footerY + 5,
-      { align: 'center' }
-    );
-    doc.text(
-      'Siège social : Quartier Lambanyi, Conakry - BP : 1234 CONAKRY',
-      pageWidth / 2,
-      footerY + 10,
-      { align: 'center' }
-    );
-    doc.text(
-      'Tél : (+224) 620 61 63 48 / 655 00 00 00 - Email : garagehervevincentguinee@gmail.com',
-      pageWidth / 2,
-      footerY + 15,
-      { align: 'center' }
-    );
-    doc.text(
-      'Site web : www.autopro.gn - RC : 123456789',
-      pageWidth / 2,
-      footerY + 20,
-      { align: 'center' }
-    );
-
-    doc.save(`facture-${invoice.invoiceNumber}.pdf`);
   }
 
   // Reçu de paiement
@@ -602,139 +604,146 @@ export class PDFService {
     invoiceNumber: string,
     clientName: string
   ): Promise<void> {
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
+    this.garageInfo = GarageDtoFunction.garageDto();
+    if (this.garageInfo) {
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
 
-    // ✅ Logo à droite
-    const logoBase64 = await this.getBase64FromUrl('/image/logo2.jpg');
-    const logoWidth = 35;
-    const logoHeight = 20;
-    doc.addImage(
-      logoBase64,
-      'PNG',
-      pageWidth - logoWidth - 20,
-      10,
-      logoWidth,
-      logoHeight
-    );
+      // ✅ Logo à droite
+      if (this.garageInfo.logo) {
 
-    // ✅ Coordonnées entreprise
-    doc.setFont('times', 'normal');
-    doc.setFontSize(11);
-    const companyInfo = [
-      'GARAGE HERVE VINCENT G-H-V',
-      'Adresse : Lambanyi Ccarrefoure, Conakry, Guinée',
-      'Téléphone : +224 620 61 63 48 / +224 655 00 00 00',
-      'Email : garagehervevincentguinee@gmail.com',
-      'Agrément : N°12345/MT/DG/2023',
-    ];
-    let y = 15;
-    companyInfo.forEach((line) => {
-      doc.text(line, 20, y);
-      y += 6;
-    });
+        const logoBase64 = this.garageInfo.logo || await this.getBase64FromUrl('/image/logo3.jpg');;
+        const logoWidth = 35;
+        const logoHeight = 20;
 
-    // ✅ Titre centré
-    doc.setFontSize(16);
-    doc.setFont('times', 'bold');
-    doc.text('REÇU DE PAIEMENT', pageWidth / 2, y + 10, { align: 'center' });
+        doc.addImage(
+          logoBase64,
+          'PNG',
+          pageWidth - logoWidth - 20,
+          10,
+          logoWidth,
+          logoHeight
+        );
+      }
 
-    // ✅ Infos de base
-    doc.setFontSize(11);
-    doc.setFont('times', 'normal');
-    const date =
-      payment.date instanceof Date
-        ? payment.date
-        : new Date(payment.date?.seconds * 1000 || payment.date);
-    const formattedDate = date.toLocaleDateString('fr-FR');
+      // ✅ Coordonnées entreprise
+      doc.setFont('times', 'normal');
+      doc.setFontSize(11);
+      const companyInfo = [
+        this.garageInfo.name,
+        `Adresse : ${this.garageInfo.address}`,
+        `Téléphone : ${this.garageInfo.phone}`,
+        `Email : ${this.garageInfo.email}`,
+        `Agrément : N°${this.garageInfo.agrement || 'N/A'}`,
+      ];
+      let y = 15;
+      companyInfo.forEach((line) => {
+        doc.text(line, 20, y);
+        y += 6;
+      });
 
-    doc.text(`Reçu N° : ${payment.id}`, 20, y + 25);
-    doc.text(`Date : ${formattedDate}`, pageWidth - 60, y + 25);
+      // ✅ Titre centré
+      doc.setFontSize(16);
+      doc.setFont('times', 'bold');
+      doc.text('REÇU DE PAIEMENT', pageWidth / 2, y + 10, { align: 'center' });
 
-    // ✅ Détails du paiement
-    const rowStartY = y + 35;
-    const rowHeight = 10;
-    const col1X = 20;
-    const col2X = 70;
+      // ✅ Infos de base
+      doc.setFontSize(11);
+      doc.setFont('times', 'normal');
+      const date =
+        payment.date instanceof Date
+          ? payment.date
+          : new Date(payment.date?.seconds * 1000 || payment.date);
+      const formattedDate = date.toLocaleDateString('fr-FR');
 
-    const formattedAmount =
-      new Intl.NumberFormat('en-US').format(payment.amount) + ' GNF';
+      doc.text(`Reçu N° : ${payment.id}`, 20, y + 25);
+      doc.text(`Date : ${formattedDate}`, pageWidth - 60, y + 25);
 
-    const tableRows: [string, string][] = [
-      ['Client', clientName],
-      ['Facture n°', invoiceNumber],
-      ['Méthode de paiement', payment.method],
-      ['Montant payé', formattedAmount],
-      payment.reference ? ['Référence', payment.reference] : null,
-      payment.notes ? ['Notes', payment.notes] : null,
-    ].filter(Boolean) as [string, string][];
+      // ✅ Détails du paiement
+      const rowStartY = y + 35;
+      const rowHeight = 10;
+      const col1X = 20;
+      const col2X = 70;
 
-    tableRows.forEach(([label, value], i) => {
-      const yPos = rowStartY + i * rowHeight;
-      doc.text(`${label} :`, col1X, yPos);
-      doc.text(value, col2X, yPos);
-      doc.setDrawColor(220);
-      doc.line(col1X, yPos + 2, pageWidth - 20, yPos + 2);
-    });
+      const formattedAmount =
+        new Intl.NumberFormat('en-US').format(payment.amount) + ' GNF';
 
-    // ✅ Montant en lettres
-    const textY = rowStartY + tableRows.length * rowHeight + 15;
-    const montantEnLettres =
-      this.nombreEnLettres(payment.amount) + ' francs guinéens';
+      const tableRows: [string, string][] = [
+        ['Client', clientName],
+        ['Facture n°', invoiceNumber],
+        ['Méthode de paiement', payment.method],
+        ['Montant payé', formattedAmount],
+        payment.reference ? ['Référence', payment.reference] : null,
+        payment.notes ? ['Notes', payment.notes] : null,
+      ].filter(Boolean) as [string, string][];
 
-    doc.setFont('times', 'italic');
-    doc.text(`Montant en lettres : ${montantEnLettres}`, 20, textY, {
-      maxWidth: pageWidth - 40,
-    });
+      tableRows.forEach(([label, value], i) => {
+        const yPos = rowStartY + i * rowHeight;
+        doc.text(`${label} :`, col1X, yPos);
+        doc.text(value, col2X, yPos);
+        doc.setDrawColor(220);
+        doc.line(col1X, yPos + 2, pageWidth - 20, yPos + 2);
+      });
 
-    // ✅ Signatures
-    const signY = textY + 25;
-    doc.setFont('times', 'normal');
+      // ✅ Montant en lettres
+      const textY = rowStartY + tableRows.length * rowHeight + 15;
+      const montantEnLettres =
+        this.nombreEnLettres(payment.amount) + ' francs guinéens';
 
-    doc.text('Signature autorisée', pageWidth - 60, signY + 10);
-    doc.line(pageWidth - 80, signY + 15, pageWidth - 20, signY + 15);
+      doc.setFont('times', 'italic');
+      doc.text(`Montant en lettres : ${montantEnLettres}`, 20, textY, {
+        maxWidth: pageWidth - 40,
+      });
 
-    // ✅ Pied de page
-    const footerY = doc.internal.pageSize.getHeight() - 15;
-    doc.setFontSize(8);
-    doc.setFont('times', 'italic');
-    doc.setTextColor(100);
-    doc.text(
-      `Document généré le ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString()}`,
-      pageWidth / 2,
-      footerY - 15,
-      { align: 'center' }
-    );
+      // ✅ Signatures
+      const signY = textY + 25;
+      doc.setFont('times', 'normal');
 
-    doc.setFontSize(9);
-    doc.setFont('times', 'normal');
-    doc.setTextColor(0);
-    doc.text(
-      'GARAGE HERVE VINCENT - Capital social : 50 000 000 000 GNF - RC : 123456789',
-      pageWidth / 2,
-      footerY - 10,
-      { align: 'center' }
-    );
-    doc.text(
-      'Siège social : Quartier Lambanyi, Conakry - BP : 4885 CONAKRY',
-      pageWidth / 2,
-      footerY - 5,
-      { align: 'center' }
-    );
-    doc.text(
-      'Tél : (+224) 620 61 63 48 / 655 00 00 00 - Email : garagehervevincentguinee@gmail.com',
-      pageWidth / 2,
-      footerY,
-      { align: 'center' }
-    );
-    doc.text(
-      'Site web : www.garage-expert.com - SIRET : 12345678900012',
-      pageWidth / 2,
-      footerY + 5,
-      { align: 'center' }
-    );
+      doc.text('Signature autorisée', pageWidth - 60, signY + 10);
+      doc.line(pageWidth - 80, signY + 15, pageWidth - 20, signY + 15);
 
-    doc.save(`recu-${payment.id}.pdf`);
+      // ✅ Pied de page
+      const footerY = doc.internal.pageSize.getHeight() - 25;
+      doc.setFontSize(8);
+      doc.setFont('times', 'italic');
+      doc.setTextColor(100);
+      doc.text(
+        `Document généré le ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString()}`,
+        pageWidth / 2,
+        footerY,
+        { align: 'center' }
+      );
+
+      doc.setFontSize(9);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(0);
+      doc.text(
+        `${this.garageInfo.name} - Capital social : ${this.formatAmount(this.garageInfo.capitalSocial || 0)}  - RC : ${this.garageInfo.rc || this.garageInfo.siret}`,
+        pageWidth / 2,
+        footerY + 5,
+        { align: 'center' }
+      );
+      doc.text(
+        'Siège social : ' + this.garageInfo.address,
+        pageWidth / 2,
+        footerY + 10,
+        { align: 'center' }
+      );
+      doc.text(
+        `Tél : ${this.garageInfo.phone} - Email : ${this.garageInfo.email}`,
+        pageWidth / 2,
+        footerY + 15,
+        { align: 'center' }
+      );
+      doc.text(
+        `Site web : ${this.garageInfo.website} - SIRET : ${this.garageInfo.siret || 'N/A'}`,
+        pageWidth / 2,
+        footerY + 20,
+        { align: 'center' }
+      );
+
+      doc.save(`recu-${payment.id}.pdf`);
+    }
   }
 
   // Fonction utilitaire pour charger une image en base64
@@ -862,11 +871,12 @@ export class PDFService {
   }
 
   private formatAmount(amount: number): string {
-    // return new Intl.NumberFormat('en-US', {
-    //   style: 'currency',
-    //   currency: 'GNF',
-    //   minimumFractionDigits: 0
-    // }).format(amount);
-    return new Intl.NumberFormat('en-US').format(amount) + ' GNF';
+    this.garageInfo = GarageDtoFunction.garageDto();
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: this.garageInfo?.currency || 'GNF',
+      minimumFractionDigits: 2
+    }).format(amount);
+    //return new Intl.NumberFormat('en-US').format(amount) + ' ' + (this.garageInfo?.currency || 'GNF');
   }
 }

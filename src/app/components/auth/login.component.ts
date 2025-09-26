@@ -270,11 +270,15 @@ export class LoginComponent {
             phone: garage.phone,
             email: garage.email,
             logo: garage.logo || null,
-            currency: garage.settings.currency || 'EUR',
-            footer: garage.footer || null,
+            signature: garage.signature || null,
+            currency: garage.settings.currency || 'GNF',
             website: garage.website,
             siret: garage.siret || null,
-            vatNumber: garage.vatNumber || null,
+           // vatNumber: garage.vatNumber || null,
+            agrement: garage.agrement || null,
+            rc: garage.rc || null,
+           // nif: garage.nif || null,
+            capitalSocial: garage.capitalSocial || null,
           })
         );
       }

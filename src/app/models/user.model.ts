@@ -44,12 +44,18 @@ export interface Garage {
   phone: string;
   email: string;
   website?: string;
+  logo?: string;
+  signature?: string
+  // Identifiants légaux & administratifs
+  agrement?: string;       // Numéro d'agrément
+  rc?: string;             // Registre de commerce
+  nif?: string;            // Numéro d'identification fiscale
+  capitalSocial?: number;  // Capital social en GNF
   siret?: string;
   vatNumber?: string;
-  logo?: string;
+
   ownerId: string;
   settings: GarageSettings;
-  footer?: string;
   createdAt: Date;
   updatedAt: Date;
   garageId?: string;

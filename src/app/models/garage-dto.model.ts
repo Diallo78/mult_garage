@@ -5,9 +5,13 @@ export interface GarageDtoModel {
     phone: string,
     email: string,
     logo: string,
+    signature?: string,
     currency: string,
-    footer: string,
     website: string,
-    siret: string,
-    vatNumber: string
+    siret?: string,
+    vatNumber?: string,
+    agrement?: string,       // Numéro d'agrément
+    rc?: string,             // Registre de commerce
+    nif?: string,            // Numéro d'identification fiscale
+    capitalSocial?: number,  // Capital social en GNF
 }

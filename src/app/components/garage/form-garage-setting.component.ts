@@ -43,6 +43,7 @@ import { GarageDataService } from '../../services/garage-data.service';
                     placeholder="Enter garage name"
                   />
                 </div>
+
                 <div>
                   <label class="form-label">Email *</label>
                   <input
@@ -52,6 +53,7 @@ import { GarageDataService } from '../../services/garage-data.service';
                     placeholder="garage@example.com"
                   />
                 </div>
+
                 <div>
                   <label class="form-label">Phone *</label>
                   <input
@@ -61,6 +63,7 @@ import { GarageDataService } from '../../services/garage-data.service';
                     placeholder="Phone number"
                   />
                 </div>
+
                 <div>
                   <label class="form-label">Website</label>
                   <input
@@ -70,6 +73,7 @@ import { GarageDataService } from '../../services/garage-data.service';
                     placeholder="https://yourgarage.com"
                   />
                 </div>
+
                 <div>
                   <label class="form-label">Prénom *</label>
                   <input
@@ -79,6 +83,7 @@ import { GarageDataService } from '../../services/garage-data.service';
                     placeholder="Prénom de l'administrateur"
                   />
                 </div>
+
                 <div>
                   <label class="form-label">Nom *</label>
                   <input
@@ -88,6 +93,7 @@ import { GarageDataService } from '../../services/garage-data.service';
                     placeholder="Nom de l'administrateur"
                   />
                 </div>
+
                 <div>
                   <label class="form-label">Mot de passe *</label>
                   <input
@@ -98,7 +104,7 @@ import { GarageDataService } from '../../services/garage-data.service';
                   />
                 </div>
 
-                                <!-- Logo Upload -->
+                <!-- Logo Upload -->
                 <div>
                   <label class="form-label">Logo du garage</label>
                   <input
@@ -115,6 +121,22 @@ import { GarageDataService } from '../../services/garage-data.service';
                   <img [src]="previewLogo" alt="Logo preview" class="h-24 rounded shadow" />
                 </div>
 
+                <!-- Signatur -->
+                <div>
+                  <label class="form-label">Signature</label>
+                  <input
+                    type="file"
+                    (change)="onSignatureSelected($event)"
+                    accept="image/*"
+                    class="form-input"
+                  />
+                </div>
+
+                <!-- Prévisualisation de la signature -->
+                <div *ngIf="previewSignature" class="mt-4">
+                  <p class="text-sm text-gray-600 mb-2">Aperçu de la signature :</p>
+                  <img [src]="previewSignature" alt="Signature preview" class="h-24 rounded shadow" />
+                </div>
 
 
                 <div class="md:col-span-2">
@@ -127,39 +149,71 @@ import { GarageDataService } from '../../services/garage-data.service';
                   ></textarea>
                 </div>
 
-                <!-- un edit footer -->
-                <div class="md:col-span-2">
-                  <label class="form-label">Footer</label>
-                  <textarea
-                    formControlName="footer"
-                    rows="3"
-                    class="form-input"
-                    placeholder="Footer(Pied de page)"
-                  ></textarea>
-                </div>
               </div>
             </div>
 
             <!-- Business Information -->
             <div>
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">Business Information</h2>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Identifiants légaux & administratifs</h2>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                 <div>
                   <label class="form-label">Numéro SIRET</label>
                   <input
                     type="text"
                     formControlName="siret"
                     class="form-input"
-                    placeholder="SIRET number"
+                    placeholder="Numéro siret (14 chiffres) (ex :1234567890001)"
                   />
                 </div>
+
                 <div>
-                  <label class="form-label">Numéro de TVA</label>
+                  <label class="form-label">Numéro de TVA intracommunautaire</label>
                   <input
                     type="text"
                     formControlName="vatNumber"
                     class="form-input"
                     placeholder="VAT number"
+                  />
+                </div>
+
+                <div>
+                  <label class="form-label">Numéro d'agrément</label>
+                  <input
+                    type="text"
+                    formControlName="agrement"
+                    class="form-input"
+                    placeholder="Numéro d'agrément (ex : AG-2024-0567)"
+                  />
+                </div>
+
+                <div>
+                  <label class="form-label">Registre de commerce</label>
+                  <input
+                    type="text"
+                    formControlName="rc"
+                    class="form-input"
+                    placeholder="Registre de commerce (ex : RC-GN-CONAKRY-2024-B12345)"
+                  />
+                </div>
+
+                <div>
+                  <label class="form-label">Numéro d'identification fiscale</label>
+                  <input
+                    type="text"
+                    formControlName="nif"
+                    class="form-input"
+                    placeholder="Numéro d'identification fiscale (ex: NIF-2024-987654321)"
+                  />
+                </div>
+
+                <div>
+                  <label class="form-label">Capital social</label>
+                  <input
+                    type="number"
+                    formControlName="capitalSocial"
+                    class="form-input"
+                    placeholder="Capital social en GNF, EUR, $"
                   />
                 </div>
               </div>
@@ -288,16 +342,24 @@ export class FormGarageSetupComponent implements OnInit {
       phone: ['', Validators.required],
       address: ['', Validators.required],
       website: [''],
-      footer: [''],
-      siret: [''],
-      vatNumber: [''],
+
+      // Identifiants légaux & administratifs
+      siret: [''], // Numéro de SIRET
+      vatNumber: [''], // Numéro de TVA intracommunautaire
+      agrement: [''],       // Numéro d'agrément
+      rc: [''],             // Registre de commerce
+      nif: [''],            // Numéro d'identification fiscale
+      capitalSocial: [''],  // Capital social en GNF
+
       currency: ['GNF'],
       defaultVatRate: [20],
       invoicePrefix: ['INV'],
+
       // Nouveaux champs utilisateur
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(6)]],
+
       // Working hours
       lundiIsOpen: [true],
       lundiOpenTime: ['08:00'],
@@ -337,17 +399,21 @@ export class FormGarageSetupComponent implements OnInit {
     if (this.isEditMode && this.garageId) {
       this.loadGarage();
     }
-   }
+  }
 
-   private async loadGarage(): Promise<void> {
+  private async loadGarage(): Promise<void> {
     this.isLoading = true;
     if (!this.garageId) return;
     try {
       const garage = await this.garageDataService.getById<Garage>('garages', this.garageId);
       if (garage) {
         this.garageForm.patchValue(garage);
+        
         this.logoBase64 = garage.logo || null;
         this.previewLogo = this.logoBase64 ? this.logoBase64 : null;
+
+        this.signatureBase64 = garage.signature || null;
+        this.previewSignature = this.signatureBase64 ? this.signatureBase64 : null;
       }
     } catch (error) {
       this.notificationService.showError('Échec du chargement des données garage. Veuillez réessayer ' + error);
@@ -367,11 +433,11 @@ export class FormGarageSetupComponent implements OnInit {
 
 
       if (this.isEditMode && this.garageId) {
-        console.log(garageFormValue);
 
         await this.garageDataService.update<Garage>('garages', this.garageId, {
           ...garageFormValue,
-          logo: this.logoBase64 || '' // <= mettre à jour le logo
+          logo: this.logoBase64 || '', // <= mettre à jour le logo
+          signature: this.signatureBase64 || '' // <= mettre à jour la signature
         });
 
         this.notificationService.showSuccess('Garage updated successfully');
@@ -417,10 +483,14 @@ export class FormGarageSetupComponent implements OnInit {
           phone: garageFormValue.phone,
           email: garageFormValue.email,
           website: garageFormValue.website,
+          // Identifiants légaux & administratifs
           siret: garageFormValue.siret,
-          vatNumber: garageFormValue.vatNumber,
+          agrement: garageFormValue.agrement,       // Numéro d'agrément
+          rc: garageFormValue.rc,             // Registre de commerce
+          nif: garageFormValue.nif,            // Numéro d'identification fiscale
+          capitalSocial: garageFormValue.capitalSocial,  // Capital social en GNF
+          vatNumber: garageFormValue.vatNumber, // Numéro de TVA intracommunautaire
           settings,
-          footer: garageFormValue.footer,
           ownerId: '', // sera mis à jour dans le service
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -428,7 +498,8 @@ export class FormGarageSetupComponent implements OnInit {
           firstName,
           lastName,
           role,
-          logo: this.logoBase64 || '' // <= ajout du logo
+          logo: this.logoBase64 || '', // <= ajout du logo
+          signature: this.signatureBase64 || '' // <= ajout de la signature
         });
 
         this.notificationService.showSuccess('Garage créé avec succès !');
@@ -448,10 +519,14 @@ export class FormGarageSetupComponent implements OnInit {
 
   previewLogo: string | null = null; // pour l’aperçu
   logoBase64: string | null = null;  // pour l’envoi à Firestore
+  previewSignature: string | null = null; // pour l’aperçu de la signature
+  signatureBase64: string | null = null;  // pour l’envoi à Firestore
 
   onLogoSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
+
+    if (!this.verifySignatureSize(input.files[0])) return;
 
     const file = input.files[0];
     const reader = new FileReader();
@@ -464,5 +539,44 @@ export class FormGarageSetupComponent implements OnInit {
     reader.readAsDataURL(file); // Convertit en Base64
   }
 
+  onSignatureSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
 
+    if (!this.verifySignatureSize(input.files[0])) return;
+
+    const file = input.files[0];
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      this.signatureBase64 = reader.result as string;
+      this.previewSignature = this.signatureBase64; // pour afficher l’aperçu
+    };
+
+    reader.readAsDataURL(file); // Convertit en Base64
+  }
+
+  // verifier la taille de l'image taille accorder est de 3 kB
+  verifySignatureSize(file: File): boolean {
+
+    const maxSize = 30 * 1024; // 30 kB
+
+    if (file.size > maxSize) {
+      this.notificationService.showWarning(`L'image est trop lourde (${(file.size/1024).toFixed(2)} KB). Taille max: 30 KB`);
+      return false;
+    }
+    // Vérifier le type MIME (optionnel)
+    if (!file.type.startsWith("image/")) {
+      this.notificationService.showInfo("Le fichier doit être une image (jpg, png, ...)");
+      return false;
+    }
+
+    // Exitension en png
+    if (!file.name.endsWith('.png')) {
+      this.notificationService.showInfo("Le fichier doit être en format PNG");
+      return false;
+    }
+
+    return true;
+  }
 }
