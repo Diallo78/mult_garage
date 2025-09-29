@@ -617,7 +617,7 @@ export class SuiviVehicule implements OnInit, OnDestroy {
       }
     } catch (error) {
       this.notificationService.showError(
-        'Échec de chargement des données client',
+        'Échec de chargement des données client. ' + error,
         500
       );
     } finally {
@@ -659,7 +659,8 @@ export class SuiviVehicule implements OnInit, OnDestroy {
       this.lastRefresh = new Date();
     } catch (error) {
       this.notificationService.showError(
-        'Échec du chargement des données liées.'
+        'Échec du chargement des données liées. ' + error,
+        500
       );
     }
   }

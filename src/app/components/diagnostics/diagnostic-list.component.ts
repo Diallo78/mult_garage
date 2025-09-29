@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +8,7 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
 import { Personnel } from '../../models/garage.model';
+import { DateFonction } from '../../services/fonction/date-fonction';
 
 
 @Component({
@@ -222,12 +223,14 @@ export class DiagnosticListComponent implements OnInit {
   fromDate = '';
   isLoading = true;
   constructor(
-    private garageDataService: GarageDataService,
-    private notificationService: NotificationService
+    private readonly garageDataService: GarageDataService,
+    private readonly notificationService: NotificationService
   ) {}
 
-  async ngOnInit(): Promise<void> {
-    await this.loadData();
+  ngOnInit() {
+    (async()=>
+      await this.loadData()
+    )()
   }
 
   private async loadData(): Promise<void> {
@@ -247,9 +250,9 @@ export class DiagnosticListComponent implements OnInit {
         this.garageDataService.getAll<Personnel>('personnel'),
         this.garageDataService.getAll<DiagnosticCategory>('diagnosticCategory'),
       ]);
-      this.filteredDiagnostics = [...this.diagnostics];
+      this.filteredDiagnostics = DateFonction.sortByCreatedAtDesc([...this.diagnostics]);
     } catch (error) {
-      this.notificationService.showError('Failed to load diagnostics');
+      this.notificationService.showError('Échec du chargement des données de diagnostic. ' +error);
     } finally {
       this.isLoading = false;
     }

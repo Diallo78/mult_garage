@@ -27,4 +27,36 @@ export class DateFonction{
     }
 
 
+    // Utilitaire générique
+    static sortByCreatedAtDesc<T extends { createdAt: any }>(array: T[]): T[] {
+        return array.sort((a, b) => {
+            const dateA = this.normalizeDate(a.createdAt);
+            const dateB = this.normalizeDate(b.createdAt);
+            return dateB - dateA; // tri décroissant
+        });
+    }
+
+    static normalizeDate(date: any): number {
+        if (!date) return 0;
+
+        // Si c'est un Firestore Timestamp
+        if (typeof date.toDate === 'function') {
+            return date.toDate().getTime();
+        }
+
+        // Si c'est une vraie Date
+        if (date instanceof Date) {
+            return date.getTime();
+        }
+
+        // Si c'est une string
+        if (typeof date === 'string') {
+            return new Date(date).getTime();
+        }
+
+        return 0; // fallback
+    }
+
+
+
 }

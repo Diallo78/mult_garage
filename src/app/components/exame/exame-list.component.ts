@@ -6,6 +6,7 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { VehicleExam } from '../../models/exam.model';
 import { FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
+import { DateFonction } from '../../services/fonction/date-fonction';
 
 @Component({
   selector: 'app-exame-list',
@@ -286,7 +287,7 @@ export class ExameListComponent implements OnInit {
     this.isLoading = true;
     try {
       this.exams = await this.garageDataService.getAll<VehicleExam>('exams');
-      this.filteredExams = [...this.exams];
+      this.filteredExams = DateFonction.sortByCreatedAtDesc([...this.exams]);
       this.updatePagination();
     } catch (error) {
       console.error('Erreur lors du chargement des examens:', error);

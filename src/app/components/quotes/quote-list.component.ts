@@ -8,6 +8,7 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
 import { AuthService } from '../../services/auth.service';
+import { DateFonction } from '../../services/fonction/date-fonction';
 
 
 @Component({
@@ -250,11 +251,11 @@ export class QuoteListComponent implements OnInit {
           ]);
 
           this.clients.push(client[0]);
-          this.filteredQuotes = [...this.quotes];
+          this.filteredQuotes = DateFonction.sortByCreatedAtDesc([...this.quotes]);
         }
       }
     } catch (error) {
-      this.notificationService.showError('Failed to load quotes');
+      this.notificationService.showError('Echec de chargement des données' + error);
     } finally {
       this.isLoading = false;
     }
@@ -268,9 +269,9 @@ export class QuoteListComponent implements OnInit {
         this.garageDataService.getAll<Client>('clients'),
         this.garageDataService.getAll<Vehicle>('vehicles'),
       ]);
-      this.filteredQuotes = [...this.quotes];
+      this.filteredQuotes = DateFonction.sortByCreatedAtDesc([...this.quotes]);
     } catch (error) {
-      this.notificationService.showError('Failed to load quotes');
+      this.notificationService.showError('Echec de chargement des données' + error);
     } finally {
       this.isLoading = false;
     }

@@ -7,6 +7,8 @@ import { NotificationService } from '../../services/notification.service';
 import { Client, Vehicle, Visit } from '../../models/client.model';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
 import { AuthService } from '../../services/auth.service';
+import { DateFonction } from '../../services/fonction/date-fonction';
+import { async } from 'rxjs';
 
 
 @Component({
@@ -205,265 +207,6 @@ import { AuthService } from '../../services/auth.service';
       </div>
     </div>
   `,
-  // template: `
-  //   <!-- Loading State -->
-  //   <div *ngIf="isLoading" class="flex justify-center items-center h-[60vh]">
-  //     <div class="animate-pulse flex flex-col items-center">
-  //       <div
-  //         class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-500"
-  //       ></div>
-  //       <p class="mt-4 text-gray-600">Chargement de votre espace...</p>
-  //     </div>
-  //   </div>
-
-  //   <div *ngIf="!isLoading" class="p-2 sm:p-4">
-  //     <div class="space-y-4 md:space-y-6">
-  //       <!-- Header Section -->
-  //       <div
-  //         class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
-  //       >
-  //         <div class="min-w-0">
-  //           <h2 class="text-xl sm:text-2xl font-bold leading-7 text-gray-900">
-  //             Visites
-  //           </h2>
-  //         </div>
-  //         <div class="flex justify-end">
-  //           <button
-  //             routerLink="/visits/new"
-  //             class="btn-primary w-full sm:w-auto"
-  //           >
-  //             Nouvelle visite
-  //           </button>
-  //         </div>
-  //       </div>
-
-  //       <!-- Search and Filter -->
-  //       <div class="card p-3 sm:p-4">
-  //         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-  //           <div class="sm:col-span-2 lg:col-span-1">
-  //             <label class="form-label text-xs sm:text-sm">Recherche</label>
-  //             <input
-  //               type="text"
-  //               [(ngModel)]="searchTerm"
-  //               (input)="filterVisits()"
-  //               class="form-input text-xs sm:text-sm"
-  //               placeholder="Client ou véhicule"
-  //             />
-  //           </div>
-  //           <div>
-  //             <label class="form-label text-xs sm:text-sm">Statut</label>
-  //             <select
-  //               [(ngModel)]="statusFilter"
-  //               (change)="filterVisits()"
-  //               class="form-input text-xs sm:text-sm"
-  //             >
-  //               <option value="">Tous</option>
-  //               <option value="Pending">En attente</option>
-  //               <option value="InProgress">En cours</option>
-  //               <option value="Completed">Complété</option>
-  //               <option value="Cancelled">Annulé</option>
-  //             </select>
-  //           </div>
-  //           <div>
-  //             <label class="form-label text-xs sm:text-sm">De</label>
-  //             <input
-  //               type="date"
-  //               [(ngModel)]="fromDate"
-  //               (change)="filterVisits()"
-  //               class="form-input text-xs sm:text-sm"
-  //             />
-  //           </div>
-  //           <div>
-  //             <label class="form-label text-xs sm:text-sm">À</label>
-  //             <input
-  //               type="date"
-  //               [(ngModel)]="toDate"
-  //               (change)="filterVisits()"
-  //               class="form-input text-xs sm:text-sm"
-  //             />
-  //           </div>
-  //         </div>
-  //       </div>
-
-  //       <!-- Visits Table -->
-  //       <div class="card overflow-hidden">
-  //         <div class="overflow-x-auto">
-  //           <table class="min-w-full divide-y divide-gray-200">
-  //             <thead class="bg-gray-50 hidden sm:table-header-group">
-  //               <tr>
-  //                 <th
-  //                   class="px-3 py-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-  //                 >
-  //                   Date
-  //                 </th>
-  //                 <th
-  //                   class="px-3 py-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-  //                 >
-  //                   Client
-  //                 </th>
-  //                 <th
-  //                   class="px-3 py-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
-  //                 >
-  //                   Véhicule
-  //                 </th>
-  //                 <th
-  //                   class="px-3 py-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-  //                 >
-  //                   Problèmes
-  //                 </th>
-  //                 <th
-  //                   class="px-3 py-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-  //                 >
-  //                   Statut
-  //                 </th>
-  //                 <th
-  //                   class="px-3 py-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-  //                 >
-  //                   Actions
-  //                 </th>
-  //               </tr>
-  //             </thead>
-  //             <tbody class="bg-white divide-y divide-gray-200">
-  //               <tr
-  //                 *ngFor="let visit of filteredVisits"
-  //                 class="hover:bg-gray-50"
-  //               >
-  //                 <!-- Mobile View -->
-  //                 <td class="px-3 py-3 sm:px-4 block sm:table-cell">
-  //                   <div class="flex flex-col">
-  //                     <div class="text-sm font-medium text-gray-900">
-  //                       {{ visit.visitDate | firestoreDate | date : 'short' }}
-  //                     </div>
-  //                     <div class="sm:hidden text-xs text-gray-500 mt-1">
-  //                       <div>Client: {{ getClientName(visit.clientId) }}</div>
-  //                       <div>
-  //                         Véhicule: {{ getVehicleInfo(visit.vehicleId) }}
-  //                       </div>
-  //                       <div class="mt-1">
-  //                         <span
-  //                           class="status-badge text-xs"
-  //                           [ngClass]="getStatusClass(visit.status)"
-  //                         >
-  //                           {{ visit.status }}
-  //                         </span>
-  //                       </div>
-  //                       <div class="text-xs mt-1">
-  //                         Problèmes:
-  //                         {{ visit.reportedIssues.slice(0, 2).join(', ') }}
-  //                         <span
-  //                           *ngIf="visit.reportedIssues.length > 2"
-  //                           class="text-gray-500"
-  //                         >
-  //                           +{{ visit.reportedIssues.length - 2 }} autres
-  //                         </span>
-  //                       </div>
-  //                     </div>
-  //                     <div class="sm:hidden flex flex-wrap gap-2 mt-2">
-  //                       <button
-  //                         [routerLink]="['/visits', visit.id]"
-  //                         class="text-primary-600 hover:text-primary-900 text-xs"
-  //                       >
-  //                         Voir
-  //                       </button>
-  //                       @if(visit.status !== 'Completed'){
-  //                       <button
-  //                         [routerLink]="['/visits', visit.id, 'edit']"
-  //                         class="text-secondary-600 hover:text-secondary-900 text-xs"
-  //                       >
-  //                         Modifier
-  //                       </button>
-  //                       } @if(hasDocuments(visit)){
-  //                       <button
-  //                         (click)="downloadDocuments(visit)"
-  //                         class="text-accent-600 hover:text-accent-900 text-xs"
-  //                       >
-  //                         📄 Docs
-  //                       </button>
-  //                       } @if(visit.status === 'InProgress'){
-  //                       <button
-  //                         [routerLink]="['/diagnostics/create', visit.id]"
-  //                         class="text-accent-600 hover:text-accent-900 text-xs"
-  //                       >
-  //                         Diag
-  //                       </button>
-  //                       }
-  //                     </div>
-  //                   </div>
-  //                 </td>
-
-  //                 <!-- Desktop View -->
-  //                 <td class="px-3 py-4 whitespace-nowrap hidden sm:table-cell">
-  //                   <div class="text-sm text-gray-900">
-  //                     {{ getClientName(visit.clientId) }}
-  //                   </div>
-  //                 </td>
-  //                 <td class="px-3 py-4 whitespace-nowrap hidden md:table-cell">
-  //                   <div class="text-sm text-gray-900">
-  //                     {{ getVehicleInfo(visit.vehicleId) }}
-  //                   </div>
-  //                 </td>
-  //                 <td class="px-3 py-4 hidden sm:table-cell">
-  //                   <div class="text-sm text-gray-900">
-  //                     {{ visit.reportedIssues.slice(0, 2).join(', ') }}
-  //                     <span
-  //                       *ngIf="visit.reportedIssues.length > 2"
-  //                       class="text-gray-500"
-  //                     >
-  //                       +{{ visit.reportedIssues.length - 2 }} autres
-  //                     </span>
-  //                   </div>
-  //                 </td>
-  //                 <td class="px-3 py-4 whitespace-nowrap hidden sm:table-cell">
-  //                   <span
-  //                     class="status-badge text-xs sm:text-sm"
-  //                     [ngClass]="getStatusClass(visit.status)"
-  //                   >
-  //                     {{ visit.status }}
-  //                   </span>
-  //                 </td>
-  //                 <td
-  //                   class="px-3 py-4 whitespace-nowrap text-sm font-medium hidden sm:table-cell"
-  //                 >
-  //                   <div class="flex flex-wrap gap-2">
-  //                     <button
-  //                       [routerLink]="['/visits', visit.id]"
-  //                       class="text-primary-600 hover:text-primary-900"
-  //                     >
-  //                       Voir
-  //                     </button>
-  //                     @if(visit.status !== 'Completed'){
-  //                     <button
-  //                       [routerLink]="['/visits', visit.id, 'edit']"
-  //                       class="text-secondary-600 hover:text-secondary-900"
-  //                     >
-  //                       Modifier
-  //                     </button>
-  //                     } @if(hasDocuments(visit)){
-  //                     <button
-  //                       (click)="downloadDocuments(visit)"
-  //                       class="text-accent-600 hover:text-accent-900"
-  //                       title="Documents client"
-  //                     >
-  //                       📄
-  //                     </button>
-  //                     } @if(visit.status === 'InProgress'){
-  //                     <button
-  //                       [routerLink]="['/diagnostics/create', visit.id]"
-  //                       class="text-accent-600 hover:text-accent-900"
-  //                     >
-  //                       Diagnostiquer
-  //                     </button>
-  //                     }
-  //                   </div>
-  //                 </td>
-  //               </tr>
-  //             </tbody>
-  //           </table>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </div>
-  // `,
 })
 export class VisitListComponent implements OnInit {
   visits: Visit[] = [];
@@ -477,14 +220,16 @@ export class VisitListComponent implements OnInit {
   isLoading = true;
 
   constructor(
-    private garageDataService: GarageDataService,
-    private notificationService: NotificationService,
+    private readonly garageDataService: GarageDataService,
+    private readonly notificationService: NotificationService,
     public authService: AuthService
   ) {}
 
-  async ngOnInit(): Promise<void> {
-    if (this.authService.isClient) this.loadDataClient();
+  ngOnInit() {
+   (async() => {
+    if (this.authService.isClient) await this.loadDataClient();
     else await this.loadDataGarage();
+   })();
   }
 
   private async loadDataClient(): Promise<void> {
@@ -511,11 +256,11 @@ export class VisitListComponent implements OnInit {
           ]);
 
           this.clients.push(client[0]);
-          this.filteredVisits = [...this.visits];
+          this.filteredVisits = DateFonction.sortByCreatedAtDesc([...this.visits]);
         }
       }
     } catch (error) {
-      this.notificationService.showError('Failed to load quotes');
+      this.notificationService.showError('Echec de chargement des données quotes. ' + error, 500);
     } finally {
       this.isLoading = false;
     }
@@ -529,9 +274,9 @@ export class VisitListComponent implements OnInit {
         this.garageDataService.getAll<Client>('clients'),
         this.garageDataService.getAll<Vehicle>('vehicles'),
       ]);
-      this.filteredVisits = [...this.visits];
+      this.filteredVisits = DateFonction.sortByCreatedAtDesc([...this.visits]);
     } catch (error) {
-      this.notificationService.showError('Failed to load visits');
+      this.notificationService.showError('Echec de chargement des données visite. ' + error, 500);
     } finally {
       this.isLoading = false;
     }

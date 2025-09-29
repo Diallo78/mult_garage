@@ -8,6 +8,7 @@ import { Invoice } from '../../models/invoice.model';
 import { Client } from '../../models/client.model';
 import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 import { PDFService } from '../../services/pdf.service';
+import { DateFonction } from '../../services/fonction/date-fonction';
 
 @Component({
   selector: 'app-payment-list',
@@ -308,9 +309,9 @@ export class PaymentListComponent implements OnInit {
       ]);
 
       this.extractPayments();
-      this.filteredPayments = [...this.payments];
+      this.filteredPayments = DateFonction.sortByCreatedAtDesc([...this.payments]);
     } catch (error) {
-      this.notificationService.showError('Erreur de chargement des paiements');
+      this.notificationService.showError('Erreur de chargement des paiements' + error);
     } finally {
       this.isLoading = false;
     }

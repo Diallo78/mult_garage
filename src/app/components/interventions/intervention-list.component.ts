@@ -8,6 +8,7 @@ import { Intervention } from '../../models/intervention.model';
 import { Quote } from '../../models/quote.model';
 import { Client, Vehicle } from '../../models/client.model';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+import { DateFonction } from '../../services/fonction/date-fonction';
 
 @Component({
   selector: 'app-intervention-list',
@@ -274,9 +275,9 @@ export class InterventionListComponent implements OnInit {
           this.garageDataService.getAll<Client>('clients'),
           this.garageDataService.getAll<Vehicle>('vehicles'),
         ]);
-      this.filteredInterventions = [...this.interventions];
+      this.filteredInterventions = DateFonction.sortByCreatedAtDesc([...this.interventions]);
     } catch (error) {
-      this.notificationService.showError('Failed to load interventions');
+      this.notificationService.showError('Echec de chargement des données intervention. ' + error, 500);
     } finally {
       this.isLoading = false;
     }

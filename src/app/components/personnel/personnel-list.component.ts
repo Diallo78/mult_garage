@@ -7,6 +7,7 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { Personnel } from '../../models/garage.model';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
+import { DateFonction } from '../../services/fonction/date-fonction';
 
 @Component({
   selector: 'app-personnel-list',
@@ -414,7 +415,7 @@ export class PersonnelListComponent implements OnInit {
       this.personnel = await this.garageDataService.getAll<Personnel>(
         'personnel'
       );
-      this.filteredPersonnel = [...this.personnel];
+      this.filteredPersonnel = DateFonction.sortByCreatedAtDesc([...this.personnel]);
     } catch (error) {
       this.notificationService.showError('Failed to load personnel: ' + error);
     } finally {

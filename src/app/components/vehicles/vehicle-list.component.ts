@@ -7,6 +7,7 @@ import { NotificationService } from '../../services/notification.service';
 import { Client, Vehicle } from '../../models/client.model';
 import { AuthService } from '../../services/auth.service';
 import { UserManagementService } from '../../services/user-management.service';
+import { DateFonction } from '../../services/fonction/date-fonction';
 
 
 @Component({
@@ -204,11 +205,11 @@ export class VehicleListComponent implements OnInit {
             [{ field: 'clientId', operator: '==', value: client.id }]
           );
           this.clients.push(client);
-          this.filteredVehicles = [...this.vehicles];
+          this.filteredVehicles = DateFonction.sortByCreatedAtDesc([...this.vehicles]);
         }
       }
     } catch (error) {
-      this.notificationService.showError('Failed to load vehicles');
+      this.notificationService.showError('Echec de chargement des données véhicule. ' + error, 500);
       console.log('Failed to load vehicles ' + error);
     } finally {
       this.isLoading = false;
@@ -222,9 +223,9 @@ export class VehicleListComponent implements OnInit {
         this.garageDataService.getAll<Vehicle>('vehicles'),
         this.garageDataService.getAll<Client>('clients'),
       ]);
-      this.filteredVehicles = [...this.vehicles];
+      this.filteredVehicles = DateFonction.sortByCreatedAtDesc([...this.vehicles]);
     } catch (error) {
-      this.notificationService.showError('Failed to load vehicles');
+      this.notificationService.showError('Echec de chargement des données véhicule. ' + error, 500);
       console.log('Failed to load vehicles ' + error);
     } finally {
       this.isLoading = false;

@@ -8,6 +8,7 @@ import { Invoice } from '../../models/invoice.model';
 import { Client, Vehicle } from '../../models/client.model';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
 import { AuthService } from '../../services/auth.service';
+import { DateFonction } from '../../services/fonction/date-fonction';
 
 @Component({
   selector: 'app-invoice-list',
@@ -654,11 +655,11 @@ export class InvoiceListComponent implements OnInit {
           ]);
 
           this.clients.push(client[0]);
-          this.filteredInvoices = [...this.invoices];
+          this.filteredInvoices = DateFonction.sortByCreatedAtDesc([...this.invoices]);
         }
       }
     } catch (error) {
-      this.notificationService.showError('Failed to load quotes');
+      this.notificationService.showError('Echec de chargement des données facture. ' + error, 500);
     } finally {
       this.isLoading = false;
     }
@@ -672,9 +673,9 @@ export class InvoiceListComponent implements OnInit {
         this.garageDataService.getAll<Client>('clients'),
         this.garageDataService.getAll<Vehicle>('vehicles'),
       ]);
-      this.filteredInvoices = [...this.invoices];
+      this.filteredInvoices = DateFonction.sortByCreatedAtDesc([...this.invoices]);
     } catch (error) {
-      this.notificationService.showError('Failed to load invoices');
+      this.notificationService.showError('Echec de chargement des données facture. ' + error, 500);
     } finally {
       this.isLoading = false;
     }
