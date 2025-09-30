@@ -307,13 +307,15 @@ export class InterventionFormComponent implements OnInit {
     return this.interventionForm.get('usedParts') as FormArray;
   }
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit() {
     this.quoteId = this.route.snapshot.paramMap.get('quoteId');
-    if (this.quoteId) {
-      await this.loadQuoteData();
-      await this.loadTechnicians();
-      this.setDefaultStartDate();
-    }
+    (async()=>{
+      if (this.quoteId) {
+        await this.loadQuoteData();
+        await this.loadTechnicians();
+        this.setDefaultStartDate();
+      }
+    })()
   }
 
   private async loadQuoteData(): Promise<void> {
@@ -330,7 +332,7 @@ export class InterventionFormComponent implements OnInit {
         this.populateTasksFromQuote();
       }
     } catch (error) {
-      this.notificationService.showError('Failed to load quote data');
+      this.notificationService.showError('Failed to load quote data ' + error);
     }
   }
 
@@ -354,7 +356,7 @@ export class InterventionFormComponent implements OnInit {
 
     // Add tasks based on quote items
     this.quote.items.forEach(item => {
-      if (item.type === 'Labor' || item.type === 'Service') {
+      if (item.type === 'Part' || item.type === 'Service') {
         this.tasksArray.push(this.createTaskGroup(item.designation, 1));
       }
     });
@@ -471,6 +473,6 @@ export class InterventionFormComponent implements OnInit {
   }
 
   private generateId(): string {
-    return Math.random().toString(36).substr(2, 9);
+    return Math.random().toString(36).substring(2, 9);
   }
 }

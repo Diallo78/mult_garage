@@ -139,13 +139,13 @@ import { firstValueFrom } from 'rxjs';
                     </select>
                   </div>
 
-                  <div class="md:col-span-2">
+                  <!-- <div class="md:col-span-2">
                     <label class="form-label">Description *</label>
 
                     <ng-container
                       [ngSwitch]="itemsArray.at(i).get('type')?.value"
                     >
-                      <!-- Si Part => liste déroulante -->
+                      Si Part => liste déroulante
                       <select
                         *ngSwitchCase="'Part'"
                         formControlName="designation"
@@ -161,7 +161,7 @@ import { firstValueFrom } from 'rxjs';
                         </option>
                       </select>
 
-                      <!-- Sinon champ libre -->
+                      Sinon champ libre
                       <input
                         *ngSwitchDefault
                         type="text"
@@ -170,7 +170,24 @@ import { firstValueFrom } from 'rxjs';
                         placeholder="Description manuelle"
                       />
                     </ng-container>
-                  </div>
+                  </div> -->
+
+                  <div class="md:col-span-2">
+                    <label class="form-label">Description *</label>
+                    <input
+                      type="text"
+                      formControlName="designation"
+                      class="form-input"
+                      placeholder="Saisir ou rechercher une pièce"
+                      [attr.list]="'stockPartsList'"
+                      (input)="onAutoCompletePart(i)"
+                    />
+                      <!-- Liste d’options autocomplétées -->
+                      <datalist id="stockPartsList">
+                        <option *ngFor="let part of stockParts" [value]="part.designation"></option>
+                      </datalist>
+                    </div>
+
 
                   <div>
                     <label class="form-label">Quantité *</label>
@@ -389,7 +406,6 @@ export class QuoteFormNewComponent implements OnInit {
   }
 
   ngOnInit() {
-    // console.log(this.route.snapshot.queryParams);
 
     (async () => {
       await this.loadClients(); // mode libre
@@ -776,5 +792,19 @@ export class QuoteFormNewComponent implements OnInit {
       console.error('Erreur notification interne:', error);
     }
   }
+
+  onAutoCompletePart(index: number): void {
+    const item = this.itemsArray.at(index);
+    const typedValue = item.get('designation')?.value;
+    const part = this.stockParts.find(p => p.designation === typedValue);
+
+    if (part) {
+      item.patchValue({
+        unitPrice: part.prixUnitaire
+      });
+      this.calculateItemSubtotal(index);
+    }
+  }
+
 
 }

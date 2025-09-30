@@ -148,7 +148,7 @@ import { DateFonction } from '../../services/fonction/date-fonction';
                       {{ quote.quoteNumber }}
                     </div>
                     <div class="text-sm text-gray-500">
-                      {{ quote.createdAt | firestoreDate | date : 'short' }}
+                      {{ quote.createdAt | firestoreDate | date : 'dd-MM-yyyy HH:mm' }}
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">

@@ -446,7 +446,7 @@ export class ExameFormComponent implements OnInit {
       category.items.forEach((item) => {
         this.examForm.addControl(
           `compliance_${item.id}`,
-          this.fb.control(false)
+          this.fb.control(true)
         );
         this.examForm.addControl(`quantity_${item.id}`, this.fb.control(0));
         this.examForm.addControl(
