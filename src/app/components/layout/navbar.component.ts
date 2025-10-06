@@ -33,7 +33,7 @@ import { GarageDtoFunction } from '../../services/fonction/garageDto-function';
 
               <ng-template #defaultLogo>
                 <img
-                  src="/image/logo2.jpg"
+                  src="/image/logo-guidev.png"
                   alt="default logo"
                   class="ml-2 h-10 w-45"
                 />

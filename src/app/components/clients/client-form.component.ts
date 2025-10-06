@@ -6,6 +6,7 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { Client } from '../../models/client.model';
 import { UserManagementService } from '../../services/user-management.service';
+import { EmailService } from '../../services/email.service';
 
 
 @Component({
@@ -360,7 +361,8 @@ private readonly garageDataService: GarageDataService,
 private readonly userManagementService: UserManagementService,
 private readonly notificationService: NotificationService,
 private readonly router: Router,
-private readonly route: ActivatedRoute
+private readonly route: ActivatedRoute,
+  private readonly emailService: EmailService
 ) {
 this.clientForm = this.fb.group({
   firstName: ['', Validators.required],
@@ -395,35 +397,66 @@ private async loadClient(): Promise<void> {
 }
 
 async onSubmit(): Promise<void> {
-if (this.clientForm.invalid) return;
+  if (this.clientForm.invalid) return;
 
-this.isLoading = true;
+  this.isLoading = true;
 
-try {
-  const clientData = this.clientForm.value;
+  try {
+    const clientData = this.clientForm.value;
 
-  if (this.isEditMode && this.clientId) {
-    await this.garageDataService.update('clients', this.clientId, clientData);
-    this.notificationService.showSuccess('Client updated successfully');
-  } else {
-    if (this.createAccount) {
+    if (this.isEditMode && this.clientId) {
+      await this.garageDataService.update('clients', this.clientId, clientData);
+      this.notificationService.showSuccess('Client updated successfully');
+    }
+    else if (this.createAccount) {
       // Création avec compte utilisateur
       await this.userManagementService.createClientAccount(clientData);
-    } else {
+      await this.sendWhatsAppNotification(clientData);
+    }
+    else {
       await this.garageDataService.create('clients', clientData);
       this.notificationService.showSuccess('Client créé avec succès');
     }
-  }
 
-  this.router.navigate(['/clients']);
-} catch (error) {
-  this.notificationService.showError('Échec de sauvegarde du client ' + error);
-} finally {
-  this.isLoading = false;
-}
+    this.router.navigate(['/clients']);
+  } catch (error) {
+    this.notificationService.showError('Échec de sauvegarde du client ' + error);
+  } finally {
+    this.isLoading = false;
+  }
 }
 
 goBack(): void {
 this.router.navigate(['/clients']);
 }
+
+  private async sendWhatsAppNotification(
+    client: Client,
+  ): Promise<void> {
+    try {
+
+      const message = `Bonjour ${client.firstName},
+
+      Votre compte a été créé avec succès sur la plateforme CarGest 🚘📑.
+
+      Voici vos identifiants de connexion :
+      📧 Email : ${client.email}
+      🔑 Mot de passe temporaire : password
+
+      Une fois connecté, merci de bien vouloir changer votre mot de passe dans l’onglet "Profil" (menu en haut à droite).
+
+      Vous pouvez accéder à la plateforme via le lien suivant :
+      ${window.location.origin}/login
+
+      Merci de votre confiance et bienvenue sur CarGest !`;
+
+
+      await this.emailService.sendWhatsAppMessage(client.phone, message);
+      this.notificationService.showSuccess(
+        'WhatsApp ouvert avec le message pré-rempli'
+      );
+    } catch (error) {
+      console.error('Erreur WhatsApp:', error);
+    }
+  }
 }

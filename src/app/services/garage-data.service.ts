@@ -16,7 +16,6 @@ import {
   QueryConstraint
 } from 'firebase/firestore';
 
-import { AuthService } from './auth.service';
 import { db } from '../../../firebase.config';
 
 @Injectable({

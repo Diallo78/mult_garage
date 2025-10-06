@@ -719,7 +719,17 @@ export class QuoteFormNewComponent implements OnInit {
     quoteId: string
   ): Promise<void> {
     try {
-      const message = `Bonjour ${client.firstName},\n\nVotre devis N° ${quoteNumber} est prêt !\n\nVous pouvez le consulter en cliquant sur le lien suivant :\n${window.location.origin}/quotes/${quoteId}\n\nMerci de votre confiance !`;
+      const message = `Bonjour ${client.firstName},
+
+      Nous avons le plaisir de vous informer que votre devis N° ${quoteNumber} est désormais disponible.
+
+      Vous pouvez le consulter et le télécharger en suivant ce lien :
+      ${window.location.origin}/quotes/${quoteId}
+
+      Nous restons à votre disposition pour toute information complémentaire.
+
+      Merci de votre confiance,
+      L’équipe CarGest 🚘📑`;
 
       await this.emailService.sendWhatsAppMessage(client.phone, message);
       this.notificationService.showSuccess(

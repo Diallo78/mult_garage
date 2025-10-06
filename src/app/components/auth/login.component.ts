@@ -24,9 +24,9 @@ import { NotificationService } from '../../services/notification.service';
         <!-- Form Section -->
         <div class="w-full lg:w-1/2 bg-white p-8 sm:p-12 space-y-8">
           <div class="flex items-center space-x-3">
-            <img src="/image/logo2.jpg" alt="Logo" class="h-10 w-auto" />
+            <img src="/image/logo-guidev.png" alt="Logo" class="h-10 w-auto" />
             <span class="text-2xl font-bold text-gray-700"
-              >GuiDev -  Multi-Garage</span
+              >GuiDev - CraGest</span
             >
           </div>
 
@@ -165,12 +165,20 @@ import { NotificationService } from '../../services/notification.service';
                 </g>
               </svg>
             </div>
-            <h2 class="text-3xl font-bold mb-2">Gestion Centralisée</h2>
+            <!-- Système de Gestion Intelligente -->
+            <h2 class="text-3xl font-bold mb-2">Gestion centralisée</h2>
             <p class="max-w-sm">
               Gérez tous vos garages depuis une seule interface. Simple, rapide
               et efficace.
+              <!-- CarGest 🚘📑 n’est pas seulement un logiciel,
+              c’est votre nouveau partenaire pour transformer votre garage. -->
+
             </p>
+            <br>
+            <a class="text-center font-semibold text-gray-800" href="/docs/doc.pptx" target="_blank"> 👉 Acceder au docment</a>
+
           </div>
+
         </div>
       </div>
     </div>
@@ -274,10 +282,10 @@ export class LoginComponent {
             currency: garage.settings.currency || 'GNF',
             website: garage.website,
             siret: garage.siret || null,
-           // vatNumber: garage.vatNumber || null,
+            // vatNumber: garage.vatNumber || null,
             agrement: garage.agrement || null,
             rc: garage.rc || null,
-           // nif: garage.nif || null,
+            // nif: garage.nif || null,
             capitalSocial: garage.capitalSocial || null,
           })
         );
