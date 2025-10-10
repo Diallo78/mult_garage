@@ -119,7 +119,7 @@ import { firstValueFrom } from 'rxjs';
                 (click)="addItem()"
                 class="btn-secondary text-sm"
               >
-                Ajouter un article
+                Ajouter un détail
               </button>
             </div>
 
@@ -179,15 +179,27 @@ import { firstValueFrom } from 'rxjs';
                       formControlName="designation"
                       class="form-input"
                       placeholder="Saisir ou rechercher une pièce"
-                      [attr.list]="'stockPartsList'"
+                      [attr.list]="
+                        (itemsArray.at(i).get('designation')?.value?.length ||
+                          0) >= 1
+                          ? 'stockPartsList-' + i
+                          : null
+                      "
+                      autocomplete="off"
                       (input)="onAutoCompletePart(i)"
                     />
-                      <!-- Liste d’options autocomplétées -->
-                      <datalist id="stockPartsList">
-                        <option *ngFor="let part of stockParts" [value]="part.designation"></option>
-                      </datalist>
-                    </div>
-
+                    <!-- Liste d'options autocomplétées -->
+                    <datalist [id]="'stockPartsList-' + i">
+                      <option
+                        *ngFor="
+                          let part of filterStockParts(
+                            itemsArray.at(i).get('designation')?.value
+                          )
+                        "
+                        [value]="part.designation"
+                      ></option>
+                    </datalist>
+                  </div>
 
                   <div>
                     <label class="form-label">Quantité *</label>
@@ -218,14 +230,24 @@ import { firstValueFrom } from 'rxjs';
                   <div class="text-sm font-medium text-gray-900">
                     Subtotal: GNF {{ getItemSubtotal(i).toFixed(2) }}
                   </div>
-                  <button
-                    type="button"
-                    (click)="removeItem(i)"
-                    class="text-red-600 hover:text-red-900 text-sm"
-                    [disabled]="itemsArray.length === 1"
-                  >
-                    Supprimer l'article
-                  </button>
+                  <div class="flex items-center justify-between">
+                    <button
+                      type="button"
+                      (click)="removeItem(i)"
+                      class="text-red-600 hover:text-red-900 text-sm"
+                      [disabled]="itemsArray.length === 1"
+                    >
+                      Retirer le détail
+                    </button>
+                    <button
+                      type="button"
+                      (click)="addItem()"
+                      class="text-blue-600 hover:text-blue-900 text-sm ml-2"
+
+                    >
+                      Ajouter un détail
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -406,7 +428,6 @@ export class QuoteFormNewComponent implements OnInit {
   }
 
   ngOnInit() {
-
     (async () => {
       await this.loadClients(); // mode libre
       await this.loadStockParts();
@@ -429,14 +450,13 @@ export class QuoteFormNewComponent implements OnInit {
     }
   }
 
-
   private async loadStockParts(): Promise<void> {
     const stockItems = await this.garageDataService.getAll<any>('stock');
     this.stockParts = stockItems
-      .filter(item => item.status === 'entre')
-      .map(item => ({
+      .filter((item) => item.status === 'entre')
+      .map((item) => ({
         designation: item.designation,
-        prixUnitaire: item.prixUnitaire
+        prixUnitaire: item.prixUnitaire,
       }));
   }
 
@@ -456,7 +476,7 @@ export class QuoteFormNewComponent implements OnInit {
   }
 
   private generateQuoteNumber(): void {
-    const quoteNumber = this.garageDataService.generateUniqueNumber('QT');
+    const quoteNumber = this.garageDataService.generateUniqueNumber('DV');
     this.quoteForm.patchValue({ quoteNumber });
   }
 
@@ -803,18 +823,27 @@ export class QuoteFormNewComponent implements OnInit {
     }
   }
 
+  filterStockParts(
+    input: string | null | undefined
+  ): { designation: string; prixUnitaire: number }[] {
+    if (!input || input.length < 1) return [];
+    const query = input.toLowerCase().trim();
+    return this.stockParts
+      .filter((part) => part.designation.toLowerCase().includes(query))
+      .slice(0, 8);
+  }
+
   onAutoCompletePart(index: number): void {
     const item = this.itemsArray.at(index);
     const typedValue = item.get('designation')?.value;
-    const part = this.stockParts.find(p => p.designation === typedValue);
+    const part = this.stockParts.find((p) => p.designation === typedValue);
 
     if (part) {
       item.patchValue({
-        unitPrice: part.prixUnitaire
+        unitPrice: part.prixUnitaire,
       });
       this.calculateItemSubtotal(index);
     }
   }
-
-
+  
 }

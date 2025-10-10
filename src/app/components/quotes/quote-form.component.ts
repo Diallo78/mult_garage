@@ -20,11 +20,14 @@ import { EmailService } from '../../services/email.service';
     <div class="space-y-6" *ngIf="diagnostic && client && vehicle">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
-          <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-          Créer un devis
+          <h2
+            class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate"
+          >
+            Créer un devis
           </h2>
           <p class="text-lg text-gray-600">
-            {{ vehicle.brand }} {{ vehicle.model }} - {{ client.firstName }} {{ client.lastName }}
+            {{ vehicle.brand }} {{ vehicle.model }} - {{ client.firstName }}
+            {{ client.lastName }}
           </p>
         </div>
       </div>
@@ -48,9 +51,18 @@ import { EmailService } from '../../services/email.service';
                 type="date"
                 formControlName="validUntil"
                 class="form-input"
-                [class.border-red-500]="quoteForm.get('validUntil')?.invalid && quoteForm.get('validUntil')?.touched"
+                [class.border-red-500]="
+                  quoteForm.get('validUntil')?.invalid &&
+                  quoteForm.get('validUntil')?.touched
+                "
               />
-              <div *ngIf="quoteForm.get('validUntil')?.invalid && quoteForm.get('validUntil')?.touched" class="mt-1 text-sm text-red-600">
+              <div
+                *ngIf="
+                  quoteForm.get('validUntil')?.invalid &&
+                  quoteForm.get('validUntil')?.touched
+                "
+                class="mt-1 text-sm text-red-600"
+              >
                 Date de validité est requise
               </div>
             </div>
@@ -78,11 +90,12 @@ import { EmailService } from '../../services/email.service';
             </div>
 
             <div formArrayName="items" class="space-y-4">
-              <div *ngFor="let item of itemsArray.controls; let i = index"
-                   [formGroupName]="i"
-                   class="border rounded-lg p-4 bg-gray-50">
+              <div
+                *ngFor="let item of itemsArray.controls; let i = index"
+                [formGroupName]="i"
+                class="border rounded-lg p-4 bg-gray-50"
+              >
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-
                   <div>
                     <label class="form-label">Type</label>
                     <select formControlName="type" class="form-input">
@@ -91,7 +104,6 @@ import { EmailService } from '../../services/email.service';
                       <option value="Service">Service</option>
                     </select>
                   </div>
-
 
                   <!-- <div class="md:col-span-2">
                     <label class="form-label">Description *</label>
@@ -128,16 +140,27 @@ import { EmailService } from '../../services/email.service';
                       formControlName="designation"
                       class="form-input"
                       placeholder="Saisir ou rechercher une pièce"
-                      [attr.list]="'stockPartsList'"
+                      [attr.list]="
+                        (itemsArray.at(i).get('designation')?.value?.length ||
+                          0) >= 1
+                          ? 'stockPartsList-' + i
+                          : null
+                      "
+                      autocomplete="off"
                       (input)="onAutoCompletePart(i)"
                     />
-                    <!-- Liste d’options autocomplétées -->
-                    <datalist id="stockPartsList">
-                      <option *ngFor="let part of stockParts" [value]="part.designation"></option>
+                    <!-- Liste d'options autocomplétées -->
+                    <datalist [id]="'stockPartsList-' + i">
+                      <option
+                        *ngFor="
+                          let part of filterStockParts(
+                            itemsArray.at(i).get('designation')?.value
+                          )
+                        "
+                        [value]="part.designation"
+                      ></option>
                     </datalist>
                   </div>
-
-
 
                   <div>
                     <label class="form-label">Quantité *</label>
@@ -168,14 +191,23 @@ import { EmailService } from '../../services/email.service';
                   <div class="text-sm font-medium text-gray-900">
                     Subtotal: GNF {{ getItemSubtotal(i).toFixed(2) }}
                   </div>
-                  <button
-                    type="button"
-                    (click)="removeItem(i)"
-                    class="text-red-600 hover:text-red-900 text-sm"
-                    [disabled]="itemsArray.length === 1"
-                  >
-                    Retirer le détail
-                  </button>
+                  <div class="flex items-center justify-between">
+                    <button
+                      type="button"
+                      (click)="removeItem(i)"
+                      class="text-red-600 hover:text-red-900 text-sm"
+                      [disabled]="itemsArray.length === 1"
+                    >
+                      Retirer le détail
+                    </button>
+                    <button
+                      type="button"
+                      (click)="addItem()"
+                      class="text-blue-600 hover:text-blue-900 text-sm ml-2"
+                    >
+                      Ajouter un détail
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -202,11 +234,17 @@ import { EmailService } from '../../services/email.service';
             <div class="space-y-2 text-right">
               <div class="flex justify-between">
                 <span class="text-sm text-gray-600">Sous-total:</span>
-                <span class="text-sm font-medium">GNF {{ subtotal.toFixed(2) }}</span>
+                <span class="text-sm font-medium"
+                  >GNF {{ subtotal.toFixed(2) }}</span
+                >
               </div>
               <div class="flex justify-between">
-                <span class="text-sm text-gray-600">TVA ({{ quoteForm.get('vatRate')?.value }}%):</span>
-                <span class="text-sm font-medium">GNF {{ vatAmount.toFixed(2) }}</span>
+                <span class="text-sm text-gray-600"
+                  >TVA ({{ quoteForm.get('vatRate')?.value }}%):</span
+                >
+                <span class="text-sm font-medium"
+                  >GNF {{ vatAmount.toFixed(2) }}</span
+                >
               </div>
               <div class="flex justify-between text-lg font-bold">
                 <span>Total:</span>
@@ -215,8 +253,8 @@ import { EmailService } from '../../services/email.service';
             </div>
           </div>
 
-              <!-- Options d'envoi -->
-              <div class="border rounded-lg p-4 bg-blue-50">
+          <!-- Options d'envoi -->
+          <div class="border rounded-lg p-4 bg-blue-50">
             <h3 class="text-lg font-medium text-gray-900 mb-4">
               Options d'envoi
             </h3>
@@ -281,11 +319,7 @@ import { EmailService } from '../../services/email.service';
           </div>
 
           <div class="flex justify-end space-x-4">
-            <button
-              type="button"
-              (click)="goBack()"
-              class="btn-outline"
-            >
+            <button type="button" (click)="goBack()" class="btn-outline">
               Annuler
             </button>
             <button
@@ -303,7 +337,7 @@ import { EmailService } from '../../services/email.service';
         </form>
       </div>
     </div>
-  `
+  `,
 })
 export class QuoteFormComponent implements OnInit {
   quoteForm: FormGroup;
@@ -324,7 +358,7 @@ export class QuoteFormComponent implements OnInit {
   sendEmail = false;
   sendSMS = false;
 
-  stockParts: { designation: string, prixUnitaire: number }[] = [];
+  stockParts: { designation: string; prixUnitaire: number }[] = [];
 
   constructor(
     private readonly fb: FormBuilder,
@@ -341,7 +375,7 @@ export class QuoteFormComponent implements OnInit {
       validUntil: ['', Validators.required],
       kilometrage: [''],
       vatRate: [18],
-      items: this.fb.array([this.createItemGroup()])
+      items: this.fb.array([this.createItemGroup()]),
     });
   }
 
@@ -359,49 +393,69 @@ export class QuoteFormComponent implements OnInit {
         this.setDefaultValidUntil();
         await this.checkEditPermissions();
       }
-    })()
+    })();
   }
 
   private async checkEditPermissions(): Promise<void> {
     const currentUser = await firstValueFrom(this.authService.currentUser$);
     if (currentUser) {
-      this.canEdit = this.userManagementService.hasPermission(currentUser.role, 'quotes:write') ||
-        this.userManagementService.hasPermission(currentUser.role, 'quotes:approve');
+      this.canEdit =
+        this.userManagementService.hasPermission(
+          currentUser.role,
+          'quotes:write'
+        ) ||
+        this.userManagementService.hasPermission(
+          currentUser.role,
+          'quotes:approve'
+        );
     }
   }
 
   private async loadDiagnosticData(): Promise<void> {
     try {
-      this.diagnostic = await this.garageDataService.getById<Diagnostic>('diagnostics', this.diagnosticId!);
+      this.diagnostic = await this.garageDataService.getById<Diagnostic>(
+        'diagnostics',
+        this.diagnosticId!
+      );
 
       if (this.diagnostic) {
         [this.visit, this.vehicle] = await Promise.all([
-          this.garageDataService.getById<Visit>('visits', this.diagnostic.visitId),
-          this.garageDataService.getById<Vehicle>('vehicles', this.diagnostic.vehicleId)
+          this.garageDataService.getById<Visit>(
+            'visits',
+            this.diagnostic.visitId
+          ),
+          this.garageDataService.getById<Vehicle>(
+            'vehicles',
+            this.diagnostic.vehicleId
+          ),
         ]);
 
         if (this.visit) {
-          this.client = await this.garageDataService.getById<Client>('clients', this.visit.clientId);
+          this.client = await this.garageDataService.getById<Client>(
+            'clients',
+            this.visit.clientId
+          );
         }
       }
     } catch (error) {
-      this.notificationService.showError('Impossible de charger les données du diagnostic ' + error);
+      this.notificationService.showError(
+        'Impossible de charger les données du diagnostic ' + error
+      );
     }
   }
 
   private async loadStockParts(): Promise<void> {
     const stockItems = await this.garageDataService.getAll<any>('stock');
     this.stockParts = stockItems
-      .filter(item => item.status === 'entre')
-      .map(item => ({
+      .filter((item) => item.status === 'entre')
+      .map((item) => ({
         designation: item.designation,
-        prixUnitaire: item.prixUnitaire
+        prixUnitaire: item.prixUnitaire,
       }));
   }
 
-
   private generateQuoteNumber(): void {
-    const quoteNumber = this.garageDataService.generateUniqueNumber('QT');
+    const quoteNumber = this.garageDataService.generateUniqueNumber('DV');
     this.quoteForm.patchValue({ quoteNumber });
   }
 
@@ -409,7 +463,7 @@ export class QuoteFormComponent implements OnInit {
     const validUntil = new Date();
     validUntil.setDate(validUntil.getDate() + 30); // 30 days from now
     this.quoteForm.patchValue({
-      validUntil: validUntil.toISOString().split('T')[0]
+      validUntil: validUntil.toISOString().split('T')[0],
     });
   }
 
@@ -420,7 +474,7 @@ export class QuoteFormComponent implements OnInit {
       quantity: [1, [Validators.required, Validators.min(1)]],
       unitPrice: [0, [Validators.required, Validators.min(0)]],
       subtotal: [0],
-      type: ['Part']
+      type: ['Part'],
     });
   }
 
@@ -456,7 +510,7 @@ export class QuoteFormComponent implements OnInit {
     this.subtotal = this.itemsArray.controls.reduce((sum, item) => {
       const quantity = item.get('quantity')?.value || 0;
       const unitPrice = item.get('unitPrice')?.value || 0;
-      return sum + (quantity * unitPrice);
+      return sum + quantity * unitPrice;
     }, 0);
 
     const vatRate = this.quoteForm.get('vatRate')?.value || 0;
@@ -467,11 +521,13 @@ export class QuoteFormComponent implements OnInit {
   onSelectPart(index: number): void {
     const item = this.itemsArray.at(index);
     const selectedDesignation = item.get('designation')?.value;
-    const part = this.stockParts.find(p => p.designation === selectedDesignation);
+    const part = this.stockParts.find(
+      (p) => p.designation === selectedDesignation
+    );
 
     if (part) {
       item.patchValue({
-        unitPrice: part.prixUnitaire
+        unitPrice: part.prixUnitaire,
       });
       this.calculateItemSubtotal(index);
     }
@@ -495,7 +551,7 @@ export class QuoteFormComponent implements OnInit {
         quoteNumber: formValue.quoteNumber,
         items: formValue.items.map((item: any) => ({
           ...item,
-          subtotal: item.quantity * item.unitPrice
+          subtotal: item.quantity * item.unitPrice,
         })),
         subtotal: this.subtotal,
         vatRate: formValue.vatRate,
@@ -506,7 +562,7 @@ export class QuoteFormComponent implements OnInit {
         kilometrage: formValue.kilometrage,
         revisionHistory: [],
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // await this.garageDataService.create('quotes', quoteData);
@@ -530,7 +586,9 @@ export class QuoteFormComponent implements OnInit {
 
       this.router.navigate(['/quotes']);
     } catch (error) {
-      this.notificationService.showError('Impossible de créer le devis ' + error);
+      this.notificationService.showError(
+        'Impossible de créer le devis ' + error
+      );
     } finally {
       this.isLoading = false;
     }
@@ -666,18 +724,26 @@ export class QuoteFormComponent implements OnInit {
     }
   }
 
+  filterStockParts(
+    input: string | null | undefined
+  ): { designation: string; prixUnitaire: number }[] {
+    if (!input || input.length < 1) return [];
+    const query = input.toLowerCase().trim();
+    return this.stockParts
+      .filter((part) => part.designation.toLowerCase().includes(query))
+      .slice(0, 8);
+  }
 
   onAutoCompletePart(index: number): void {
     const item = this.itemsArray.at(index);
     const typedValue = item.get('designation')?.value;
-    const part = this.stockParts.find(p => p.designation === typedValue);
+    const part = this.stockParts.find((p) => p.designation === typedValue);
 
     if (part) {
       item.patchValue({
-        unitPrice: part.prixUnitaire
+        unitPrice: part.prixUnitaire,
       });
       this.calculateItemSubtotal(index);
     }
   }
-
 }

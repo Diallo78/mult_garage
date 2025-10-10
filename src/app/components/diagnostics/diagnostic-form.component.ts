@@ -1,6 +1,14 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { Client, Vehicle, Visit } from '../../models/client.model';
@@ -9,7 +17,6 @@ import { NotificationService } from '../../services/notification.service';
 import { Diagnostic, DiagnosticCategory } from '../../models/diagnostic.model';
 import { firstValueFrom } from 'rxjs';
 import { Personnel } from '../../models/garage.model';
-
 
 @Component({
   selector: 'app-diagnostic-form',
@@ -243,13 +250,15 @@ import { Personnel } from '../../models/garage.model';
                     <!-- Category for each check -->
                     <div>
                       <label class="form-label">Catégorie *</label>
-                      
+
                       <!-- Hidden field to track if "other" was selected -->
                       <input type="hidden" [formControlName]="'categoryType'" />
-                      
+
                       <!-- Input field shown when "other" is selected -->
                       <div *ngIf="check.get('categoryType')?.value === 'other'">
-                        <span class="text-red-600">Veuillez saisir la catégorie</span>
+                        <span class="text-red-600"
+                          >Veuillez saisir la catégorie</span
+                        >
                         <input
                           type="text"
                           formControlName="category"
@@ -257,29 +266,53 @@ import { Personnel } from '../../models/garage.model';
                           placeholder="Entrer la catégorie"
                         />
                       </div>
-                      
+
                       <!-- Select shown when "other" is not selected -->
                       <div *ngIf="check.get('categoryType')?.value !== 'other'">
-                        <select (change)="onCategoryChange($event, check)" formControlName="category" class="form-input w-full">
-                            <option value="">Sélectionner une catégorie</option>
-                            <option
-                              *ngFor="let ctg of diagnosticCategory"
-                              [value]="ctg.categorie"
-                            >
-                              {{ ctg.categorie }}
-                            </option>
-                            <option value="other">autre</option>
+                        <select
+                          (change)="onCategoryChange($event, check)"
+                          formControlName="category"
+                          class="form-input w-full"
+                        >
+                          <option value="">Sélectionner une catégorie</option>
+                          <option
+                            *ngFor="let name of uniqueCategoryNames()"
+                            [value]="name"
+                          >
+                            {{ name }}
+                          </option>
+                          <option value="other">autre</option>
                         </select>
                       </div>
                     </div>
+
                     <div class="md:col-span-2">
                       <label class="form-label">Description *</label>
                       <input
                         type="text"
                         formControlName="description"
                         class="form-input"
+                        [attr.list]="
+                          (check.get('description')?.value?.length || 0) >= 1
+                            ? 'visit-issues-' + i
+                            : null
+                        "
+                        autocomplete="off"
                         placeholder="Décrire ce qui a été vérifié"
                       />
+                      <datalist [id]="'visit-issues-' + i">
+                        <option
+                          *ngFor="
+                            let issue of filterIssues(
+                              check.get('description')?.value
+                            )
+                          "
+                          [value]="issue"
+                        ></option>
+                      </datalist>
+                      <p class="text-xs text-gray-500 mt-1">
+                        <!-- Tapez au moins 2 caractères pour voir des suggestions. -->
+                      </p>
                     </div>
 
                     <div>
@@ -314,7 +347,9 @@ import { Personnel } from '../../models/garage.model';
                     </div>
 
                     <div>
-                      <label class="form-label">Vérification après réparation</label>
+                      <label class="form-label"
+                        >Vérification après réparation</label
+                      >
                       <select
                         formControlName="postRepairVerification"
                         class="form-input"
@@ -343,6 +378,13 @@ import { Personnel } from '../../models/garage.model';
                       [disabled]="checksArray.length === 1"
                     >
                       Supprimer la vérification
+                    </button>
+                    <button
+                      type="button"
+                      (click)="addCheck()"
+                      class="text-blue-600 hover:text-blue-900 text-sm ml-2"
+                    >
+                      Ajouter une vérification
                     </button>
                   </div>
                 </div>
@@ -431,23 +473,22 @@ export class DiagnosticFormComponent implements OnInit {
   isLoading = false;
 
   titresDiagnostics: string[] = [
-    'Diagnostic système de freinage ABS',
-    'Panne démarrage moteur – Test batterie et alternateur',
-    'Diagnostic voyant moteur allumé (Check Engine)',
-    'Problème de surchauffe moteur',
-    'Inspection et test du système d’injection',
-    'Détection de fuite dans le circuit de refroidissement',
-    'Bruits anormaux au niveau de la suspension',
-    'Diagnostic embrayage / boîte de vitesses',
-    'Contrôle des émissions de gaz d’échappement',
-    'Analyse du système électrique (faisceau / fusibles / relais)',
-    'Vibrations à haute vitesse – Diagnostic roues et équilibrage',
-    'Inspection du système d’air conditionné (AC)',
-    'Problème de direction assistée – Contrôle hydraulique',
-    'Diagnostic démarrage difficile à froid',
-    'Problème de direction assistée – Contrôle hydraulique',
-    'Problème de consommation excessive de carburant',
-    'Autres',
+    'Diagnostic du système de freinage (ABS inclus)',
+    'Test démarrage moteur, batterie et alternateur',
+    'Voyant moteur allumé (Check Engine)',
+    'Surchauffe moteur – Contrôle du circuit de refroidissement',
+    'Diagnostic du système d’injection',
+    'Fuite détectée dans le système de refroidissement',
+    'Bruits ou anomalies de suspension',
+    'Diagnostic embrayage et boîte de vitesses',
+    'Contrôle des émissions et échappement',
+    'Analyse du système électrique (faisceaux, fusibles, relais)',
+    'Vibrations ou déséquilibre des roues',
+    'Contrôle du système de climatisation (AC)',
+    'Diagnostic direction assistée (hydraulique ou électrique)',
+    'Démarrage difficile à froid',
+    'Consommation excessive de carburant',
+    'Autres diagnostics',
   ];
 
   constructor(
@@ -546,9 +587,8 @@ export class DiagnosticFormComponent implements OnInit {
       );
     } catch (error) {
       this.notificationService.showError(
-        'Erreur lors du chargement des données'
+        'Erreur lors du chargement des données ' + error
       );
-      console.error('Chargement échoué :', error);
     } finally {
       this.isLoading = false;
     }
@@ -580,7 +620,32 @@ export class DiagnosticFormComponent implements OnInit {
       comments: [''],
     });
   }
-  
+
+  filterIssues(input: string | null | undefined): string[] {
+    if (!this.visit?.reportedIssues || !input) return [];
+    const query = input.toLowerCase().trim();
+    if (query.length < 1) return [];
+    return this.visit.reportedIssues
+      .filter((issue) => issue.toLowerCase().includes(query))
+      .slice(0, 8);
+  }
+
+  uniqueCategoryNames(): string[] {
+    if (!this.diagnosticCategory || this.diagnosticCategory.length === 0) {
+      return [];
+    }
+    const seen = new Set<string>();
+    const names: string[] = [];
+    for (const cat of this.diagnosticCategory) {
+      const name = (cat.name || '').trim();
+      if (name && !seen.has(name)) {
+        seen.add(name);
+        names.push(name);
+      }
+    }
+    return names;
+  }
+
   onCategoryChange(event: any, check: AbstractControl): void {
     const selectedValue = event.target.value;
     if (selectedValue === 'other') {
@@ -650,6 +715,6 @@ export class DiagnosticFormComponent implements OnInit {
   }
 
   private generateId(): string {
-    return Math.random().toString(36).substr(2, 9);
+    return Math.random().toString(36).substring(2, 9);
   }
 }

@@ -7,7 +7,7 @@ export class GarageDtoFunction {
         const storedGarage = localStorage.getItem('garageInfo');
         if (storedGarage) {
             const garageInfo = JSON.parse(storedGarage) as GarageDtoModel;
-            console.log('Garage récupéré depuis localStorage:', garageInfo);
+           // console.log('Garage récupéré depuis localStorage:', garageInfo);
             return garageInfo;
         }
         return null; // si rien trouvé

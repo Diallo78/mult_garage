@@ -19,31 +19,37 @@ import {
 import { db } from '../../../firebase.config';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GarageDataService {
   private readonly garageId: string | null = null;
-
 
   constructor() {
     this.garageId = localStorage.getItem('garageId');
   }
 
-  async create<T>(collectionName: string, data: Omit<T, 'id'>): Promise<string> {
+  async create<T>(
+    collectionName: string,
+    data: Omit<T, 'id'>
+  ): Promise<string> {
     if (!this.garageId) throw new Error('No garage ID available');
 
     const docData = {
       ...data,
       garageId: this.garageId,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     const docRef = await addDoc(collection(db, collectionName), docData);
     return docRef.id;
   }
 
-  async update<T>(collectionName: string, id: string, updates: Partial<T>): Promise<void> {
+  async update<T>(
+    collectionName: string,
+    id: string,
+    updates: Partial<T>
+  ): Promise<void> {
     if (!this.garageId) throw new Error('No garage ID available');
 
     const docRef = doc(db, collectionName, id);
@@ -73,20 +79,25 @@ export class GarageDataService {
     return null;
   }
 
-  async getAll<T>(collectionName: string, constraints: QueryConstraint[] = []): Promise<T[]> {
+  async getAll<T>(
+    collectionName: string,
+    constraints: QueryConstraint[] = []
+  ): Promise<T[]> {
     if (!this.garageId) throw new Error('No garage ID available');
 
     const q = query(
       collection(db, collectionName),
-      where('garageId', '==', this.garageId),
-
+      where('garageId', '==', this.garageId)
     );
 
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as T));
+    return querySnapshot.docs.map(
+      (doc) =>
+        ({
+          id: doc.id,
+          ...doc.data(),
+        } as T)
+    );
   }
 
   async getWithFilter<T>(
@@ -102,17 +113,20 @@ export class GarageDataService {
     );
 
     // Apply additional filters
-    filters.forEach(filter => {
+    filters.forEach((filter) => {
       q = query(q, where(filter.field, filter.operator, filter.value));
     });
 
     q = query(q);
 
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as T));
+    return querySnapshot.docs.map(
+      (doc) =>
+        ({
+          id: doc.id,
+          ...doc.data(),
+        } as T)
+    );
   }
 
   async getPaginated<T>(
@@ -135,12 +149,16 @@ export class GarageDataService {
     }
 
     const querySnapshot = await getDocs(q);
-    const data = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as T));
+    const data = querySnapshot.docs.map(
+      (doc) =>
+        ({
+          id: doc.id,
+          ...doc.data(),
+        } as T)
+    );
 
-    const lastDocument = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+    const lastDocument =
+      querySnapshot.docs[querySnapshot.docs.length - 1] || null;
 
     return { data, lastDoc: lastDocument };
   }
@@ -160,15 +178,34 @@ export class GarageDataService {
     );
 
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as T));
+    return querySnapshot.docs.map(
+      (doc) =>
+        ({
+          id: doc.id,
+          ...doc.data(),
+        } as T)
+    );
   }
 
+  // generateUniqueNumber(prefix: string): string {
+  //   const timestamp = Date.now().toString();
+  //   console.log('timestamp', timestamp);
+  //   const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  //   return `${prefix}${timestamp}${random}`;
+  // }
   generateUniqueNumber(prefix: string): string {
-    const timestamp = Date.now().toString();
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `${prefix}${timestamp}${random}`;
+    const now = new Date();
+    const formattedDate =
+      now.getFullYear().toString() +
+      (now.getMonth() + 1).toString().padStart(2, '0') +
+      now.getDate().toString().padStart(2, '0') +
+      now.getHours().toString().padStart(2, '0') +
+      now.getMinutes().toString().padStart(2, '0') +
+      now.getSeconds().toString().padStart(2, '0');
+      // console.log('formattedDate', formattedDate);
+    const random = Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, '0');
+    return `${prefix}${formattedDate}${random}`;
   }
 }
