@@ -52,7 +52,20 @@ import { Timestamp } from 'firebase/firestore';
                   formControlName="firstName"
                   class="form-input"
                   placeholder="Enter first name"
+                  [class.border-red-500]="
+                    personnelForm.get('firstName')?.invalid &&
+                    personnelForm.get('firstName')?.touched
+                  "
                 />
+                <div
+                  *ngIf="
+                    personnelForm.get('firstName')?.invalid &&
+                    personnelForm.get('firstName')?.touched
+                  "
+                  class="mt-1 text-sm text-red-600"
+                >
+                  Le prénom est obligatoire
+                </div>
               </div>
               <div>
                 <label class="form-label">Nom de famille *</label>
@@ -61,7 +74,20 @@ import { Timestamp } from 'firebase/firestore';
                   formControlName="lastName"
                   class="form-input"
                   placeholder="Enter last name"
+                  [class.border-red-500]="
+                    personnelForm.get('lastName')?.invalid &&
+                    personnelForm.get('lastName')?.touched
+                  "
                 />
+                <div
+                  *ngIf="
+                    personnelForm.get('lastName')?.invalid &&
+                    personnelForm.get('lastName')?.touched
+                  "
+                  class="mt-1 text-sm text-red-600"
+                >
+                  Le nom de famille est obligatoire
+                </div>
               </div>
               <div>
                 <label class="form-label">E-mail *</label>
@@ -70,7 +96,25 @@ import { Timestamp } from 'firebase/firestore';
                   formControlName="email"
                   class="form-input"
                   placeholder="employee@garage.com"
+                  [class.border-red-500]="
+                    personnelForm.get('email')?.invalid &&
+                    personnelForm.get('email')?.touched
+                  "
                 />
+                <div
+                  *ngIf="
+                    personnelForm.get('email')?.invalid &&
+                    personnelForm.get('email')?.touched
+                  "
+                  class="mt-1 text-sm text-red-600"
+                >
+                  <span *ngIf="personnelForm.get('email')?.hasError('required')">
+                    L'e-mail est obligatoire
+                  </span>
+                  <span *ngIf="personnelForm.get('email')?.hasError('email')">
+                    Veuillez saisir une adresse e-mail valide
+                  </span>
+                </div>
               </div>
               <div>
                 <label class="form-label">Téléphone *</label>
@@ -79,7 +123,20 @@ import { Timestamp } from 'firebase/firestore';
                   formControlName="phone"
                   class="form-input"
                   placeholder="Phone number"
+                  [class.border-red-500]="
+                    personnelForm.get('phone')?.invalid &&
+                    personnelForm.get('phone')?.touched
+                  "
                 />
+                <div
+                  *ngIf="
+                    personnelForm.get('phone')?.invalid &&
+                    personnelForm.get('phone')?.touched
+                  "
+                  class="mt-1 text-sm text-red-600"
+                >
+                  Le téléphone est obligatoire
+                </div>
               </div>
             </div>
           </div>
@@ -92,7 +149,14 @@ import { Timestamp } from 'firebase/firestore';
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label class="form-label">Rôle *</label>
-                <select formControlName="role" class="form-input">
+                <select
+                  formControlName="role"
+                  class="form-input"
+                  [class.border-red-500]="
+                    personnelForm.get('role')?.invalid &&
+                    personnelForm.get('role')?.touched
+                  "
+                >
                   <option value="">Select role</option>
                   <option value="AdminGarage">Admin Garage</option>
                   <option value="Manager">Manager</option>
@@ -100,6 +164,15 @@ import { Timestamp } from 'firebase/firestore';
                   <option value="Receptionist">Receptionist</option>
                   <option value="Accountant">Accountant</option>
                 </select>
+                <div
+                  *ngIf="
+                    personnelForm.get('role')?.invalid &&
+                    personnelForm.get('role')?.touched
+                  "
+                  class="mt-1 text-sm text-red-600"
+                >
+                  Le rôle est obligatoire
+                </div>
               </div>
               <div>
                 <label class="form-label">Date d'embauche *</label>
@@ -107,7 +180,20 @@ import { Timestamp } from 'firebase/firestore';
                   type="date"
                   formControlName="hireDate"
                   class="form-input"
+                  [class.border-red-500]="
+                    personnelForm.get('hireDate')?.invalid &&
+                    personnelForm.get('hireDate')?.touched
+                  "
                 />
+                <div
+                  *ngIf="
+                    personnelForm.get('hireDate')?.invalid &&
+                    personnelForm.get('hireDate')?.touched
+                  "
+                  class="mt-1 text-sm text-red-600"
+                >
+                  La date d'embauche est obligatoire
+                </div>
               </div>
               <div>
                 <label class="form-label">Salaire mensuel</label>
@@ -243,6 +329,7 @@ export class PersonnelFormComponent implements OnInit {
   isEditMode = false;
   isLoading = false;
   personnelId: string | null = null;
+  personnelUserId: string | null = null;
   selectedSpecializations: string[] = [];
   permissions: Permission[] = [];
   createAccount = true;
@@ -369,6 +456,7 @@ export class PersonnelFormComponent implements OnInit {
           salary: personnel.salary,
           isActive: personnel.isActive,
         });
+        this.personnelUserId = personnel.userId || null;
         this.selectedSpecializations = personnel.specializations || [];
         this.permissions = personnel.permissions || [];
       }
@@ -422,7 +510,13 @@ export class PersonnelFormComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-    if (this.personnelForm.invalid) return;
+    if (this.personnelForm.invalid) {
+      this.personnelForm.markAllAsTouched();
+      this.notificationService.showError(
+        'Veuillez renseigner tous les champs obligatoires.'
+      );
+      return;
+    }
 
     this.isLoading = true;
 
@@ -437,12 +531,21 @@ export class PersonnelFormComponent implements OnInit {
         role: formValue.role as UserRole,
         specializations: this.selectedSpecializations,
         hireDate: new Date(formValue.hireDate),
-        salary: formValue.salary || undefined,
         isActive: formValue.isActive,
         permissions: this.permissions,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
+
+      // N'inclure le salaire que s'il est renseigné :
+      // Firestore rejette les valeurs undefined ("Unsupported field value: undefined")
+      if (
+        formValue.salary !== null &&
+        formValue.salary !== undefined &&
+        formValue.salary !== ''
+      ) {
+        personnelData.salary = Number(formValue.salary);
+      }
 
       if (this.isEditMode && this.personnelId) {
         await this.garageDataService.update(
@@ -450,7 +553,17 @@ export class PersonnelFormComponent implements OnInit {
           this.personnelId,
           personnelData
         );
-        this.notificationService.showSuccess('Employé mis à jour avec succès');
+
+        // Synchroniser le rôle/statut/nom du compte utilisateur lié :
+        // c'est le document "users" qui est lu à la connexion pour les droits.
+        await this.userManagementService.syncPersonnelUserAccount(
+          personnelData,
+          this.personnelUserId || undefined
+        );
+
+        this.notificationService.showSuccess(
+          'Employé et compte utilisateur mis à jour avec succès'
+        );
       } else {
         if (this.createAccount) {
           // Création avec compte utilisateur
@@ -465,8 +578,11 @@ export class PersonnelFormComponent implements OnInit {
       }
 
       this.router.navigate(['/personnel']);
-    } catch (error) {
-      this.notificationService.showError("Échec de sauvegarde de l'employé " + error);
+    } catch (error: any) {
+      const message = error?.message || 'Erreur inconnue';
+      this.notificationService.showError(
+        `Échec de la sauvegarde de l'employé : ${message}`
+      );
     } finally {
       this.isLoading = false;
     }

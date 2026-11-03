@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { Client, Vehicle, Visit } from '../../models/client.model';
+import { Client, Vehicle, Visit, getClientDisplayName, isCompanyClient } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
@@ -22,9 +22,18 @@ import { AuthService } from '../../services/auth.service';
     <div class="space-y-6" *ngIf="client">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
-          <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            {{ client.firstName }} {{ client.lastName }}
-          </h2>
+          <div class="flex items-center gap-3 flex-wrap">
+            <span class="text-3xl">{{ isCompany(client) ? '🏢' : '👤' }}</span>
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+              {{ getDisplayName(client) }}
+            </h2>
+            <span
+              class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+              [ngClass]="isCompany(client) ? 'bg-secondary-100 text-secondary-800' : 'bg-primary-100 text-primary-800'"
+            >
+              {{ isCompany(client) ? 'Entreprise' : 'Personne physique' }}
+            </span>
+          </div>
         </div>
         <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3" *ngIf="this.authService.canAccessBtnEdit">
           <button [routerLink]="['/clients', client.id, 'edit']" class="btn-secondary">
@@ -36,8 +45,8 @@ import { AuthService } from '../../services/auth.service';
         </div>
       </div>
 
-      <!-- Client Information -->
-      <div class="card">
+      <!-- Client Information : Personne physique -->
+      <div class="card" *ngIf="!isCompany(client)">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Informations client</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -46,19 +55,62 @@ import { AuthService } from '../../services/auth.service';
           </div>
           <div>
             <label class="text-sm font-medium text-gray-500">Email</label>
-            <p class="mt-1 text-sm text-gray-900">{{ client.email }}</p>
+            <p class="mt-1 text-sm text-gray-900">{{ client.email || 'N/A' }}</p>
           </div>
           <div>
             <label class="text-sm font-medium text-gray-500">Téléphone</label>
-            <p class="mt-1 text-sm text-gray-900">{{ client.phone }}</p>
+            <p class="mt-1 text-sm text-gray-900">{{ client.phone || 'N/A' }}</p>
           </div>
           <div>
-            <label class="text-sm font-medium text-gray-500">Address</label>
+            <label class="text-sm font-medium text-gray-500">Adresse</label>
             <p class="mt-1 text-sm text-gray-900">{{ client.address || 'N/A' }}</p>
           </div>
           <div>
             <label class="text-sm font-medium text-gray-500">Client depuis</label>
             <p class="mt-1 text-sm text-gray-900">{{ client.createdAt | firestoreDate | date:'mediumDate' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Client Information : Entreprise -->
+      <div class="card" *ngIf="isCompany(client)">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Informations entreprise</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="md:col-span-2">
+            <label class="text-sm font-medium text-gray-500">Nom de l'entreprise</label>
+            <p class="mt-1 text-sm text-gray-900">{{ client.companyName || 'N/A' }}</p>
+          </div>
+          <div class="md:col-span-2">
+            <label class="text-sm font-medium text-gray-500">Adresse complète</label>
+            <p class="mt-1 text-sm text-gray-900 whitespace-pre-line">{{ client.companyAddress || 'N/A' }}</p>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500">NIF</label>
+            <p class="mt-1 text-sm text-gray-900">{{ client.nif || 'N/A' }}</p>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500">Clé TVA</label>
+            <p class="mt-1 text-sm text-gray-900">{{ client.vatKey || 'N/A' }}</p>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500">Client depuis</label>
+            <p class="mt-1 text-sm text-gray-900">{{ client.createdAt | firestoreDate | date:'mediumDate' }}</p>
+          </div>
+        </div>
+
+        <h3 class="text-lg font-medium text-gray-900 mt-6 mb-4">Contact / Logisticien</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="text-sm font-medium text-gray-500">Nom complet du contact</label>
+            <p class="mt-1 text-sm text-gray-900">{{ client.contactName || 'N/A' }}</p>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500">Téléphone du contact</label>
+            <p class="mt-1 text-sm text-gray-900">{{ client.contactPhone || 'N/A' }}</p>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500">Email du contact</label>
+            <p class="mt-1 text-sm text-gray-900">{{ client.contactEmail || 'N/A' }}</p>
           </div>
         </div>
       </div>
@@ -175,5 +227,15 @@ export class ClientDetailComponent implements OnInit {
       case 'cancelled': return 'status-rejected';
       default: return 'status-pending';
     }
+  }
+
+  /** Vrai si le client est une entreprise (compatibilité anciens enregistrements). */
+  isCompany(client: Client): boolean {
+    return isCompanyClient(client);
+  }
+
+  /** Nom affiché : nom de l'entreprise ou Prénom + Nom. */
+  getDisplayName(client: Client): string {
+    return getClientDisplayName(client);
   }
 }

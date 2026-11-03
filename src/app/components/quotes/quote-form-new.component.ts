@@ -751,7 +751,7 @@ export class QuoteFormNewComponent implements OnInit {
       Merci de votre confiance,
       L’équipe CarGest 🚘📑`;
 
-      await this.emailService.sendWhatsAppMessage(client.phone, message);
+      await this.emailService.sendWhatsAppMessage(client.phone!, message);
       this.notificationService.showSuccess(
         'WhatsApp ouvert avec le message pré-rempli'
       );

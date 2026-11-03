@@ -610,7 +610,7 @@ export class InvoiceFormComponent implements OnInit {
     try {
       const message = `Bonjour ${client.firstName},\n\nVotre facture N° ${invoiceNumber} est prêt !\n\nVous pouvez le consulter en cliquant sur le lien suivant :\n${window.location.origin}/invoices/${invoiceId}\n\nMerci de votre confiance !`;
 
-      await this.emailService.sendWhatsAppMessage(client.phone, message);
+      await this.emailService.sendWhatsAppMessage(client.phone!, message);
       this.notificationService.showSuccess(
         'WhatsApp ouvert avec le message pré-rempli'
       );

@@ -34,12 +34,12 @@ export class GarageDataService {
   ): Promise<string> {
     if (!this.garageId) throw new Error('No garage ID available');
 
-    const docData = {
+    const docData = this.removeUndefined({
       ...data,
       garageId: this.garageId,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    });
 
     const docRef = await addDoc(collection(db, collectionName), docData);
     return docRef.id;
@@ -53,11 +53,28 @@ export class GarageDataService {
     if (!this.garageId) throw new Error('No garage ID available');
 
     const docRef = doc(db, collectionName, id);
-    await updateDoc(docRef, {
-      ...updates,
-      garageId: this.garageId,
-      updatedAt: new Date(),
+    await updateDoc(
+      docRef,
+      this.removeUndefined({
+        ...updates,
+        garageId: this.garageId,
+        updatedAt: new Date(),
+      })
+    );
+  }
+
+  /**
+   * Firestore refuse les valeurs undefined ("Unsupported field value: undefined").
+   * On retire donc toute propriété non définie avant l'écriture.
+   */
+  private removeUndefined<T extends Record<string, any>>(data: T): T {
+    const cleaned: Record<string, any> = {};
+    Object.keys(data).forEach((key) => {
+      if (data[key] !== undefined) {
+        cleaned[key] = data[key];
+      }
     });
+    return cleaned as T;
   }
 
   async delete(collectionName: string, id: string): Promise<void> {

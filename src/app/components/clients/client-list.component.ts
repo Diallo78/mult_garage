@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Client } from '../../models/client.model';
+import { Client, getClientDisplayName, isCompanyClient } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
@@ -236,9 +236,21 @@ import { AuthService } from '../../services/auth.service';
                   <!-- Mobile View - Stacked -->
                   <td class="px-3 py-4 sm:px-6 block sm:table-cell">
                     <div class="flex items-center">
+                      <span
+                        class="mr-2 text-base"
+                        [title]="isCompany(client) ? 'Entreprise' : 'Personne physique'"
+                      >
+                        {{ isCompany(client) ? '🏢' : '👤' }}
+                      </span>
                       <div class="text-sm font-medium text-gray-900 sm:block">
-                        {{ client.firstName }} {{ client.lastName }}
+                        {{ getDisplayName(client) }}
                       </div>
+                      <span
+                        class="ml-2 hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                        [ngClass]="isCompany(client) ? 'bg-secondary-100 text-secondary-800' : 'bg-primary-100 text-primary-800'"
+                      >
+                        {{ isCompany(client) ? 'Entreprise' : 'Particulier' }}
+                      </span>
                       <div class="sm:hidden ml-auto flex space-x-2">
                         <button
                           [routerLink]="['/clients', client.id]"
@@ -256,9 +268,9 @@ import { AuthService } from '../../services/auth.service';
                       </div>
                     </div>
                     <div class="sm:hidden mt-1 text-xs text-gray-500">
-                      <div>{{ client.email }}</div>
-                      <div>{{ client.phone }}</div>
-                      <div class="mt-1">{{ client.address || 'N/A' }}</div>
+                      <div>{{ getContactEmail(client) }}</div>
+                      <div>{{ getContactPhone(client) }}</div>
+                      <div class="mt-1">{{ getAddress(client) || 'N/A' }}</div>
                       <div class="mt-1">
                         {{ client.createdAt | firestoreDate | date : 'short' }}
                       </div>
@@ -276,13 +288,19 @@ import { AuthService } from '../../services/auth.service';
 
                   <!-- Desktop View - Table Cells -->
                   <td class="px-3 py-4 whitespace-nowrap hidden sm:table-cell">
-                    <div class="text-sm text-gray-900">{{ client.email }}</div>
-                    <div class="text-sm text-gray-500">{{ client.phone }}</div>
+                    <div class="text-sm text-gray-900">{{ getContactEmail(client) }}</div>
+                    <div class="text-sm text-gray-500">{{ getContactPhone(client) }}</div>
+                    <div
+                      *ngIf="isCompany(client) && client.contactName"
+                      class="text-xs text-gray-400"
+                    >
+                      Contact : {{ client.contactName }}
+                    </div>
                   </td>
 
                   <td class="px-3 py-4 whitespace-nowrap hidden md:table-cell">
                     <div class="text-sm text-gray-900">
-                      {{ client.address || 'N/A' }}
+                      {{ getAddress(client) || 'N/A' }}
                     </div>
                   </td>
                   <td
@@ -370,28 +388,66 @@ export class ClientListComponent implements OnInit {
     }
 
     const term = this.searchTerm.toLowerCase();
-    this.filteredClients = this.clients.filter(
-      (client) =>
-        client.firstName.toLowerCase().includes(term) ||
-        client.lastName.toLowerCase().includes(term) ||
-        client.email.toLowerCase().includes(term) ||
-        client.phone.toLowerCase().includes(term)
-    );
+    this.filteredClients = this.clients.filter((client) => {
+      const haystack = [
+        client.firstName,
+        client.lastName,
+        client.email,
+        client.phone,
+        client.address,
+        client.companyName,
+        client.companyAddress,
+        client.nif,
+        client.vatKey,
+        client.contactName,
+        client.contactPhone,
+        client.contactEmail,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }
+
+  /** Vrai si le client est une entreprise (compatibilité anciens enregistrements). */
+  isCompany(client: Client): boolean {
+    return isCompanyClient(client);
+  }
+
+  /** Nom affiché : nom de l'entreprise ou Prénom + Nom. */
+  getDisplayName(client: Client): string {
+    return getClientDisplayName(client);
+  }
+
+  /** E-mail à afficher : e-mail du contact pour une entreprise, sinon e-mail du client. */
+  getContactEmail(client: Client): string {
+    return (this.isCompany(client) ? client.contactEmail : client.email) || 'N/A';
+  }
+
+  /** Téléphone à afficher : téléphone du contact pour une entreprise, sinon téléphone du client. */
+  getContactPhone(client: Client): string {
+    return (this.isCompany(client) ? client.contactPhone : client.phone) || 'N/A';
+  }
+
+  /** Adresse à afficher : adresse de l'entreprise ou adresse personnelle. */
+  getAddress(client: Client): string {
+    return (this.isCompany(client) ? client.companyAddress : client.address) || '';
   }
 
   async deleteClient(client: Client): Promise<void> {
     if (
       confirm(
-        `Are you sure you want to delete ${client.firstName} ${client.lastName}?`
+        `Êtes-vous sûr de vouloir supprimer ${this.getDisplayName(client)} ?`
       )
     ) {
       try {
         await this.garageDataService.delete('clients', client.id);
         this.clients = this.clients.filter((c) => c.id !== client.id);
         this.filterClients();
-        this.notificationService.showSuccess('Client deleted successfully');
+        this.notificationService.showSuccess('Client supprimé avec succès');
       } catch (error) {
-        this.notificationService.showError('Failed to delete client ' + error);
+        this.notificationService.showError('Échec de la suppression du client ' + error);
       }
     }
   }

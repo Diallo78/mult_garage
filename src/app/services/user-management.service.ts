@@ -12,7 +12,10 @@ import {
   updateDoc,
   getDoc,
   addDoc,
-  collection
+  collection,
+  query,
+  where,
+  getDocs
 } from 'firebase/firestore';
 
 import { AuthService } from './auth.service';
@@ -37,7 +40,17 @@ export class UserManagementService {
 
   }
 
-  async createClientAccount(clientData: Omit<Client, 'id'>): Promise<{ clientId: string; userId: string }> {
+  async createClientAccount(
+    clientData: Omit<
+      Client,
+      'id' | 'garageId' | 'createdAt' | 'updatedAt' | 'firstName' | 'lastName' | 'phone' | 'email'
+    > & {
+      firstName: string;
+      lastName: string;
+      phone: string;
+      email: string;
+    }
+  ): Promise<{ clientId: string; userId: string }> {
     try {
       const currentUser = await firstValueFrom(this.authService.currentUser$);
       if (!currentUser) throw new Error('No user logged in');
@@ -102,7 +115,80 @@ export class UserManagementService {
     }
   }
 
+  /**
+   * Crée un compte utilisateur (Firebase Auth + document "users") pour l'interlocuteur
+   * d'une entreprise. Aucun document "clients" n'est créé : l'entreprise reste le client,
+   * le compte appartient uniquement à son contact.
+   * Retourne l'uid du compte créé.
+   */
+  async createCompanyContactAccount(contactData: {
+    fullName: string;
+    email: string;
+  }): Promise<string> {
+    try {
+      const currentUser = await firstValueFrom(this.authService.currentUser$);
+      if (!currentUser) throw new Error('No user logged in');
+
+      const garageId = localStorage.getItem('garageId');
+      if (!garageId) {
+        throw new Error('ID du garage manquant');
+      }
+
+      // Sauvegarder les informations de l'utilisateur actuel
+      const currentUserEmail = currentUser.email;
+      const currentUserPassword = await this.promptForCurrentPassword();
+
+      // Generate temporary password
+      const tempPassword = this.generateTempPassword();
+
+      // Create Firebase Auth account
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        contactData.email,
+        tempPassword
+      );
+      const firebaseUser = userCredential.user;
+
+      // Update display name
+      await updateProfile(firebaseUser, { displayName: contactData.fullName });
+
+      // Create user document
+      const userData: User = {
+        uid: firebaseUser.uid,
+        email: contactData.email,
+        displayName: contactData.fullName,
+        garageId: garageId,
+        role: 'Client' as UserRole,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+
+      // Send password reset email for the contact to set their own password
+      await sendPasswordResetEmail(auth, contactData.email);
+
+      // Déconnecter le nouveau compte et reconnecter l'utilisateur original
+      await signOut(auth);
+      await signInWithEmailAndPassword(auth, currentUserEmail, currentUserPassword);
+
+      this.notificationService.showSuccess(
+        `Compte du contact créé. Email de réinitialisation envoyé à ${contactData.email}`
+      );
+
+      return firebaseUser.uid;
+    } catch (error: any) {
+      const friendlyError = this.transformErrorToUserFriendly(error);
+      this.notificationService.showError(friendlyError.message);
+      throw friendlyError;
+    }
+  }
+
   async createPersonnelAccount(personnelData: Omit<Personnel, 'id'>): Promise<{ personnelId: string; userId: string }> {
+    let accountCreated = false;
+    let personnelSaved = false;
+
     try {
       const currentUser = await firstValueFrom(this.authService.currentUser$);
       if (!currentUser) throw new Error('No user logged in');
@@ -122,6 +208,7 @@ export class UserManagementService {
       // Create Firebase Auth account
       const userCredential = await createUserWithEmailAndPassword(auth, personnelData.email, tempPassword);
       const firebaseUser = userCredential.user;
+      accountCreated = true;
 
       // Update display name
       await updateProfile(firebaseUser, {
@@ -147,6 +234,7 @@ export class UserManagementService {
         ...personnelData,
         userId: firebaseUser.uid
       });
+      personnelSaved = true;
 
       // Send password reset email for personnel to set their own password
       await sendPasswordResetEmail(auth, personnelData.email);
@@ -162,10 +250,53 @@ export class UserManagementService {
       return { personnelId, userId: firebaseUser.uid };
     } catch (error: any) {
       const friendlyError = this.transformErrorToUserFriendly(error);
+
+      // Le compte de connexion a été créé mais l'employé n'a pas pu être enregistré :
+      // on prévient explicitement l'utilisateur de cet état incohérent.
+      if (accountCreated && !personnelSaved) {
+        friendlyError.message =
+          `Le compte de connexion de ${personnelData.email} a bien été créé, ` +
+          `mais l'employé n'a pas pu être enregistré : ${friendlyError.message}`;
+      }
+
       this.notificationService.showError(friendlyError.message);
       console.log(error);
 
       throw friendlyError;
+    }
+  }
+
+  /**
+   * Synchronise le compte utilisateur (collection "users") rattaché à un employé.
+   * Le rôle et le statut utilisés à la connexion proviennent de "users" : il faut
+   * donc les mettre à jour lorsque l'employé est modifié, sinon la connexion
+   * conserve l'ancien rôle.
+   */
+  async syncPersonnelUserAccount(
+    personnelData: Omit<Personnel, 'id'>,
+    userId?: string
+  ): Promise<void> {
+    try {
+      let uid = userId;
+      if (!uid) {
+        const usersQuery = query(
+          collection(db, 'users'),
+          where('email', '==', personnelData.email)
+        );
+        const snapshot = await getDocs(usersQuery);
+        if (snapshot.empty) return; // Aucun compte utilisateur associé
+        uid = snapshot.docs[0].id;
+      }
+
+      await updateDoc(doc(db, 'users', uid), {
+        role: personnelData.role,
+        isActive: personnelData.isActive,
+        displayName: `${personnelData.firstName} ${personnelData.lastName}`,
+        updatedAt: new Date()
+      });
+    } catch (error: any) {
+      console.error('Error syncing personnel user account:', error);
+      throw error;
     }
   }
 
@@ -465,7 +596,7 @@ export class UserManagementService {
       'auth/network-request-failed': 'Problème de connexion. Veuillez vérifier votre accès internet.'
     };
 
-    const defaultMessage = error.message || 'Une erreur inattendue est survenue lors de la création du compte client.';
+    const defaultMessage = error.message || 'Une erreur inattendue est survenue lors de la création du compte.';
 
     return new Error(errorMap[error.code] || defaultMessage);
   }
