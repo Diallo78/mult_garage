@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Client, getClientDisplayName, isCompanyClient } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
+import { EmailService } from '../../services/email.service';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
 import { AuthService } from '../../services/auth.service';
 
@@ -259,6 +260,12 @@ import { AuthService } from '../../services/auth.service';
                           Voir
                         </button>
                         <button
+                          (click)="sendClientWhatsApp(client)"
+                          class="text-green-600 hover:text-green-900 text-xs"
+                        >
+                          WhatsApp
+                        </button>
+                        <button
                           *ngIf="this.authService.canBtnAccessInterventions"
                           [routerLink]="['/clients', client.id, 'edit']"
                           class="text-secondary-600 hover:text-secondary-900 text-xs"
@@ -320,6 +327,12 @@ import { AuthService } from '../../services/auth.service';
                         Voir
                       </button>
                       <button
+                        (click)="sendClientWhatsApp(client)"
+                        class="text-green-600 hover:text-green-900"
+                      >
+                        WhatsApp
+                      </button>
+                      <button
                         *ngIf="this.authService.canBtnAccessInterventions"
                         [routerLink]="['/clients', client.id, 'edit']"
                         class="text-secondary-600 hover:text-secondary-900"
@@ -353,6 +366,7 @@ export class ClientListComponent implements OnInit {
   constructor(
     private readonly garageDataService: GarageDataService,
     private readonly notificationService: NotificationService,
+    private readonly emailService: EmailService,
     public readonly authService: AuthService
   ) {}
 
@@ -433,6 +447,56 @@ export class ClientListComponent implements OnInit {
   /** Adresse à afficher : adresse de l'entreprise ou adresse personnelle. */
   getAddress(client: Client): string {
     return (this.isCompany(client) ? client.companyAddress : client.address) || '';
+  }
+
+  /**
+   * Renvoie les informations du client au format WhatsApp.
+   * Pour une entreprise, le message part vers le téléphone de l'interlocuteur.
+   */
+  async sendClientWhatsApp(client: Client): Promise<void> {
+    const phone = this.isCompany(client) ? client.contactPhone : client.phone;
+    if (!phone) {
+      this.notificationService.showError(
+        'Aucun numéro de téléphone disponible pour ce client'
+      );
+      return;
+    }
+
+    const lines: string[] = [];
+
+    if (this.isCompany(client)) {
+      lines.push(`*${client.companyName ?? 'Entreprise'}* (Entreprise)`);
+      if (client.companyAddress) lines.push(`Adresse : ${client.companyAddress}`);
+      if (client.nif) lines.push(`NIF : ${client.nif}`);
+      if (client.vatKey) lines.push(`Clé TVA : ${client.vatKey}`);
+      lines.push('');
+      lines.push('*Interlocuteur*');
+      if (client.contactName) lines.push(`Nom : ${client.contactName}`);
+      lines.push(`Téléphone : ${phone}`);
+      if (client.contactEmail) lines.push(`E-mail : ${client.contactEmail}`);
+    } else {
+      lines.push(`*${this.getDisplayName(client)}* (Personne physique)`);
+      if (client.phone) lines.push(`Téléphone : ${client.phone}`);
+      if (client.email) lines.push(`E-mail : ${client.email}`);
+      if (client.address) lines.push(`Adresse : ${client.address}`);
+    }
+
+    const message =
+      `Bonjour,\n\n` +
+      `Voici les informations de votre fiche client CarGest 🚘📑 :\n\n` +
+      `${lines.join('\n')}\n\n` +
+      `Merci de votre confiance,\nL'équipe CarGest`;
+
+    try {
+      await this.emailService.sendWhatsAppMessage(phone, message);
+      this.notificationService.showSuccess(
+        'WhatsApp ouvert avec les informations du client'
+      );
+    } catch (error) {
+      this.notificationService.showError(
+        "Échec de l'envoi WhatsApp " + error
+      );
+    }
   }
 
   async deleteClient(client: Client): Promise<void> {
