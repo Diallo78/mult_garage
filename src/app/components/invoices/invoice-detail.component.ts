@@ -4,6 +4,11 @@ import { RouterModule, ActivatedRoute } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { PDFService } from '../../services/pdf.service';
+import { PrintTemplateService } from '../../services/print-template.service';
+import {
+  PrintDocumentData,
+  PrintRendererService,
+} from '../../services/print-renderer.service';
 import { Invoice } from '../../models/invoice.model';
 import { Client, Vehicle } from '../../models/client.model';
 import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
@@ -274,6 +279,13 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
               class="btn-secondary w-full sm:w-auto"
             >
               Télécharger PDF
+            </button>
+            <button
+              type="button"
+              (click)="printWithTemplate()"
+              class="btn-primary w-full sm:w-auto"
+            >
+              Imprimer
             </button>
             <button
               *ngIf="invoice.status !== 'Paid'"
@@ -604,6 +616,13 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
                         >
                           Reçu
                         </button>
+                        <button
+                          type="button"
+                          (click)="printReceiptWithTemplate(payment)"
+                          class="text-primary-600 hover:text-primary-900 text-xs ml-2"
+                        >
+                          Imprimer
+                        </button>
                       </div>
                     </div>
                   </td>
@@ -633,6 +652,13 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
                     >
                       Reçu
                     </button>
+                    <button
+                      type="button"
+                      (click)="printReceiptWithTemplate(payment)"
+                      class="text-primary-600 hover:text-primary-900 ml-3"
+                    >
+                      Imprimer
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -654,6 +680,8 @@ export class InvoiceDetailComponent implements OnInit {
     private garageDataService: GarageDataService,
     private notificationService: NotificationService,
     private pdfService: PDFService,
+    private printTemplateService: PrintTemplateService,
+    private printRendererService: PrintRendererService,
     private route: ActivatedRoute
   ) {}
 
@@ -730,6 +758,163 @@ export class InvoiceDetailComponent implements OnInit {
     } catch (error) {
       this.notificationService.showError('Failed to generate receipt');
     }
+  }
+
+  /**
+   * Imprime la facture avec le modèle d'impression personnalisé du garage
+   * (repli sur le modèle par défaut). Le bouton PDF existant reste inchangé.
+   */
+  async printWithTemplate(): Promise<void> {
+    if (!this.invoice || !this.client || !this.vehicle) return;
+
+    try {
+      const template = await this.printTemplateService.getTemplate('invoice');
+      const garage = await this.printRendererService.loadGarageInfo();
+      const currency = garage?.currency ?? 'GNF';
+
+      const data: PrintDocumentData = {
+        documentType: 'invoice',
+        documentNumber: this.invoice.invoiceNumber,
+        documentDate: this.formatDate(this.invoice.createdAt),
+        meta: [
+          { label: "Date d'échéance", value: this.formatDate(this.invoice.dueDate) },
+          { label: 'Statut', value: this.invoice.status },
+        ],
+        clientName: this.getClientName(),
+        clientLines: this.getClientLines(),
+        vehicleLines: [
+          `${this.vehicle.brand} ${this.vehicle.model}`,
+          this.vehicle.licensePlate
+            ? `Immatriculation : ${this.vehicle.licensePlate}`
+            : '',
+        ].filter((line) => !!line),
+        items: this.invoice.items.map((item) => ({
+          designation: item.description,
+          quantity: item.quantity,
+          unitPrice: this.formatMoney(item.unitPrice, currency),
+          total: this.formatMoney(item.subtotal, currency),
+        })),
+        itemsHead: ['Désignation', 'Qté', 'Prix unitaire', 'Total'],
+        totals: [
+          {
+            label: 'Sous-total',
+            value: this.formatMoney(this.invoice.subtotal, currency),
+          },
+          {
+            label: 'Remise',
+            value: `- ${this.formatMoney(this.invoice.discountAmount, currency)}`,
+          },
+          {
+            label: 'TVA',
+            value: this.formatMoney(this.invoice.vatAmount, currency),
+          },
+          {
+            label: 'Total',
+            value: this.formatMoney(this.invoice.totalAmount, currency),
+            strong: true,
+          },
+          {
+            label: 'Montant payé',
+            value: this.formatMoney(this.invoice.amountPaid, currency),
+          },
+          {
+            label: 'Reste à payer',
+            value: this.formatMoney(this.invoice.amountDue, currency),
+            strong: true,
+          },
+        ],
+        currency,
+      };
+
+      this.printRendererService.print(template, data, garage);
+      this.notificationService.showSuccess('Document prêt pour impression');
+    } catch (error) {
+      this.notificationService.showError("Échec de l'impression : " + error);
+    }
+  }
+
+  /**
+   * Imprime un reçu de paiement avec le modèle personnalisé du garage.
+   */
+  async printReceiptWithTemplate(payment: any): Promise<void> {
+    if (!this.invoice || !this.client) return;
+
+    try {
+      const template = await this.printTemplateService.getTemplate(
+        'paymentReceipt'
+      );
+      const garage = await this.printRendererService.loadGarageInfo();
+      const currency = garage?.currency ?? 'GNF';
+
+      const data: PrintDocumentData = {
+        documentType: 'paymentReceipt',
+        documentNumber: this.invoice.invoiceNumber,
+        documentDate: this.formatDate(payment?.date),
+        meta: [
+          { label: 'Facture', value: this.invoice.invoiceNumber },
+          {
+            label: 'Mode de paiement',
+            value: payment?.method ?? '',
+          },
+          { label: 'Référence', value: payment?.reference ?? '' },
+        ],
+        clientName: this.getClientName(),
+        clientLines: this.getClientLines(),
+        totals: [
+          {
+            label: 'Montant réglé',
+            value: this.formatMoney(payment?.amount, currency),
+            strong: true,
+          },
+        ],
+        notes: payment?.notes ?? '',
+        currency,
+      };
+
+      this.printRendererService.print(template, data, garage);
+      this.notificationService.showSuccess('Reçu prêt pour impression');
+    } catch (error) {
+      this.notificationService.showError("Échec de l'impression : " + error);
+    }
+  }
+
+  /** Nom d'affichage du client (personne physique ou entreprise). */
+  private getClientName(): string {
+    if (!this.client) return '';
+    if (this.client.clientType === 'company') {
+      return this.client.companyName || this.client.contactName || '';
+    }
+    return `${this.client.firstName ?? ''} ${this.client.lastName ?? ''}`.trim();
+  }
+
+  /** Coordonnées du client pour l'impression. */
+  private getClientLines(): string[] {
+    if (!this.client) return [];
+    if (this.client.clientType === 'company') {
+      return [
+        this.client.companyAddress ? `Adresse : ${this.client.companyAddress}` : '',
+        this.client.contactPhone ? `Tél. : ${this.client.contactPhone}` : '',
+        this.client.contactEmail ? `E-mail : ${this.client.contactEmail}` : '',
+      ].filter((line) => !!line);
+    }
+    return [
+      this.client.phone ? `Tél. : ${this.client.phone}` : '',
+      this.client.email ? `E-mail : ${this.client.email}` : '',
+      this.client.address ? `Adresse : ${this.client.address}` : '',
+    ].filter((line) => !!line);
+  }
+
+  /** Convertit une date Firestore en date lisible (fr-FR). */
+  private formatDate(value: unknown): string {
+    if (!value) return '';
+    const date = new FirestoreDatePipe().transform(value);
+    return date ? date.toLocaleDateString('fr-FR') : '';
+  }
+
+  /** Formate un montant avec la devise du garage. */
+  private formatMoney(value: number | undefined, currency: string): string {
+    const amount = typeof value === 'number' ? value : 0;
+    return `${amount.toLocaleString('fr-FR')} ${currency}`;
   }
 
   getStatusClass(status: string): string {

@@ -4,9 +4,17 @@ import { RouterModule, ActivatedRoute } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { PDFService } from '../../services/pdf.service';
+import { PrintTemplateService } from '../../services/print-template.service';
+import {
+  PrintDocumentData,
+  PrintRendererService,
+} from '../../services/print-renderer.service';
 import { Quote } from '../../models/quote.model';
 import { Client, Vehicle } from '../../models/client.model';
-import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
+import {
+  FirestoreDatePipe,
+  FirestoreDatePipeTS,
+} from '../../pipe/firestore-date.pipe';
 import { AuthService } from '../../services/auth.service';
 import { FormsModule } from '@angular/forms';
 
@@ -344,6 +352,13 @@ import { FormsModule } from '@angular/forms';
               class="btn-secondary w-full sm:w-auto"
             >
               Télécharger PDF
+            </button>
+            <button
+              type="button"
+              (click)="printWithTemplate()"
+              class="btn-primary w-full sm:w-auto"
+            >
+              Imprimer
             </button>
             @if(this.authService.isClient){
             <div class="flex gap-2 sm:gap-3">
@@ -709,6 +724,8 @@ export class QuoteDetailComponent implements OnInit {
     private readonly garageDataService: GarageDataService,
     private readonly notificationService: NotificationService,
     private readonly pdfService: PDFService,
+    private readonly printTemplateService: PrintTemplateService,
+    private readonly printRendererService: PrintRendererService,
     private readonly route: ActivatedRoute,
     public authService: AuthService
   ) {}
@@ -843,6 +860,87 @@ export class QuoteDetailComponent implements OnInit {
     } catch (error) {
       this.notificationService.showError('Failed to generate PDF ' + error);
     }
+  }
+
+  /**
+   * Imprime le devis en utilisant le modèle d'impression personnalisé du
+   * garage (repli sur le modèle par défaut si aucun n'a été configuré).
+   * Le bouton « Télécharger PDF » existant reste inchangé.
+   */
+  async printWithTemplate(): Promise<void> {
+    if (!this.quote || !this.client || !this.vehicle) return;
+
+    try {
+      const template = await this.printTemplateService.getTemplate('quote');
+      const garage = await this.printRendererService.loadGarageInfo();
+      const currency = garage?.currency ?? 'GNF';
+
+      const data: PrintDocumentData = {
+        documentType: 'quote',
+        documentNumber: this.quote.quoteNumber,
+        documentDate: this.formatDate(this.quote.createdAt),
+        meta: [
+          { label: "Valable jusqu'au", value: this.formatDate(this.quote.validUntil) },
+          { label: 'Statut', value: this.quote.status },
+        ],
+        clientName: `${this.client.firstName} ${this.client.lastName}`,
+        clientLines: [
+          this.client.phone ? `Tél. : ${this.client.phone}` : '',
+          this.client.email ? `E-mail : ${this.client.email}` : '',
+          this.client.address ? `Adresse : ${this.client.address}` : '',
+        ].filter((line) => !!line),
+        vehicleLines: [
+          `${this.vehicle.brand} ${this.vehicle.model}`,
+          this.vehicle.licensePlate
+            ? `Immatriculation : ${this.vehicle.licensePlate}`
+            : '',
+          this.quote.kilometrage
+            ? `Kilométrage : ${this.quote.kilometrage}`
+            : '',
+        ].filter((line) => !!line),
+        items: this.quote.items.map((item) => ({
+          designation: item.designation,
+          quantity: item.quantity,
+          unitPrice: this.formatMoney(item.unitPrice, currency),
+          total: this.formatMoney(item.subtotal, currency),
+        })),
+        itemsHead: ['Désignation', 'Qté', 'Prix unitaire', 'Total'],
+        totals: [
+          {
+            label: 'Sous-total',
+            value: this.formatMoney(this.quote.subtotal, currency),
+          },
+          {
+            label: `TVA (${this.quote.vatRate}%)`,
+            value: this.formatMoney(this.quote.vatAmount, currency),
+          },
+          {
+            label: 'Total',
+            value: this.formatMoney(this.quote.total, currency),
+            strong: true,
+          },
+        ],
+        currency,
+      };
+
+      this.printRendererService.print(template, data, garage);
+      this.notificationService.showSuccess('Document prêt pour impression');
+    } catch (error) {
+      this.notificationService.showError("Échec de l'impression : " + error);
+    }
+  }
+
+  /** Convertit une date Firestore en date lisible (fr-FR). */
+  private formatDate(value: unknown): string {
+    if (!value) return '';
+    const date = new FirestoreDatePipe().transform(value);
+    return date ? date.toLocaleDateString('fr-FR') : '';
+  }
+
+  /** Formate un montant avec la devise du garage. */
+  private formatMoney(value: number | undefined, currency: string): string {
+    const amount = typeof value === 'number' ? value : 0;
+    return `${amount.toLocaleString('fr-FR')} ${currency}`;
   }
 
   getStatusClass(status: string): string {

@@ -388,6 +388,20 @@ export const routes: Routes = [
             (m) => m.ExameFormComponent
           ),
       },
+      {
+        path: 'print-templates',
+        loadComponent: () =>
+          import(
+            './components/print-templates/print-template-list.component'
+          ).then((m) => m.PrintTemplateListComponent),
+      },
+      {
+        path: 'print-templates/:documentType',
+        loadComponent: () =>
+          import(
+            './components/print-templates/print-template-editor.component'
+          ).then((m) => m.PrintTemplateEditorComponent),
+      },
     ],
   },
   {

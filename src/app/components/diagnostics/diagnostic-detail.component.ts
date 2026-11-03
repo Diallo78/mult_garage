@@ -6,6 +6,11 @@ import { Client, Vehicle, Visit } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { PDFService } from '../../services/pdf.service';
+import { PrintTemplateService } from '../../services/print-template.service';
+import {
+  PrintDocumentData,
+  PrintRendererService,
+} from '../../services/print-renderer.service';
 import { Personnel } from '../../models/garage.model';
 import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 
@@ -44,6 +49,13 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
           <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
             <button (click)="downloadPDF()" class="btn-secondary">
               Télécharger PDF
+            </button>
+            <button
+              type="button"
+              (click)="printWithTemplate()"
+              class="btn-primary"
+            >
+              Imprimer
             </button>
             <button
               [routerLink]="['/quotes/create', diagnostic.id]"
@@ -277,6 +289,8 @@ export class DiagnosticDetailComponent implements OnInit {
     private garageDataService: GarageDataService,
     private notificationService: NotificationService,
     private pdfService: PDFService,
+    private printTemplateService: PrintTemplateService,
+    private printRendererService: PrintRendererService,
     private route: ActivatedRoute
   ) {}
 
@@ -345,6 +359,75 @@ export class DiagnosticDetailComponent implements OnInit {
     } catch (error) {
       this.notificationService.showError('Failed to generate PDF');
     }
+  }
+
+  /**
+   * Imprime le rapport de diagnostic avec le modèle personnalisé du garage
+   * (repli sur le modèle par défaut). Le bouton PDF existant reste inchangé.
+   */
+  async printWithTemplate(): Promise<void> {
+    if (!this.diagnostic || !this.client || !this.vehicle) return;
+
+    try {
+      const template = await this.printTemplateService.getTemplate('report');
+      const garage = await this.printRendererService.loadGarageInfo();
+
+      const data: PrintDocumentData = {
+        documentType: 'report',
+        title: this.diagnostic.title,
+        documentDate: this.formatDate(this.diagnostic.createdAt),
+        meta: [
+          { label: 'Décision', value: this.diagnostic.finalDecision },
+          {
+            label: 'Technicien',
+            value: this.technician
+              ? `${this.technician.firstName} ${this.technician.lastName}`.trim()
+              : '',
+          },
+        ],
+        clientName: this.getClientName(),
+        clientLines: [
+          this.client.phone ? `Tél. : ${this.client.phone}` : '',
+          this.client.email ? `E-mail : ${this.client.email}` : '',
+        ].filter((line) => !!line),
+        vehicleLines: [
+          `${this.vehicle.brand} ${this.vehicle.model}`,
+          this.vehicle.licensePlate
+            ? `Immatriculation : ${this.vehicle.licensePlate}`
+            : '',
+        ].filter((line) => !!line),
+        itemsHead: ['Catégorie', 'Description', 'État', 'Sévérité'],
+        items: this.diagnostic.checks.map((check) => ({
+          designation: check.description,
+          quantity: check.category,
+          unitPrice: check.compliant ? 'Conforme' : 'Non conforme',
+          total: check.severityLevel,
+        })),
+        notes: this.diagnostic.summary,
+        currency: garage?.currency ?? 'GNF',
+      };
+
+      this.printRendererService.print(template, data, garage);
+      this.notificationService.showSuccess('Rapport prêt pour impression');
+    } catch (error) {
+      this.notificationService.showError("Échec de l'impression : " + error);
+    }
+  }
+
+  /** Nom d'affichage du client (personne physique ou entreprise). */
+  private getClientName(): string {
+    if (!this.client) return '';
+    if (this.client.clientType === 'company') {
+      return this.client.companyName || this.client.contactName || '';
+    }
+    return `${this.client.firstName ?? ''} ${this.client.lastName ?? ''}`.trim();
+  }
+
+  /** Convertit une date Firestore en date lisible (fr-FR). */
+  private formatDate(value: unknown): string {
+    if (!value) return '';
+    const date = new FirestoreDatePipe().transform(value);
+    return date ? date.toLocaleDateString('fr-FR') : '';
   }
 
   getDecisionClass(decision: string): string {

@@ -722,6 +722,36 @@ import { trigger, transition, style, animate } from '@angular/animations';
               <span class="truncate">Configuration</span>
             </div>
           </a>
+
+          <a
+            routerLink="/print-templates"
+            routerLinkActive="bg-primary-600 text-white dark:bg-primary-700"
+            (click)="closeSidebarOnMobile()"
+            class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 transition-all duration-200 ease-in-out text-sm group mt-1"
+            *ngIf="authService.canAccessPersonnel"
+          >
+            <div class="flex items-center">
+              <div
+                class="mr-3 flex items-center justify-center w-8 h-8 rounded-md bg-emerald-500 bg-opacity-20 text-emerald-500 group-hover:bg-opacity-30 transition-all duration-200"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H9.414A2 2 0 018 8.414V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2h9m4-12v4m0 0l-2-2m2 2l2-2"
+                  ></path>
+                </svg>
+              </div>
+              <span class="truncate">Modèles d'impression</span>
+            </div>
+          </a>
         </div>
       </nav>
     </div>

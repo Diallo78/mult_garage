@@ -378,9 +378,13 @@ export class ClientFormComponent implements OnInit {
       : 'individual';
   }
 
-  /** L'e-mail du contact est obligatoire uniquement si un compte lui est créé. */
+  /**
+   * L'e-mail du contact est obligatoire uniquement si un compte lui est créé
+   * (option disponible en création seulement).
+   */
   get isContactEmailRequired(): boolean {
     return (
+      !this.isEditMode &&
       this.clientType === 'company' &&
       !!this.clientForm.get('createAccount')?.value
     );
@@ -484,10 +488,12 @@ export class ClientFormComponent implements OnInit {
     });
 
     // E-mail du contact : facultatif, mais obligatoire au format valide
-    // lorsqu'un compte est créé pour l'interlocuteur de l'entreprise.
+    // lorsqu'un compte est créé pour l'interlocuteur de l'entreprise
+    // (uniquement en création, l'option n'existant pas en modification).
     const contactEmail = this.clientForm.get('contactEmail');
     if (contactEmail) {
-      const createAccount = !!this.clientForm.get('createAccount')?.value;
+      const createAccount =
+        !this.isEditMode && !!this.clientForm.get('createAccount')?.value;
       contactEmail.setValidators(
         isCompany
           ? createAccount
