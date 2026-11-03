@@ -54,6 +54,16 @@ export interface Garage {
   siret?: string;
   vatNumber?: string;
 
+  /**
+   * Devise et paramètres d'édition.
+   * Le formulaire de paramétrage du garage les enregistre à la racine du
+   * document, tandis que la création les place dans `settings` : les deux
+   * emplacements sont donc supportés.
+   */
+  currency?: string;
+  defaultVatRate?: number;
+  invoicePrefix?: string;
+
   ownerId: string;
   settings: GarageSettings;
   createdAt: Date;

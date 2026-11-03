@@ -279,7 +279,7 @@ export class LoginComponent {
             email: garage.email,
             logo: garage.logo || null,
             signature: garage.signature || null,
-            currency: garage.settings.currency || 'GNF',
+            currency: garage.currency || garage.settings?.currency || 'GNF',
             website: garage.website,
             siret: garage.siret || null,
             // vatNumber: garage.vatNumber || null,

@@ -166,7 +166,10 @@ export class PrintRendererService {
         rc: garage.rc,
         agrement: garage.agrement,
         capitalSocial: garage.capitalSocial,
-        currency: garage.settings?.currency,
+        // La devise peut être stockée à la racine (formulaire de paramétrage)
+        // ou dans `settings` (création du garage) : on prend la valeur la plus
+        // récente, sinon celle de `settings`.
+        currency: garage.currency ?? garage.settings?.currency,
       };
     } catch {
       return this.getGarageInfoFromStorage();

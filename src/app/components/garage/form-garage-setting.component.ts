@@ -401,6 +401,36 @@ export class FormGarageSetupComponent implements OnInit {
     }
   }
 
+  /**
+   * Met à jour le cache local `garageInfo` (lu par la génération PDF) après
+   * une modification, afin d'éviter d'avoir à se reconnecter pour que la
+   * nouvelle devise ou le nouveau logo soient pris en compte.
+   */
+  private refreshGarageInfoStorage(formValue: any): void {
+    const stored = localStorage.getItem('garageInfo');
+    const current = stored ? JSON.parse(stored) : {};
+
+    localStorage.setItem(
+      'garageInfo',
+      JSON.stringify({
+        ...current,
+        id: this.garageId,
+        name: formValue.name,
+        address: formValue.address,
+        phone: formValue.phone,
+        email: formValue.email,
+        logo: this.logoBase64 || current.logo || null,
+        signature: this.signatureBase64 || current.signature || null,
+        currency: formValue.currency || current.currency || 'GNF',
+        website: formValue.website,
+        siret: formValue.siret || null,
+        agrement: formValue.agrement || null,
+        rc: formValue.rc || null,
+        capitalSocial: formValue.capitalSocial || null,
+      })
+    );
+  }
+
   private async loadGarage(): Promise<void> {
     this.isLoading = true;
     if (!this.garageId) return;
@@ -408,7 +438,7 @@ export class FormGarageSetupComponent implements OnInit {
       const garage = await this.garageDataService.getById<Garage>('garages', this.garageId);
       if (garage) {
         this.garageForm.patchValue(garage);
-        
+
         this.logoBase64 = garage.logo || null;
         this.previewLogo = this.logoBase64 ? this.logoBase64 : null;
 
@@ -439,6 +469,11 @@ export class FormGarageSetupComponent implements OnInit {
           logo: this.logoBase64 || '', // <= mettre à jour le logo
           signature: this.signatureBase64 || '' // <= mettre à jour la signature
         });
+
+        // Rafraîchit le cache local utilisé par la génération PDF afin que
+        // les nouveaux paramètres (devise, en-tête...) s'appliquent sans
+        // nécessiter une reconnexion.
+        this.refreshGarageInfoStorage(garageFormValue);
 
         this.notificationService.showSuccess('Garage updated successfully');
         this.router.navigate(['/garage/liste']);
