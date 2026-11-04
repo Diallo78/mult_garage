@@ -544,7 +544,9 @@ export class VisitFormEnhancedComponent implements OnInit {
         phone: [''],
         licenseNumber: [''],
       }),
-      reportedIssues: this.fb.array([this.fb.control('', Validators.required)]),
+      // Problèmes personnalisés : champs libres facultatifs (la présence d'au
+      // moins un problème est vérifiée à la soumission, cases cochées incluses).
+      reportedIssues: this.fb.array([this.fb.control('')]),
       status: ['Pending'],
       declarationMethod: ['manual'],
     });
@@ -665,7 +667,7 @@ export class VisitFormEnhancedComponent implements OnInit {
   }
 
   addIssue(): void {
-    this.reportedIssuesArray.push(this.fb.control('', Validators.required));
+    this.reportedIssuesArray.push(this.fb.control(''));
   }
 
   removeIssue(index: number): void {
@@ -753,21 +755,24 @@ export class VisitFormEnhancedComponent implements OnInit {
   async onSubmit(): Promise<void> {
     if (this.visitForm.invalid) return;
 
+    const formValue = this.visitForm.value;
+    const isManual = formValue.declarationMethod === 'manual';
+
+    // Problèmes signalés = catégories cochées + problèmes personnalisés saisis.
+    const customIssues: string[] = (formValue.reportedIssues ?? [])
+      .map((issue: string) => (issue ?? '').trim())
+      .filter((issue: string) => !!issue);
+    const reportedIssues = [...this.getSelectedProblemLabels(), ...customIssues];
+
     // Validate declaration method
-    if (
-      this.visitForm.get('declarationMethod')?.value === 'manual' &&
-      this.reportedIssuesArray.length === 0
-    ) {
+    if (isManual && reportedIssues.length === 0) {
       this.notificationService.showError(
-        'Please add at least one reported issue'
+        'Veuillez signaler au moins un problème'
       );
       return;
     }
 
-    if (
-      this.visitForm.get('declarationMethod')?.value === 'document' &&
-      this.uploadedDocuments.length === 0
-    ) {
+    if (!isManual && this.uploadedDocuments.length === 0) {
       this.notificationService.showError('Please upload at least one document');
       return;
     }
@@ -775,7 +780,6 @@ export class VisitFormEnhancedComponent implements OnInit {
     this.isLoading = true;
 
     try {
-      const formValue = this.visitForm.value;
       const visitData: any = {
         visitDate: new Date(formValue.visitDate),
         clientId: formValue.clientId,
@@ -784,10 +788,8 @@ export class VisitFormEnhancedComponent implements OnInit {
         declarationMethod: this.declarationMethod,
       };
 
-      if (formValue.declarationMethod === 'manual') {
-        visitData.reportedIssues = formValue.reportedIssues.filter(
-          (issue: string) => issue.trim()
-        );
+      if (isManual) {
+        visitData.reportedIssues = reportedIssues;
       } else {
         visitData.documents = this.uploadedDocuments;
         visitData.reportedIssues = ['See uploaded documents'];
@@ -1017,37 +1019,18 @@ export class VisitFormEnhancedComponent implements OnInit {
         (id) => id !== problemId
       );
     }
-
-    // Mettre à jour le formulaire avec les problèmes sélectionnés
-    this.updateReportedIssuesFromSelection();
   }
 
   isProblemSelected(problemId: string): boolean {
     return this.selectedProblems.includes(problemId);
   }
 
-  private updateReportedIssuesFromSelection(): void {
-    // Vider le FormArray
-    while (this.reportedIssuesArray.length > 0) {
-      this.reportedIssuesArray.removeAt(0);
-    }
-
-    // Ajouter les problèmes sélectionnés
-    this.selectedProblems.forEach((problemId) => {
-      const category = this.allDiagnosticCategories.find(
-        (cat) => cat.id === problemId
-      );
-      if (category) {
-        this.reportedIssuesArray.push(
-          this.fb.control(category.categorie, Validators.required)
-        );
-      }
-    });
-
-    // S'assurer qu'il y a au moins un champ vide pour la saisie manuelle
-    if (this.reportedIssuesArray.length === 0) {
-      this.reportedIssuesArray.push(this.fb.control('', Validators.required));
-    }
+  /** Libellés des problèmes sélectionnés via les cases à cocher. */
+  private getSelectedProblemLabels(): string[] {
+    return this.selectedProblems
+      .map((id) => this.allDiagnosticCategories.find((cat) => cat.id === id))
+      .map((category) => category?.categorie)
+      .filter((label): label is string => !!label);
   }
 
   private loadExistingProblems(reportedIssues: string[]): void {
@@ -1063,19 +1046,17 @@ export class VisitFormEnhancedComponent implements OnInit {
       );
 
       if (matchingCategory) {
-        // Si on trouve une correspondance, l'ajouter aux sélections
+        // Si on trouve une correspondance, cocher la catégorie correspondante
         this.selectedProblems.push(matchingCategory.id);
       } else {
         // Sinon, l'ajouter comme problème personnalisé
-        this.reportedIssuesArray.push(
-          this.fb.control(issue, Validators.required)
-        );
+        this.reportedIssuesArray.push(this.fb.control(issue));
       }
     });
 
     // S'assurer qu'il y a au moins un champ vide pour la saisie manuelle
     if (this.reportedIssuesArray.length === 0) {
-      this.reportedIssuesArray.push(this.fb.control('', Validators.required));
+      this.reportedIssuesArray.push(this.fb.control(''));
     }
   }
 
