@@ -38,6 +38,22 @@ export interface PrintMetaLine {
   value: string;
 }
 
+/** Une ligne d'un tableau libre. */
+export interface PrintTableRow {
+  cells: (string | number)[];
+  /** Libellé de regroupement affiché au-dessus de la ligne (ex : catégorie). */
+  groupLabel?: string;
+}
+
+/** Un tableau libre à colonnes configurables (ex : points de contrôle). */
+export interface PrintTableBlock {
+  title?: string;
+  head: string[];
+  rows: PrintTableRow[];
+  /** Index des colonnes alignées au centre ; les autres sont alignées à gauche. */
+  centerColumns?: number[];
+}
+
 /** Données métier à imprimer. Elles proviennent des collections existantes. */
 export interface PrintDocumentData {
   documentType: PrintDocumentType;
@@ -51,6 +67,8 @@ export interface PrintDocumentData {
   vehicleLines?: string[];
   items?: PrintLineItem[];
   itemsHead?: string[];
+  /** Tableaux libres supplémentaires (points de contrôle, pièces jointes...). */
+  tables?: PrintTableBlock[];
   totals?: PrintTotalLine[];
   notes?: string;
   currency?: string;
@@ -427,7 +445,7 @@ ${lines.join('<br/>')}
     switch (section) {
       case 'itemsTable':
         return template.bodySettings.showItems
-          ? this.renderItemsTable(template, data)
+          ? this.renderItemsSection(template, data)
           : '';
       case 'totals':
         return template.bodySettings.showTotals
@@ -460,6 +478,79 @@ ${lines.join('<br/>')}
     return `<section style="margin-bottom:${template.bodySettings.sectionSpacing}mm;">
   <div style="font-size:${style.baseFontSize - 1}px;font-weight:700;color:${style.secondaryColor};margin-bottom:1.5mm;">${this.escape(title)}</div>
   <div style="font-size:${style.baseFontSize - 1}px;line-height:1.5;">${content}</div>
+</section>`;
+  }
+
+  /**
+   * Contenu de la section « tableau » : tableau des prestations (le cas
+   * échéant) puis tableaux libres éventuels (points de contrôle...).
+   */
+  private renderItemsSection(
+    template: PrintTemplateData,
+    data: PrintDocumentData
+  ): string {
+    const parts: string[] = [];
+    if (data.items?.length) parts.push(this.renderItemsTable(template, data));
+    (data.tables ?? []).forEach((table) => {
+      if (table.rows?.length) parts.push(this.renderTableBlock(template, table));
+    });
+    return parts.join('\n');
+  }
+
+  /** Tableau libre à colonnes configurables, avec regroupements optionnels. */
+  private renderTableBlock(
+    template: PrintTemplateData,
+    table: PrintTableBlock
+  ): string {
+    const body = template.bodySettings;
+    const style = template.styleSettings;
+    const columnCount = table.head.length;
+    const alignments = table.head.map((_, index) =>
+      table.centerColumns?.includes(index) ? 'center' : 'left'
+    );
+
+    const headCells = table.head
+      .map(
+        (label, index) =>
+          `<th style="padding:2mm;border:1px solid ${body.tableBorderColor};text-align:${alignments[index]};font-size:${body.fontSize}px;">${this.escape(label)}</th>`
+      )
+      .join('');
+
+    const rows = table.rows
+      .map((row, index) => {
+        const parts: string[] = [];
+        if (row.groupLabel) {
+          parts.push(
+            `<tr style="background:${body.tableHeadColor};color:${body.tableHeadTextColor};">
+  <td colspan="${columnCount}" style="padding:2mm;border:1px solid ${body.tableBorderColor};font-weight:700;font-size:${body.fontSize}px;">${this.escape(row.groupLabel)}</td>
+</tr>`
+          );
+        }
+        const background =
+          body.tableZebra && index % 2 === 1 ? `background:${ZEBRA_COLOR};` : '';
+        const cells = row.cells
+          .map(
+            (value, cellIndex) =>
+              `<td style="padding:2mm;border:1px solid ${body.tableBorderColor};text-align:${alignments[cellIndex] ?? 'left'};font-size:${body.fontSize}px;vertical-align:top;">${this.formatCell(value)}</td>`
+          )
+          .join('');
+        parts.push(`<tr style="${background}">${cells}</tr>`);
+        return parts.join('');
+      })
+      .join('');
+
+    const title = table.title
+      ? `<div style="font-size:${style.baseFontSize - 1}px;font-weight:700;color:${style.secondaryColor};margin-bottom:1.5mm;">${this.escape(table.title)}</div>`
+      : '';
+
+    return `<section style="margin-bottom:${body.sectionSpacing}mm;">
+  ${title}
+  <table style="width:100%;">
+    <thead>
+      <tr style="background:${body.tableHeadColor};color:${body.tableHeadTextColor};">${headCells}</tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
 </section>`;
   }
 
@@ -709,7 +800,8 @@ ${lines.join('<br/>')}
       const formatted = value.toLocaleString('fr-FR');
       return currency ? `${formatted} ${this.escape(currency)}` : formatted;
     }
-    return this.escape(value);
+    // Les sauts de ligne d'une cellule deviennent des retours à la ligne HTML.
+    return this.escape(value).replace(/\n/g, '<br/>');
   }
 
   private escape(value: unknown): string {

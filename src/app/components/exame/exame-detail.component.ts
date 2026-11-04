@@ -5,6 +5,13 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { VehicleExam, EXAM_CATEGORIES } from '../../models/exam.model';
 import { FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
+import { PrintTemplateService } from '../../services/print-template.service';
+import {
+  PrintDocumentData,
+  PrintMetaLine,
+  PrintRendererService,
+  PrintTableRow,
+} from '../../services/print-renderer.service';
 
 @Component({
   selector: 'app-exame-detail',
@@ -302,7 +309,9 @@ export class ExameDetailComponent implements OnInit {
     private readonly garageDataService: GarageDataService,
     private readonly notificationService: NotificationService,
     private readonly router: Router,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly printTemplateService: PrintTemplateService,
+    private readonly printRenderer: PrintRendererService
   ) {}
 
   ngOnInit() {
@@ -377,8 +386,92 @@ export class ExameDetailComponent implements OnInit {
     this.router.navigate(['/exams', this.examId, 'edit']);
   }
 
-  printExam(): void {
-    window.print();
+  /**
+   * Imprime la fiche de réception en utilisant le modèle personnalisé
+   * « Fiche de réception véhicule » (repli automatique sur le modèle par défaut).
+   */
+  async printExam(): Promise<void> {
+    if (!this.exam) return;
+    try {
+      const data = this.buildReceptionData(this.exam);
+      const [template, garage] = await Promise.all([
+        this.printTemplateService.getTemplate('vehicleReception'),
+        this.printRenderer.loadGarageInfo(),
+      ]);
+      this.printRenderer.print(template, data, garage);
+    } catch (error) {
+      this.notificationService.showError(
+        "Échec de l'impression de la fiche de réception. " + error
+      );
+    }
+  }
+
+  /** Prépare les données d'impression à partir de l'examen (réception). */
+  private buildReceptionData(exam: VehicleExam): PrintDocumentData {
+    const rows: PrintTableRow[] = [];
+
+    this.examCategories.forEach((category) => {
+      category.items.forEach((item, index) => {
+        const check = exam.technicalChecks?.find((c) => c.id === item.id);
+        rows.push({
+          groupLabel:
+            index === 0 ? `${category.key}. ${category.name}` : undefined,
+          cells: [
+            `${item.name}\n${item.verificationRequired}`,
+            check?.compliance ? 'Conforme' : 'Non conforme',
+            check?.quantity ?? 0,
+            check?.postRepairVerification ? 'Vérifié' : 'Non vérifié',
+          ],
+        });
+      });
+    });
+
+    const meta: PrintMetaLine[] = [];
+    if (exam.driver) {
+      if (exam.driver.name) {
+        meta.push({ label: 'Chauffeur', value: exam.driver.name });
+      }
+      if (exam.driver.phone) {
+        meta.push({ label: 'Tél. chauffeur', value: exam.driver.phone });
+      }
+      if (exam.driver.account) {
+        meta.push({ label: 'Compte', value: exam.driver.account });
+      }
+    }
+
+    return {
+      documentType: 'vehicleReception',
+      title: 'FICHE DE RÉCEPTION',
+      documentNumber: exam.examNumber,
+      documentDate: this.formatDate(exam.date),
+      meta,
+      clientName: exam.clientName,
+      clientLines: exam.clientPhone ? [`Tél. : ${exam.clientPhone}`] : [],
+      vehicleLines: [
+        `Marque : ${exam.vehicleMake}`,
+        `Immatriculation : ${exam.vehicleRegistration}`,
+      ],
+      tables: [
+        {
+          head: [
+            'Vérifications requises',
+            'Conformité',
+            'QTE',
+            'Vérification après travaux',
+          ],
+          centerColumns: [1, 2, 3],
+          rows,
+        },
+      ],
+      totals: [
+        {
+          label: 'Décision finale',
+          value: this.getStatusLabel(exam.finalDecision),
+          strong: true,
+        },
+      ],
+      notes: exam.summary,
+    };
   }
 
   goBack(): void {
