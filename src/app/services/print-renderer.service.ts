@@ -218,10 +218,19 @@ export class PrintRendererService {
 <meta charset="utf-8" />
 <title>${this.escape(data.title || getDocumentTypeInfo(data.documentType)?.defaultTitle || 'Document')}</title>
 <style>
-  * { box-sizing: border-box; }
+  /* Par défaut, les navigateurs suppriment les fonds à l'impression.
+     On force la restitution des couleurs pour l'en-tête du tableau
+     (fond + texte) et les bordures colorées. */
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color-adjust: exact;
+  }
   html, body { margin: 0; padding: 0; background: #ffffff; }
   @page { size: ${page.width}mm ${page.height}mm; margin: 0; }
   table { border-collapse: collapse; }
+  th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 </style>
 </head>
 <body>
