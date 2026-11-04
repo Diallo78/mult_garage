@@ -152,6 +152,20 @@ type EditorTab = 'header' | 'body' | 'footer' | 'signature' | 'style';
               </div>
 
               <div>
+                <label class="form-label">Titre du document</label>
+                <input
+                  type="text"
+                  formControlName="title"
+                  class="form-input"
+                  [placeholder]="defaultDocumentTitle"
+                />
+                <p class="mt-1 text-xs text-gray-500">
+                  Titre imprimé en haut du document. Laisser vide pour utiliser
+                  le titre par défaut ({{ defaultDocumentTitle }}).
+                </p>
+              </div>
+
+              <div>
                 <p class="form-label">Informations affichées</p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div class="flex items-center gap-2" *ngFor="let item of headerToggles">
@@ -620,6 +634,11 @@ export class PrintTemplateEditorComponent implements OnInit, OnDestroy {
   /** Devise affichée sur les documents (paramètre métier du garage). */
   get garageCurrency(): string {
     return this.garageInfo?.currency || 'GNF';
+  }
+
+  /** Titre par défaut du type de document (utilisé si le champ est vide). */
+  get defaultDocumentTitle(): string {
+    return getDocumentTypeInfo(this.documentType)?.defaultTitle ?? '';
   }
 
   // ---------------------------------------------------------------------------

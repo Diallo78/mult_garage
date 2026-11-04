@@ -57,6 +57,8 @@ export interface PrintPageSettings {
 
 /** En-tête du document. */
 export interface PrintHeaderSettings {
+  /** Titre imprimé sur le document. Vide = titre par défaut du type de document. */
+  title: string;
   logoVisible: boolean;
   logoAlign: PrintAlign;
   logoWidth: number;
@@ -246,6 +248,7 @@ export function createDefaultPrintTemplate(
     },
 
     headerSettings: {
+      title: '',
       logoVisible: true,
       logoAlign: 'right',
       logoWidth: 40,

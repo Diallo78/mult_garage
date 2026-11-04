@@ -216,7 +216,7 @@ export class PrintRendererService {
 <html lang="fr">
 <head>
 <meta charset="utf-8" />
-<title>${this.escape(data.title || getDocumentTypeInfo(data.documentType)?.defaultTitle || 'Document')}</title>
+<title>${this.escape(this.resolveTitle(template, data))}</title>
 <style>
   /* Par défaut, les navigateurs suppriment les fonds à l'impression.
      On force la restitution des couleurs pour l'en-tête du tableau
@@ -295,11 +295,7 @@ ${this.renderFooter(template, garage)}
       ? `border-bottom:2px solid ${header.borderColor};padding-bottom:4mm;`
       : 'padding-bottom:4mm;';
 
-    const title = this.escape(
-      data.title ||
-        getDocumentTypeInfo(data.documentType)?.defaultTitle ||
-        'DOCUMENT'
-    );
+    const title = this.escape(this.resolveTitle(template, data));
 
     return `<header style="display:flex;align-items:flex-start;gap:6mm;${borderStyle}">
   <div style="flex:1;display:flex;align-items:flex-start;justify-content:space-between;gap:6mm;">
@@ -799,6 +795,22 @@ ${lines.join('<br/>')}
   // ---------------------------------------------------------------------------
   // Utilitaires
   // ---------------------------------------------------------------------------
+
+  /**
+   * Titre imprimé : titre du modèle personnalisé, sinon titre fourni par le
+   * document, sinon titre par défaut du type de document.
+   */
+  private resolveTitle(
+    template: PrintTemplateData,
+    data: PrintDocumentData
+  ): string {
+    return (
+      template.headerSettings?.title?.trim() ||
+      data.title ||
+      getDocumentTypeInfo(data.documentType)?.defaultTitle ||
+      'DOCUMENT'
+    );
+  }
 
   private formatCell(
     value: string | number | undefined,
