@@ -4,7 +4,7 @@ export interface GarageDtoModel {
     address: string,
     phone: string,
     email: string,
-    logo: string,
+    logo?: string  | null,
     signature?: string,
     currency: string,
     website: string,

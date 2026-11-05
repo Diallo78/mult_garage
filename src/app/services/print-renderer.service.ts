@@ -147,7 +147,7 @@ export class PrintRendererService {
       phone: dto.phone ?? '',
       email: dto.email ?? '',
       website: dto.website,
-      logo: dto.logo,
+      logo: dto.logo ?? '',
       signature: dto.signature,
       nif: dto.nif,
       rc: dto.rc,
