@@ -20,6 +20,7 @@
     "@angular/platform-browser": "^18.2.0",
     "@angular/platform-browser-dynamic": "^18.2.0",
     "@angular/router": "^18.2.0",
+    "@angular/service-worker": "18.2.13",
     "@tailwindcss/typography": "^0.5.16",
     "chart.js": "^4.4.1",
     "firebase": "^11.10.0",

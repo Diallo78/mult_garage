@@ -5,10 +5,11 @@ import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideStorage, getStorage } from '@angular/fire/storage';
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, isDevMode } from '@angular/core';
 import { IMAGE_CONFIG, registerLocaleData } from '@angular/common';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import localeFr from '@angular/common/locales/fr';
+import { provideServiceWorker } from '@angular/service-worker';
 
 registerLocaleData(localeFr);
 
@@ -27,6 +28,10 @@ export const appConfig: ApplicationConfig = {
         disableImageSizeWarning: true,
         disableImageLazyLoadWarning: true
       }
-    }
+    },
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
+    })
   ]
 };

@@ -1,51 +1,35 @@
 {
-  "name": "Multi-Garage - Gestion de Garage Automobile",
-  "short_name": "Multi-Garage",
-  "description": "Application de gestion complète pour garages automobiles. Gestion des clients, véhicules, interventions et facturation.",
+  "id": "/",
+  "name": "Union Garage de Ratoma",
+  "short_name": "Garage Ratoma",
+  "description": "Plateforme professionnelle de gestion automobile : clients, véhicules, interventions, devis et facturation.",
+  "lang": "fr",
+  "dir": "ltr",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#ffffff",
   "theme_color": "#22c55e",
-  "orientation": "portrait-primary",
+  "categories": ["business", "productivity"],
   "icons": [
     {
-      "src": "image/logo2.jpg",
+      "src": "/image/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "image/logo2.jpg",
+      "src": "/image/icon-512.png",
       "sizes": "512x512",
-      "type": "image/jpg",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "image/logo2.jpg",
-      "sizes": "128x128",
-      "type": "image/jpg",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "image/logo2.jpg",
-      "sizes": "144x144",
-      "type": "image/jpg",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "image/logo2.jpg",
-      "sizes": "152x152",
-      "type": "image/jpg",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "image/logo2.jpg",
-      "sizes": "384x384",
-      "type": "image/jpg",
-      "purpose": "any maskable"
+      "src": "/image/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ],
-  "categories": ["business", "productivity"],
-  "lang": "fr",
-  "scope": "/"
+  ]
 }
