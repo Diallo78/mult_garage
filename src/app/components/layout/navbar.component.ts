@@ -28,7 +28,7 @@ import { GarageDtoFunction } from '../../services/fonction/garageDto-function';
                 *ngIf="garageInfo?.logo; else defaultLogo"
                 [src]="garageInfo?.logo"
                 alt="logo"
-                class="ml-2 h-10 w-45"
+                class="ml-2 h-20 w-200"
               />
 
               <ng-template #defaultLogo>
