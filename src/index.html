@@ -1,84 +1,115 @@
+
 <!DOCTYPE html>
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <title>Union Garage De Ratoma</title>
     <base href="/" />
 
-    <!-- Métadonnées pour mobile -->
+    <!-- Titre et affichage -->
+    <title>Union Garage de Ratoma | Gestion automobile</title>
+
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0"
     />
+
+    <!-- Identité de l'application -->
+    <meta name="application-name" content="Union Garage de Ratoma" />
+    <meta name="author" content="Union Garage de Ratoma" />
+    <meta name="description"
+      content="Union Garage de Ratoma : plateforme professionnelle de gestion automobile, clients, véhicules, interventions, devis et facturation." />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#22c55e" />
+
+    <!-- Compatibilité mobile -->
     <meta name="format-detection" content="telephone=no" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Multi-Garage" />
-
-    <!-- PWA et manifest -->
-    <meta name="theme-color" content="#22c55e" />
-    <meta name="msapplication-TileColor" content="#22c55e" />
-    <meta name="msapplication-navbutton-color" content="#22c55e" />
-
-    <!-- Description et mots-clés -->
     <meta
-      name="description"
-      content="Application de gestion complète pour garages automobiles. Gestion des clients, véhicules, interventions et facturation."
+      name="apple-mobile-web-app-title"
+      content="Union Garage de Ratoma"
     />
-    <meta
-      name="keywords"
-      content="garage, automobile, gestion, clients, véhicules, interventions, facturation"
-    />
-    <meta name="author" content="Multi-Garage" />
 
-    <!-- Open Graph pour les réseaux sociaux -->
+    <!-- URL officielle -->
+    <link
+      rel="canonical"
+      href="https://uniongarageratoma.com/"
+    />
+
+    <!-- Open Graph : WhatsApp, Facebook, LinkedIn -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Union Garage de Ratoma" />
+    <meta property="og:locale" content="fr_GN" />
     <meta
       property="og:title"
-      content="Multi-Garage - Gestion de Garage Automobile"
+      content="Union Garage de Ratoma | Gestion automobile"
     />
     <meta
       property="og:description"
-      content="Application de gestion complète pour garages automobiles"
+      content="Découvrez Union Garage de Ratoma, votre plateforme de gestion des clients, véhicules, interventions et facturation automobile."
     />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://multi-garage.com" />
-    <meta property="og:image" content="/image/logo2.jpg" />
+    <meta
+      property="og:url"
+      content="https://uniongarageratoma.com/"
+    />
+    <meta
+      property="og:image"
+      content="https://uniongarageratoma.com/image/logo2.jpg"
+    />
+    <meta property="og:image:alt" content="Union Garage de Ratoma" />
 
-    <!-- Twitter Card -->
+    <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
-      content="Multi-Garage - Gestion de Garage Automobile"
+      content="Union Garage de Ratoma | Gestion automobile"
     />
     <meta
       name="twitter:description"
-      content="Application de gestion complète pour garages automobiles"
+      content="Une plateforme professionnelle pour gérer les activités de votre garage automobile."
     />
-    <meta name="twitter:image" content="/image/logo2.jpg" />
+    <meta
+      name="twitter:image"
+      content="https://uniongarageratoma.com/image/logo2.jpg"
+    />
 
     <!-- Favicon et icônes -->
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/image/logo2.jpg" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/image/logo2.jpg" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/image/logo2.jpg" />
-
-    <!-- Préchargement des polices -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
+    <link rel="shortcut icon" href="favicon.ico" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/image/logo2.jpg"
+    />
 
     <!-- Manifest PWA -->
     <link rel="manifest" href="/manifest.json" />
 
-    <!-- Styles critiques inline pour améliorer le LCP -->
+    <!-- Préconnexion aux polices -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+
+    <!-- Styles critiques -->
     <style>
-      /* Styles de base pour éviter le FOUC (Flash of Unstyled Content) */
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+      }
+
       body {
         margin: 0;
         padding: 0;
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-          Roboto, sans-serif;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, sans-serif;
         background-color: #f9fafb;
         color: #111827;
         line-height: 1.5;
@@ -86,13 +117,16 @@
         -moz-osx-font-smoothing: grayscale;
       }
 
-      /* Loading spinner */
       .loading-spinner {
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100vh;
-        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        background: linear-gradient(
+          135deg,
+          #22c55e 0%,
+          #16a34a 100%
+        );
       }
 
       .spinner {
@@ -105,33 +139,20 @@
       }
 
       @keyframes spin {
-        0% {
+        from {
           transform: rotate(0deg);
         }
-        100% {
+        to {
           transform: rotate(360deg);
         }
       }
 
-      /* Optimisations mobile */
-      * {
-        box-sizing: border-box;
-      }
-
-      /* Amélioration du scroll sur mobile */
-      html {
-        scroll-behavior: smooth;
-        -webkit-overflow-scrolling: touch;
-      }
-
-      /* Prévention du zoom sur iOS */
       input,
       select,
       textarea {
         font-size: 16px;
       }
 
-      /* Optimisation des boutons tactiles */
       button,
       a,
       [role="button"] {
@@ -140,47 +161,35 @@
       }
     </style>
   </head>
+
   <body>
-    <!-- Loading spinner pendant le chargement de l'application -->
+    <!-- Chargement initial -->
     <div id="loading" class="loading-spinner">
       <div class="spinner"></div>
     </div>
 
     <!-- Application Angular -->
     <app-root>
-      <!-- Contenu de fallback si JavaScript est désactivé -->
       <div class="fallback-content">
-        <h1>Multi-Garage</h1>
-        <p>Application de gestion de garage automobile</p>
+        <h1>Union Garage de Ratoma</h1>
+        <p>Plateforme de gestion automobile.</p>
         <p>Veuillez activer JavaScript pour utiliser l'application.</p>
       </div>
     </app-root>
 
-    <!-- Script pour masquer le loading spinner -->
+    <!-- Masquer le chargement après le chargement initial -->
     <script>
-      // Masquer le loading spinner une fois l'application chargée
       window.addEventListener("load", function () {
         const loading = document.getElementById("loading");
+
         if (loading) {
           loading.style.opacity = "0";
+
           setTimeout(() => {
             loading.style.display = "none";
           }, 300);
         }
       });
-
-      // Masquer le loading spinner si l'application Angular est prête
-      if (window.angular) {
-        window.angular.element(document).ready(function () {
-          const loading = document.getElementById("loading");
-          if (loading) {
-            loading.style.opacity = "0";
-            setTimeout(() => {
-              loading.style.display = "none";
-            }, 300);
-          }
-        });
-      }
     </script>
   </body>
 </html>
