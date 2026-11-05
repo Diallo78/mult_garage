@@ -26,7 +26,7 @@ import { GarageDtoFunction } from '../../services/fonction/garageDto-function';
               <!-- 🚗 <span class="ml-1 hidden xs:inline">Garage</span> -->
               <img
                 *ngIf="garageInfo?.logo; else defaultLogo"
-                [src]="garageInfo.logo"
+                [src]="garageInfo?.logo"
                 alt="logo"
                 class="ml-2 h-20 w-200"
               />
