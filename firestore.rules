@@ -1,75 +1,104 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function authed() {
+      return request.auth != null;
+    }
+
+    function userGarage() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId;
+    }
+
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isGarageStaff() {
+      return authed() && ['AdminGarage', 'Manager', 'SuperAdmin'].includes(userRole());
+    }
+
+    // Document déjà en base (read / update / delete)
+    function inMyGarage(existing) {
+      return authed() && userGarage() == existing.garageId;
+    }
+
     // Users can only access their own user document
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if authed() && request.auth.uid == userId;
     }
-    
+
     // Garage isolation - users can only access data from their garage
     match /garages/{garageId} {
-      allow read, write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == garageId;
+      allow read, write: if authed() && userGarage() == garageId;
     }
-    
-    // Clients - only accessible by users from the same garage
+
+    // Collections isolées par garage.
+    // A la creation, `resource` est null : il faut comparer request.resource.data.
     match /clients/{clientId} {
-      allow read, write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+      allow read, update, delete: if inMyGarage(resource.data);
+      allow create: if inMyGarage(request.resource.data);
     }
-    
-    // Vehicles - only accessible by users from the same garage
+
     match /vehicles/{vehicleId} {
-      allow read, write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+      allow read, update, delete: if inMyGarage(resource.data);
+      allow create: if inMyGarage(request.resource.data);
     }
-    
-    // Visits - only accessible by users from the same garage
+
     match /visits/{visitId} {
-      allow read, write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+      allow read, update, delete: if inMyGarage(resource.data);
+      allow create: if inMyGarage(request.resource.data);
     }
-    
-    // Diagnostics - only accessible by users from the same garage
+
     match /diagnostics/{diagnosticId} {
-      allow read, write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+      allow read, update, delete: if inMyGarage(resource.data);
+      allow create: if inMyGarage(request.resource.data);
     }
-    
-    // Quotes - only accessible by users from the same garage
+
     match /quotes/{quoteId} {
-      allow read, write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+      allow read, update, delete: if inMyGarage(resource.data);
+      allow create: if inMyGarage(request.resource.data);
     }
-    
-    // Interventions - only accessible by users from the same garage
+
     match /interventions/{interventionId} {
-      allow read, write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+      allow read, update, delete: if inMyGarage(resource.data);
+      allow create: if inMyGarage(request.resource.data);
     }
-    
-    // Invoices - only accessible by users from the same garage
+
     match /invoices/{invoiceId} {
-      allow read, write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+      allow read, update, delete: if inMyGarage(resource.data);
+      allow create: if inMyGarage(request.resource.data);
     }
-    
-    // Payments - only accessible by users from the same garage
+
     match /payments/{paymentId} {
-      allow read, write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+      allow read, update, delete: if inMyGarage(resource.data);
+      allow create: if inMyGarage(request.resource.data);
     }
-    
-    // Reports - only accessible by users from the same garage
+
     match /reports/{reportId} {
-      allow read, write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+      allow read, update, delete: if inMyGarage(resource.data);
+      allow create: if inMyGarage(request.resource.data);
     }
-    
-    // Print templates - only accessible by users from the same garage
+
     match /garagePrintTemplates/{templateId} {
-      allow read, write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.garageId == resource.data.garageId;
+      allow read, update, delete: if inMyGarage(resource.data);
+      allow create: if inMyGarage(request.resource.data);
+    }
+
+    // Categorias de diagnostic : liseuses et ecrites par les membres du garage
+    // (ecran « Checks diagnostiques »).
+    match /diagnosticCategory/{categoryId} {
+      allow read, update, delete: if inMyGarage(resource.data);
+      allow create: if inMyGarage(request.resource.data);
+    }
+
+    // Personnel : lu par les selecteurs de techniciens (diagnostics, interventions),
+    // ecrit seulement par le staff du garage.
+    match /personnel/{personnelId} {
+      allow read: if inMyGarage(resource.data);
+      allow create: if isGarageStaff() && inMyGarage(request.resource.data);
+      allow update: if isGarageStaff() && inMyGarage(resource.data) && inMyGarage(request.resource.data);
+      allow delete: if isGarageStaff() && inMyGarage(resource.data);
     }
   }
 }

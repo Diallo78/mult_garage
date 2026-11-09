@@ -5,7 +5,6 @@ import {
   FormArray,
   FormBuilder,
   FormGroup,
-  FormsModule,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
@@ -21,7 +20,7 @@ import { Personnel } from '../../models/garage.model';
 @Component({
   selector: 'app-diagnostic-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   styles: `
   .form-select {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
@@ -94,7 +93,7 @@ import { Personnel } from '../../models/garage.model';
                   diagnosticForm.get('title')?.touched
                 "
                 aria-describedby="title-error"
-                aria-invalid="diagnosticForm.get('title')?.invalid"
+                [attr.aria-invalid]="diagnosticForm.get('title')?.invalid"
               >
                 <option value="" disabled selected hidden>
                   Sélectionnez un titre...
@@ -171,19 +170,35 @@ import { Personnel } from '../../models/garage.model';
                 Informations technicien
               </h3>
               <div class="mb-4">
-                <label class="text-sm font-medium text-blue-700"
-                  >Sélectionner un technicien</label
+                <label for="diagnostic-technician" class="text-sm font-medium text-blue-700"
+                  >Sélectionner un technicien <span class="text-red-500">*</span></label
                 >
                 <select
+                  id="diagnostic-technician"
                   class="form-input"
-                  [ngModel]="currentTechnician?.id"
-                  (ngModelChange)="onTechnicianSelect($event)"
-                  [ngModelOptions]="{ standalone: true }"
+                  formControlName="technicianId"
+                  [attr.aria-invalid]="diagnosticForm.get('technicianId')?.invalid && diagnosticForm.get('technicianId')?.touched"
                 >
+                  <option value="" disabled selected hidden>
+                    Sélectionner un technicien...
+                  </option>
                   <option *ngFor="let tech of personnel" [value]="tech.id">
                     {{ tech.firstName }} {{ tech.lastName }}
                   </option>
                 </select>
+                <div
+                  *ngIf="
+                    diagnosticForm.get('technicianId')?.invalid &&
+                    diagnosticForm.get('technicianId')?.touched
+                  "
+                  class="mt-1 text-sm text-red-600"
+                >
+                  Le technicien est requis
+                </div>
+                <p *ngIf="personnel.length === 0 && !isLoading" class="mt-1 text-sm text-amber-700">
+                  Aucun technicien actif trouvé pour ce garage. Ajoutez un membre du
+                  personnel avec le rôle « Technician » et le statut actif.
+                </p>
               </div>
               <div
                 class="grid grid-cols-1 md:grid-cols-2 gap-4"
@@ -318,8 +333,8 @@ import { Personnel } from '../../models/garage.model';
                     <div>
                       <label class="form-label">Conforme</label>
                       <select formControlName="compliant" class="form-input">
-                        <option [value]="true">Oui - Conforme</option>
-                        <option [value]="false">Non - Non conforme</option>
+                        <option [ngValue]="true">Oui - Conforme</option>
+                        <option [ngValue]="false">Non - Non conforme</option>
                       </select>
                     </div>
 
@@ -354,8 +369,8 @@ import { Personnel } from '../../models/garage.model';
                         formControlName="postRepairVerification"
                         class="form-input"
                       >
-                        <option [value]="false">Non</option>
-                        <option [value]="true">Oui</option>
+                        <option [ngValue]="false">Non</option>
+                        <option [ngValue]="true">Oui</option>
                       </select>
                     </div>
 
@@ -468,7 +483,6 @@ export class DiagnosticFormComponent implements OnInit {
   client: Client | null = null;
   personnel: Personnel[] = [];
   diagnosticCategory: DiagnosticCategory[] = [];
-  currentTechnician: Personnel | null = null;
   visitId: string | null = null;
   isLoading = false;
 
@@ -501,6 +515,7 @@ export class DiagnosticFormComponent implements OnInit {
   ) {
     this.diagnosticForm = this.fb.group({
       title: ['', Validators.required], // <-- nouveau champ
+      technicianId: ['', Validators.required],
       checks: this.fb.array([this.createCheckGroup()]),
       summary: ['', Validators.required],
       finalDecision: ['', Validators.required],
@@ -509,6 +524,11 @@ export class DiagnosticFormComponent implements OnInit {
 
   get checksArray(): FormArray {
     return this.diagnosticForm.get('checks') as FormArray;
+  }
+
+  get currentTechnician(): Personnel | null {
+    const id = this.diagnosticForm.get('technicianId')?.value;
+    return this.personnel.find((p) => p.id === id) ?? null;
   }
 
   ngOnInit() {
@@ -594,19 +614,6 @@ export class DiagnosticFormComponent implements OnInit {
     }
   }
 
-  onTechnicianSelect(id: string) {
-    this.loadCurrentTechnicianID(id);
-  }
-
-  private loadCurrentTechnicianID(id: string) {
-    if (id) {
-      const found = this.personnel.find((p) => p.id === id);
-      if (found) {
-        this.currentTechnician = found;
-      }
-    }
-  }
-
   private createCheckGroup(): FormGroup {
     return this.fb.group({
       id: [this.generateId()],
@@ -674,9 +681,9 @@ export class DiagnosticFormComponent implements OnInit {
     try {
       const currentUser = await firstValueFrom(this.authService.currentUser$);
 
-      if (!currentUser) throw new Error('No user logged in');
-
-      if (!this.currentTechnician) throw new Error('No user logged in');
+      if (!currentUser?.garageId) {
+        throw new Error('Session expirée : reconnectez-vous.');
+      }
 
       const formValue = this.diagnosticForm.value;
       const diagnosticData: Omit<Diagnostic, 'id'> = {
@@ -684,7 +691,7 @@ export class DiagnosticFormComponent implements OnInit {
         garageId: currentUser.garageId,
         visitId: this.visitId!,
         vehicleId: this.visit.vehicleId,
-        technicianId: this.currentTechnician.id,
+        technicianId: formValue.technicianId,
         checks: formValue.checks,
         summary: formValue.summary,
         finalDecision: formValue.finalDecision,
@@ -703,8 +710,11 @@ export class DiagnosticFormComponent implements OnInit {
         'Diagnostic report created successfully'
       );
       this.router.navigate(['/diagnostics']);
-    } catch (error) {
-      this.notificationService.showError('Failed to create diagnostic report');
+    } catch (error: any) {
+      console.error('Failed to create diagnostic report', error);
+      this.notificationService.showError(
+        'Échec de la création du rapport : ' + (error?.message ?? error)
+      );
     } finally {
       this.isLoading = false;
     }

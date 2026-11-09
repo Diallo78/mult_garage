@@ -692,8 +692,11 @@ ${lines.join('<br/>')}
       if (garage.address) legal.push(this.escape(garage.address));
       if (garage.rc) legal.push(`RC : ${this.escape(garage.rc)}`);
       if (garage.nif) legal.push(`NIF : ${this.escape(garage.nif)}`);
-      if (garage.capitalSocial !== undefined) {
-        legal.push(`Capital : ${garage.capitalSocial.toLocaleString('fr-FR')}`);
+      if (
+          typeof garage.capitalSocial === 'number' &&
+          Number.isFinite(garage.capitalSocial)
+        ) {
+          legal.push(`Capital : ${garage.capitalSocial.toLocaleString('fr-FR')}`);
       }
       if (legal.length) lines.push(legal.join(' - '));
     }
