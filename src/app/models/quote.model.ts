@@ -16,8 +16,31 @@ export interface Quote {
     clientSignature?: string;
     createdAt: Date;
     updatedAt: Date;
-    rejectionReason?: RejectionReason,
-    kilometrage?: string
+    rejectionReason?: RejectionReason;
+    kilometrage?: string;
+
+    // --- Contrôle de visibilité côté client ---
+    isVisibleToClient?: boolean;
+    sentToClientAt?: Date;
+    sentToClientBy?: string;
+    sentToClientById?: string;
+    visibilityRevokedAt?: Date;
+    visibilityRevokedBy?: string;
+
+    // --- Gestion des remises ---
+    hasDiscount?: boolean;
+    discountType?: 'percentage' | 'fixed';
+    discountValue?: number;
+    discountAmount?: number;
+    subtotalAfterDiscount?: number;
+
+    // --- Gestion du précompte ---
+    hasPrecompte?: boolean;
+    precompteRate?: number;
+    precompteAmount?: number;
+
+    // --- Montant net à payer ---
+    netToPay?: number;
   }
 
   export interface QuoteItem {

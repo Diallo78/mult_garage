@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, ActivatedRoute } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { PDFService } from '../../services/pdf.service';
@@ -334,19 +334,83 @@ import { FormsModule } from '@angular/forms';
           class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
         >
           <div class="min-w-0">
-            <h2 class="text-xl sm:text-2xl font-bold leading-7 text-gray-900">
-              Devis N: {{ quote.quoteNumber }}
-            </h2>
-            <p class="text-base sm:text-lg text-gray-600 mt-1">
+            <div class="flex items-center gap-3 flex-wrap">
+              <h2 class="text-xl sm:text-2xl font-bold leading-7 text-gray-900">
+                Devis N° {{ quote.quoteNumber }}
+              </h2>
+              <!-- Indicateur de statut métier -->
               <span
-                class="status-badge text-sm sm:text-base"
+                class="status-badge text-xs sm:text-sm"
                 [ngClass]="getStatusClass(quote.status)"
               >
                 {{ quote.status }}
               </span>
-            </p>
+              <!-- Indicateur de visibilité client pour le personnel -->
+              <ng-container *ngIf="!this.authService.isClient">
+                <span
+                  *ngIf="quote.isVisibleToClient"
+                  class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                >
+                  <svg class="mr-1 h-3.5 w-3.5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                  </svg>
+                  Visible par le client
+                </span>
+                <span
+                  *ngIf="!quote.isVisibleToClient"
+                  class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800"
+                >
+                  <svg class="mr-1 h-3.5 w-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd" />
+                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                  </svg>
+                  Brouillon / Non envoyé
+                </span>
+              </ng-container>
+            </div>
+
+            <!-- Traçabilité d'envoi / retrait de visibilité -->
+            <div *ngIf="!this.authService.isClient" class="mt-1 text-xs text-gray-500">
+              <span *ngIf="quote.isVisibleToClient && quote.sentToClientAt">
+                Envoyé au client le {{ quote.sentToClientAt | firestoreDate | date : 'dd/MM/yyyy à HH:mm' }}
+                <span *ngIf="quote.sentToClientBy">par {{ quote.sentToClientBy }}</span>
+              </span>
+              <span *ngIf="!quote.isVisibleToClient && quote.visibilityRevokedAt">
+                Visibilité retirée le {{ quote.visibilityRevokedAt | firestoreDate | date : 'dd/MM/yyyy à HH:mm' }}
+                <span *ngIf="quote.visibilityRevokedBy">par {{ quote.visibilityRevokedBy }}</span>
+              </span>
+            </div>
           </div>
-          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-2 sm:mt-0">
+
+          <div class="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 mt-2 sm:mt-0">
+            <!-- Bouton Modifier pour le personnel -->
+            <button
+              *ngIf="!this.authService.isClient && this.authService.canAccessBtnEdit"
+              [routerLink]="['/quotes', quote.id, 'edit']"
+              class="btn-secondary w-full sm:w-auto"
+            >
+              Modifier
+            </button>
+
+            <!-- Actions de visibilité administrateur -->
+            <button
+              *ngIf="!this.authService.isClient && !quote.isVisibleToClient"
+              type="button"
+              (click)="openVisibilityModal(true)"
+              class="btn-primary bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto text-white"
+            >
+              Envoyer au client
+            </button>
+            <button
+              *ngIf="!this.authService.isClient && quote.isVisibleToClient"
+              type="button"
+              (click)="openVisibilityModal(false)"
+              class="btn-secondary text-amber-700 hover:bg-amber-50 border-amber-300 w-full sm:w-auto"
+            >
+              Retirer la visibilité
+            </button>
+
             <button
               (click)="downloadPDF()"
               class="btn-secondary w-full sm:w-auto"
@@ -444,6 +508,17 @@ import { FormsModule } from '@angular/forms';
                 <p class="mt-1 text-xs sm:text-sm text-gray-900">
                   {{ quote.validUntil | firestoreDate | date : 'short' }}
                 </p>
+              </div>
+              <div *ngIf="!this.authService.isClient" class="col-span-2 border-t pt-2 mt-1">
+                <div class="flex items-center justify-between text-xs sm:text-sm">
+                  <span class="text-gray-500">Visibilité client :</span>
+                  <span
+                    class="font-semibold"
+                    [ngClass]="quote.isVisibleToClient ? 'text-green-600' : 'text-amber-600'"
+                  >
+                    {{ quote.isVisibleToClient ? 'Visible dans l\'espace client' : 'Inaccessible au client (Brouillon)' }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -608,30 +683,85 @@ import { FormsModule } from '@angular/forms';
         </div>
 
         <!-- Quote Totals -->
-        <div class="card p-3 sm:p-4">
+        <div class="card p-4 sm:p-5">
           <div class="max-w-md ml-auto">
-            <div class="space-y-2">
-              <div class="flex justify-between">
-                <span class="text-xs sm:text-sm text-gray-600"
-                  >Sous-total:</span
-                >
-                <span class="text-xs sm:text-sm font-medium"
-                  >\GNF {{ quote.subtotal.toFixed(2) }}</span
-                >
+            <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">Récapitulatif financier</h4>
+            <div class="space-y-2.5">
+              <!-- Sous-total HT -->
+              <div class="flex justify-between text-xs sm:text-sm">
+                <span class="text-gray-600">Sous-total HT :</span>
+                <span class="font-medium text-gray-900">
+                  {{ formatAmount(quote.subtotal) }}
+                </span>
               </div>
-              <div class="flex justify-between">
-                <span class="text-xs sm:text-sm text-gray-600"
-                  >TVA ({{ quote.vatRate }}%):</span
-                >
-                <span class="text-xs sm:text-sm font-medium"
-                  >\GNF {{ quote.vatAmount.toFixed(2) }}</span
-                >
+
+              <!-- Remise (si applicable) -->
+              <div
+                *ngIf="quote.hasDiscount && (quote.discountAmount || 0) > 0"
+                class="flex justify-between text-xs sm:text-sm text-emerald-700 bg-emerald-50 px-2 py-1 rounded"
+              >
+                <span>
+                  Remise ({{ quote.discountType === 'percentage' ? quote.discountValue + '%' : 'Fixe' }}) :
+                </span>
+                <span class="font-semibold">
+                  - {{ formatAmount(quote.discountAmount) }}
+                </span>
               </div>
-              <div class="border-t pt-2">
-                <div class="flex justify-between text-sm sm:text-lg font-bold">
-                  <span>Total:</span>
-                  <span>\GNF {{ quote.total.toFixed(2) }}</span>
+
+              <!-- Total HT après remise (si remise active) -->
+              <div
+                *ngIf="quote.hasDiscount && (quote.discountAmount || 0) > 0"
+                class="flex justify-between text-xs sm:text-sm font-medium text-gray-800"
+              >
+                <span>Total HT après remise :</span>
+                <span>
+                  {{ formatAmount(quote.subtotalAfterDiscount ?? (quote.subtotal - (quote.discountAmount || 0))) }}
+                </span>
+              </div>
+
+              <!-- TVA -->
+              <div class="flex justify-between text-xs sm:text-sm">
+                <span class="text-gray-600">TVA ({{ quote.vatRate }}%) :</span>
+                <span class="font-medium text-gray-900">
+                  {{ formatAmount(quote.vatAmount) }}
+                </span>
+              </div>
+
+              <!-- Total TTC -->
+              <div class="flex justify-between text-xs sm:text-sm font-semibold text-gray-900 pt-1 border-t">
+                <span>Total TTC :</span>
+                <span>
+                  {{ formatAmount(quote.total) }}
+                </span>
+              </div>
+
+              <!-- Précompte TVA (si applicable) -->
+              <div
+                *ngIf="quote.hasPrecompte && (quote.precompteAmount || 0) > 0"
+                class="flex justify-between text-xs sm:text-sm text-indigo-700 bg-indigo-50 px-2 py-1 rounded"
+              >
+                <div class="flex flex-col">
+                  <span>Précompte TVA :</span>
+                  <span class="text-[10px] text-indigo-500">
+                    ({{ quote.precompteRate ? quote.precompteRate + '% sur la TVA' : 'Montant retenu' }})
+                  </span>
                 </div>
+                <span class="font-semibold">
+                  - {{ formatAmount(quote.precompteAmount) }}
+                </span>
+              </div>
+
+              <!-- Net à payer -->
+              <div class="border-t-2 border-primary-200 pt-3 mt-2 bg-primary-50 p-3 rounded-lg">
+                <div class="flex justify-between items-center text-sm sm:text-lg font-bold text-primary-900">
+                  <span>Net à payer :</span>
+                  <span class="text-primary-700">
+                    {{ formatAmount(quote.netToPay ?? (quote.hasPrecompte && quote.precompteAmount ? quote.total - quote.precompteAmount : quote.total)) }}
+                  </span>
+                </div>
+                <p *ngIf="quote.hasPrecompte && (quote.precompteAmount || 0) > 0" class="text-[11px] text-primary-600 mt-1">
+                  * Montant net déduction faite de la retenue au titre du précompte TVA.
+                </p>
               </div>
             </div>
           </div>
@@ -705,6 +835,67 @@ import { FormsModule } from '@angular/forms';
           </div>
         </div>
       </div>
+
+      <!-- Visibility Confirmation Modal -->
+      <div
+        *ngIf="showVisibilityModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-2 sm:p-4"
+      >
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-5 sm:p-6 animate-fadeIn">
+          <div class="flex items-center space-x-3 mb-4">
+            <div
+              class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+              [ngClass]="pendingVisibilityState ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'"
+            >
+              <svg *ngIf="pendingVisibilityState" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <svg *ngIf="!pendingVisibilityState" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">
+                {{ pendingVisibilityState ? 'Envoyer au client' : 'Retirer la visibilité' }}
+              </h3>
+              <p class="text-xs text-gray-500">
+                Devis N° {{ quote?.quoteNumber }}
+              </p>
+            </div>
+          </div>
+
+          <p class="text-sm text-gray-600 mb-6">
+            <span *ngIf="pendingVisibilityState">
+              En confirmant, ce devis deviendra immédiatement accessible au client dans son espace personnel. Le client pourra le consulter, le télécharger et l'accepter ou le refuser.
+            </span>
+            <span *ngIf="!pendingVisibilityState">
+              En confirmant, la visibilité de ce devis sera temporairement retirée de l'espace client. Le client ne pourra plus y accéder jusqu'à un nouvel envoi.
+            </span>
+          </p>
+
+          <div class="flex justify-end gap-3">
+            <button
+              type="button"
+              class="btn-secondary text-xs sm:text-sm"
+              (click)="cancelVisibilityModal()"
+              [disabled]="isUpdatingVisibility"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              (click)="submitToggleVisibility()"
+              [disabled]="isUpdatingVisibility"
+              [ngClass]="pendingVisibilityState ? 'btn-primary' : 'bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg shadow'"
+              class="text-xs sm:text-sm"
+            >
+              <span *ngIf="isUpdatingVisibility" class="mr-2">Action en cours...</span>
+              {{ pendingVisibilityState ? 'Confirmer l\'envoi' : 'Confirmer le retrait' }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
 })
@@ -715,10 +906,15 @@ export class QuoteDetailComponent implements OnInit {
   quoteId: string | null = null;
   isLoading = true;
 
-  // =============MODAL==============
+  // =============MODAL REJET==============
   showRejectionModal = false;
   rejectionTitle = '';
   rejectionMessage = '';
+
+  // =============MODAL VISIBILITÉ==============
+  showVisibilityModal = false;
+  pendingVisibilityState = false;
+  isUpdatingVisibility = false;
 
   constructor(
     private readonly garageDataService: GarageDataService,
@@ -727,6 +923,7 @@ export class QuoteDetailComponent implements OnInit {
     private readonly printTemplateService: PrintTemplateService,
     private readonly printRendererService: PrintRendererService,
     private readonly route: ActivatedRoute,
+    private readonly router: Router,
     public authService: AuthService
   ) {}
 
@@ -748,6 +945,14 @@ export class QuoteDetailComponent implements OnInit {
       );
 
       if (this.quote) {
+        // Restriction de sécurité : un client ne peut consulter que les devis autorisés
+        if (this.authService.isClient && !this.quote.isVisibleToClient) {
+          this.notificationService.showError("Ce devis n'est pas encore accessible.");
+          this.quote = null;
+          this.router.navigate(['/client/dashboard']);
+          return;
+        }
+
         [this.client, this.vehicle] = await Promise.all([
           this.garageDataService.getById<Client>(
             'clients',
@@ -907,18 +1112,49 @@ export class QuoteDetailComponent implements OnInit {
         itemsHead: ['Désignation', 'Qté', 'Prix unitaire', 'Total'],
         totals: [
           {
-            label: 'Sous-total',
+            label: 'Sous-total HT',
             value: this.formatMoney(this.quote.subtotal, currency),
           },
+          ...(this.quote.hasDiscount && (this.quote.discountAmount || 0) > 0
+            ? [
+                {
+                  label: `Remise (${this.quote.discountType === 'percentage' ? this.quote.discountValue + '%' : 'Fixe'})`,
+                  value: `- ${this.formatMoney(this.quote.discountAmount, currency)}`,
+                },
+                {
+                  label: 'Total HT après remise',
+                  value: this.formatMoney(
+                    this.quote.subtotalAfterDiscount ?? (this.quote.subtotal - (this.quote.discountAmount || 0)),
+                    currency
+                  ),
+                },
+              ]
+            : []),
           {
             label: `TVA (${this.quote.vatRate}%)`,
             value: this.formatMoney(this.quote.vatAmount, currency),
           },
           {
-            label: 'Total',
+            label: 'Total TTC',
             value: this.formatMoney(this.quote.total, currency),
-            strong: true,
+            strong: !this.quote.hasPrecompte,
           },
+          ...(this.quote.hasPrecompte && (this.quote.precompteAmount || 0) > 0
+            ? [
+                {
+                  label: `Précompte TVA (${this.quote.precompteRate ? this.quote.precompteRate + '%' : 'Fixe'})`,
+                  value: `- ${this.formatMoney(this.quote.precompteAmount, currency)}`,
+                },
+                {
+                  label: 'Net à payer',
+                  value: this.formatMoney(
+                    this.quote.netToPay ?? (this.quote.total - (this.quote.precompteAmount || 0)),
+                    currency
+                  ),
+                  strong: true,
+                },
+              ]
+            : []),
         ],
         currency,
       };
@@ -928,6 +1164,83 @@ export class QuoteDetailComponent implements OnInit {
     } catch (error) {
       this.notificationService.showError("Échec de l'impression : " + error);
     }
+  }
+
+  // ============= GESTION DE VISIBILITÉ =============
+  openVisibilityModal(makeVisible: boolean): void {
+    this.pendingVisibilityState = makeVisible;
+    this.showVisibilityModal = true;
+  }
+
+  cancelVisibilityModal(): void {
+    this.showVisibilityModal = false;
+    this.pendingVisibilityState = false;
+  }
+
+  async submitToggleVisibility(): Promise<void> {
+    if (!this.quoteId || !this.quote) return;
+    this.isUpdatingVisibility = true;
+
+    try {
+      const currentUser = this.authService.getCurrentUser();
+      const adminName = currentUser?.displayName || currentUser?.email || 'Administrateur';
+      const makeVisible = this.pendingVisibilityState;
+
+      const updates: Partial<Quote> = {
+        isVisibleToClient: makeVisible,
+      };
+
+      if (makeVisible) {
+        updates.sentToClientAt = new Date();
+        updates.sentToClientBy = adminName;
+        updates.sentToClientById = currentUser?.uid;
+      } else {
+        updates.visibilityRevokedAt = new Date();
+        updates.visibilityRevokedBy = adminName;
+      }
+
+      await this.garageDataService.update('quotes', this.quoteId, updates);
+
+      // Notification pour le client si visibilité accordée
+      if (makeVisible && this.client?.email) {
+        await this.garageDataService.create('notifications', {
+          title: 'Nouveau devis disponible',
+          message: `Votre devis N° ${this.quote.quoteNumber} est désormais consultable dans votre espace client.`,
+          read: false,
+          quoteId: this.quoteId,
+          emailDesitnateur: this.client.email,
+          type: 'Devis',
+          garageId: this.quote.garageId,
+          createdAt: new Date(),
+        });
+      }
+
+      // Mise à jour locale
+      this.quote.isVisibleToClient = makeVisible;
+      if (makeVisible) {
+        this.quote.sentToClientAt = updates.sentToClientAt;
+        this.quote.sentToClientBy = updates.sentToClientBy;
+      } else {
+        this.quote.visibilityRevokedAt = updates.visibilityRevokedAt;
+        this.quote.visibilityRevokedBy = updates.visibilityRevokedBy;
+      }
+
+      this.notificationService.showSuccess(
+        makeVisible
+          ? 'Le devis a été envoyé et est désormais visible par le client'
+          : 'La visibilité du devis a été retirée pour le client'
+      );
+      this.cancelVisibilityModal();
+    } catch (error) {
+      this.notificationService.showError('Échec de la mise à jour de la visibilité : ' + error);
+    } finally {
+      this.isUpdatingVisibility = false;
+    }
+  }
+
+  formatAmount(value: number | undefined): string {
+    const amount = typeof value === 'number' && !isNaN(value) ? value : 0;
+    return `GNF ${amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
   /** Convertit une date Firestore en date lisible (fr-FR). */

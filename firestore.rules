@@ -23,6 +23,14 @@ service cloud.firestore {
       return authed() && userGarage() == existing.garageId;
     }
 
+    // Vérifie qu'un utilisateur client accède uniquement à un devis qui lui est destiné ET autorisé
+    function isQuoteOwnerClient(quoteData) {
+      return authed() &&
+        userRole() == 'Client' &&
+        quoteData.get('isVisibleToClient', false) == true &&
+        get(/databases/$(database)/documents/clients/$(quoteData.clientId)).data.userId == request.auth.uid;
+    }
+
     // Users can only access their own user document
     match /users/{userId} {
       allow read, write: if authed() && request.auth.uid == userId;
@@ -56,8 +64,18 @@ service cloud.firestore {
     }
 
     match /quotes/{quoteId} {
-      allow read, update, delete: if inMyGarage(resource.data);
-      allow create: if inMyGarage(request.resource.data);
+      allow read: if inMyGarage(resource.data) && (
+        userRole() != 'Client' || isQuoteOwnerClient(resource.data)
+      );
+      allow create: if inMyGarage(request.resource.data) && userRole() != 'Client';
+      allow update: if inMyGarage(resource.data) && (
+        userRole() != 'Client' || (
+          isQuoteOwnerClient(resource.data) &&
+          request.resource.data.get('isVisibleToClient', false) == resource.data.get('isVisibleToClient', false) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'rejectionReason', 'clientSignature', 'updatedAt'])
+        )
+      );
+      allow delete: if inMyGarage(resource.data) && userRole() != 'Client';
     }
 
     match /interventions/{interventionId} {

@@ -229,110 +229,260 @@ import { EmailService } from '../../services/email.service';
             </div>
           </div>
 
-          <!-- Totals -->
-          <div class="border-t pt-6">
-            <div class="space-y-2 text-right">
-              <div class="flex justify-between">
-                <span class="text-sm text-gray-600">Sous-total:</span>
-                <span class="text-sm font-medium"
-                  >GNF {{ subtotal.toFixed(2) }}</span
-                >
+          <!-- ===== SECTION FINANCIÈRE : REMISE, TVA & PRÉCOMPTE ===== -->
+          <div class="border rounded-xl p-5 bg-gradient-to-br from-gray-50 to-slate-50 border-gray-200 space-y-6">
+            <div class="flex items-center justify-between border-b pb-3">
+              <h3 class="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Paramètres financiers & Taxes
+              </h3>
+              <span class="text-xs text-gray-500 hidden sm:inline">Calculs automatiques en temps réel</span>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- Colonne Gauche : Configuration Remise, TVA & Précompte -->
+              <div class="space-y-4">
+                <!-- 1. GESTION DE LA REMISE -->
+                <div class="border rounded-lg p-4 bg-white shadow-sm">
+                  <div class="flex items-center justify-between">
+                    <label class="flex items-center cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        formControlName="hasDiscount"
+                        (change)="onDiscountToggle()"
+                        class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      />
+                      <span class="ml-2 font-medium text-gray-800 text-xs sm:text-sm">
+                        Appliquer une remise sur le sous-total HT
+                      </span>
+                    </label>
+                    <span
+                      class="text-xs px-2 py-0.5 rounded font-medium"
+                      [ngClass]="quoteForm.get('hasDiscount')?.value ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'"
+                    >
+                      {{ quoteForm.get('hasDiscount')?.value ? 'Active' : 'Désactivée' }}
+                    </span>
+                  </div>
+
+                  <div *ngIf="quoteForm.get('hasDiscount')?.value" class="mt-4 pt-3 border-t border-gray-100 space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label class="form-label text-xs">Type de remise</label>
+                        <select
+                          formControlName="discountType"
+                          (change)="calculateTotals()"
+                          class="form-input text-xs"
+                        >
+                          <option value="percentage">Pourcentage (%)</option>
+                          <option value="fixed">Montant fixe (GNF)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label class="form-label text-xs">
+                          {{ quoteForm.get('discountType')?.value === 'percentage' ? 'Taux de remise (%) *' : 'Montant de remise (GNF) *' }}
+                        </label>
+                        <input
+                          type="number"
+                          formControlName="discountValue"
+                          (input)="calculateTotals()"
+                          class="form-input text-xs"
+                          [min]="0"
+                          [max]="quoteForm.get('discountType')?.value === 'percentage' ? 100 : subtotal"
+                          [step]="quoteForm.get('discountType')?.value === 'percentage' ? 0.5 : 1000"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Impact visuel immédiat -->
+                    <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-800 flex justify-between items-center">
+                      <span>Montant déduit du HT :</span>
+                      <span class="font-bold">- GNF {{ discountAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. GESTION DE LA TVA -->
+                <div class="border rounded-lg p-4 bg-white shadow-sm">
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="form-label text-xs mb-0 font-medium text-gray-800">Taux de TVA (%) *</label>
+                    <span class="text-xs text-gray-500">Appliquée sur le montant HT net</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3 items-center">
+                    <input
+                      type="number"
+                      formControlName="vatRate"
+                      (input)="calculateTotals()"
+                      class="form-input text-xs"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                    />
+                    <div class="text-xs text-gray-600 text-right">
+                      Montant TVA : <strong class="text-gray-900">GNF {{ vatAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 3. GESTION DU PRÉCOMPTE -->
+                <div class="border rounded-lg p-4 bg-white shadow-sm">
+                  <div class="flex items-center justify-between">
+                    <label class="flex items-center cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        formControlName="hasPrecompte"
+                        (change)="onPrecompteToggle()"
+                        class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      />
+                      <span class="ml-2 font-medium text-gray-800 text-xs sm:text-sm">
+                        Appliquer un précompte sur la TVA
+                      </span>
+                    </label>
+                    <span
+                      class="text-xs px-2 py-0.5 rounded font-medium"
+                      [ngClass]="quoteForm.get('hasPrecompte')?.value ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-500'"
+                    >
+                      {{ quoteForm.get('hasPrecompte')?.value ? 'Actif' : 'Désactivé' }}
+                    </span>
+                  </div>
+
+                  <div *ngIf="quoteForm.get('hasPrecompte')?.value" class="mt-4 pt-3 border-t border-gray-100 space-y-3">
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <label class="form-label text-xs mb-0">Taux de précompte sur la TVA (%) *</label>
+                        <span class="text-[11px] text-gray-500">Ex: 50% ou 100% de la TVA</span>
+                      </div>
+                      <input
+                        type="number"
+                        formControlName="precompteRate"
+                        (input)="calculateTotals()"
+                        class="form-input text-xs"
+                        min="0"
+                        max="100"
+                        step="0.5"
+                        placeholder="Ex: 50"
+                      />
+                    </div>
+
+                    <!-- Impact visuel immédiat -->
+                    <div class="p-2.5 bg-indigo-50 border border-indigo-200 rounded text-xs text-indigo-800 flex justify-between items-center">
+                      <div>
+                        <span>Montant retenu sur la TVA :</span>
+                        <div class="text-[10px] text-indigo-600">Calculé sur la TVA (GNF {{ vatAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }})</div>
+                      </div>
+                      <span class="font-bold">- GNF {{ precompteAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+                    </div>
+
+                    <p class="text-[11px] text-gray-500 leading-tight">
+                      * Conformément à la règle comptable et fiscale, le précompte est calculé sur le montant de la TVA. Il est distinctement déduit du total TTC pour déterminer le net à payer.
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div class="flex justify-between">
-                <span class="text-sm text-gray-600"
-                  >TVA ({{ quoteForm.get('vatRate')?.value }}%):</span
-                >
-                <span class="text-sm font-medium"
-                  >GNF {{ vatAmount.toFixed(2) }}</span
-                >
-              </div>
-              <div class="flex justify-between text-lg font-bold">
-                <span>Total:</span>
-                <span>GNF {{ total.toFixed(2) }}</span>
+
+              <!-- Colonne Droite : Récapitulatif Totaux en temps réel -->
+              <div class="bg-white border rounded-lg p-5 shadow-sm flex flex-col justify-between">
+                <div>
+                  <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">
+                    Décomposition financière en temps réel
+                  </h4>
+
+                  <div class="space-y-3 text-sm">
+                    <!-- Sous-total HT -->
+                    <div class="flex justify-between text-gray-700">
+                      <span>Sous-total HT :</span>
+                      <span class="font-medium text-gray-900">GNF {{ subtotal.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+                    </div>
+
+                    <!-- Remise (si applicable) -->
+                    <div
+                      *ngIf="quoteForm.get('hasDiscount')?.value && discountAmount > 0"
+                      class="flex justify-between text-emerald-700 bg-emerald-50 p-2 rounded"
+                    >
+                      <span>
+                        Remise ({{ quoteForm.get('discountType')?.value === 'percentage' ? (quoteForm.get('discountValue')?.value || 0) + '%' : 'Fixe' }}) :
+                      </span>
+                      <span class="font-semibold">- GNF {{ discountAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+                    </div>
+
+                    <!-- Total HT après remise -->
+                    <div
+                      *ngIf="quoteForm.get('hasDiscount')?.value && discountAmount > 0"
+                      class="flex justify-between text-gray-800 font-medium"
+                    >
+                      <span>Total HT après remise :</span>
+                      <span>GNF {{ subtotalAfterDiscount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+                    </div>
+
+                    <!-- TVA -->
+                    <div class="flex justify-between text-gray-700">
+                      <span>TVA ({{ quoteForm.get('vatRate')?.value || 0 }}%) :</span>
+                      <span class="font-medium text-gray-900">GNF {{ vatAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+                    </div>
+
+                    <!-- Total TTC -->
+                    <div class="flex justify-between font-semibold text-gray-900 pt-2 border-t">
+                      <span>Total TTC :</span>
+                      <span>GNF {{ total.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+                    </div>
+
+                    <!-- Précompte TVA (si applicable) -->
+                    <div
+                      *ngIf="quoteForm.get('hasPrecompte')?.value && precompteAmount > 0"
+                      class="flex justify-between text-indigo-700 bg-indigo-50 p-2 rounded"
+                    >
+                      <span>
+                        Précompte TVA ({{ quoteForm.get('precompteRate')?.value || 0 }}%) :
+                      </span>
+                      <span class="font-semibold">- GNF {{ precompteAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Net à payer mis en valeur -->
+                <div class="mt-6 pt-4 border-t-2 border-primary-200 bg-primary-50 p-4 rounded-xl">
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <span class="text-xs uppercase font-bold text-primary-800 tracking-wider">Montant final</span>
+                      <div class="text-lg font-extrabold text-primary-900">Net à payer :</div>
+                    </div>
+                    <div class="text-2xl font-black text-primary-700">
+                      GNF {{ netToPay.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+                    </div>
+                  </div>
+                  <div *ngIf="quoteForm.get('hasPrecompte')?.value && precompteAmount > 0" class="text-[11px] text-primary-600 mt-1">
+                    * Déduction faite du précompte TVA de GNF {{ precompteAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Options d'envoi -->
-          <div class="border rounded-lg p-4 bg-blue-50">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">
-              Options d'envoi
-            </h3>
-            <div class="space-y-3">
-              <div class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="sendWhatsApp"
-                  [(ngModel)]="sendWhatsApp"
-                  [ngModelOptions]="{ standalone: true }"
-                  class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
-                <label for="sendWhatsApp" class="ml-2 text-sm text-gray-700">
-                  📱 Envoyer instantanément par WhatsApp
-                </label>
-              </div>
-              <div class="flex items-center">
-                <input
-                  disabled="true"
-                  type="checkbox"
-                  id="sendEmail"
-                  [(ngModel)]="sendEmail"
-                  [ngModelOptions]="{ standalone: true }"
-                  class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
-                <label for="sendEmail" class="ml-2 text-sm text-gray-700">
-                  📧 Envoyer par email au client
-                </label>
-              </div>
-              <div class="flex items-center">
-                <input
-                  disabled="true"
-                  type="checkbox"
-                  id="sendSMS"
-                  [(ngModel)]="sendSMS"
-                  [ngModelOptions]="{ standalone: true }"
-                  class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
-                <label for="sendSMS" class="ml-2 text-sm text-gray-700">
-                  💬 Envoyer par SMS
-                </label>
-              </div>
+          <!-- Boutons d'action -->
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
+            <div class="text-xs text-gray-500">
+              ℹ️ Le devis sera enregistré en mode <strong>Brouillon (inaccessible au client)</strong>. Vous pourrez l'envoyer au client après vérification.
             </div>
 
-            <!-- Statut d'envoi en temps réel -->
-            <div
-              *ngIf="isLoading"
-              class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
-            >
-              <div class="flex items-center">
-                <div
-                  class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"
-                ></div>
-                <span class="text-sm text-yellow-800">Envoi en cours...</span>
-              </div>
-              <div class="mt-2 text-xs text-yellow-700">
-                <div *ngIf="sendWhatsApp">• Ouverture de WhatsApp...</div>
-                <div *ngIf="sendEmail">• Envoi de l'email...</div>
-                <div *ngIf="sendSMS">• Envoi du SMS...</div>
-              </div>
+            <div class="flex space-x-3 w-full sm:w-auto justify-end">
+              <button type="button" (click)="goBack()" class="btn-outline">
+                Annuler
+              </button>
+              <button
+                type="submit"
+                [disabled]="quoteForm.invalid || isLoading || !canEdit"
+                class="btn-primary"
+              >
+                <span *ngIf="isLoading" class="mr-2">Création en cours...</span>
+                Créer le devis
+              </button>
             </div>
           </div>
 
-          <div class="flex justify-end space-x-4">
-            <button type="button" (click)="goBack()" class="btn-outline">
-              Annuler
-            </button>
-            <button
-              type="submit"
-              [disabled]="quoteForm.invalid || isLoading || !canEdit"
-              class="btn-primary"
-            >
-              <span *ngIf="isLoading" class="mr-2">Création en cours...</span>
-              Créer le devis
-            </button>
-            <div *ngIf="!canEdit" class="text-sm text-red-600">
-              Vous n'avez pas les permissions pour créer/modifier des devis
-            </div>
+          <div *ngIf="!canEdit" class="text-sm text-red-600 text-right">
+            Vous n'avez pas les permissions pour créer/modifier des devis
           </div>
         </form>
       </div>
@@ -350,8 +500,12 @@ export class QuoteFormComponent implements OnInit {
   canEdit = false;
 
   subtotal = 0;
+  discountAmount = 0;
+  subtotalAfterDiscount = 0;
   vatAmount = 0;
   total = 0;
+  precompteAmount = 0;
+  netToPay = 0;
 
   // Options d'envoi
   sendWhatsApp = true;
@@ -374,7 +528,15 @@ export class QuoteFormComponent implements OnInit {
       quoteNumber: [''],
       validUntil: ['', Validators.required],
       kilometrage: [''],
-      vatRate: [18],
+      // Configuration Remise
+      hasDiscount: [false],
+      discountType: ['percentage'],
+      discountValue: [0, [Validators.min(0)]],
+      // Configuration TVA
+      vatRate: [18, [Validators.required, Validators.min(0), Validators.max(100)]],
+      // Configuration Précompte
+      hasPrecompte: [false],
+      precompteRate: [0, [Validators.min(0), Validators.max(100)]],
       items: this.fb.array([this.createItemGroup()]),
     });
   }
@@ -489,33 +651,110 @@ export class QuoteFormComponent implements OnInit {
     }
   }
 
+  onDiscountToggle(): void {
+    if (!this.quoteForm.get('hasDiscount')?.value) {
+      this.quoteForm.patchValue({ discountValue: 0 });
+    }
+    this.calculateTotals();
+  }
+
+  onPrecompteToggle(): void {
+    if (!this.quoteForm.get('hasPrecompte')?.value) {
+      this.quoteForm.patchValue({ precompteRate: 0 });
+    }
+    this.calculateTotals();
+  }
+
   calculateItemSubtotal(index: number): void {
     const item = this.itemsArray.at(index);
-    const quantity = item.get('quantity')?.value || 0;
-    const unitPrice = item.get('unitPrice')?.value || 0;
-    const subtotal = quantity * unitPrice;
+    const quantity = Number(item.get('quantity')?.value) || 0;
+    const unitPrice = Number(item.get('unitPrice')?.value) || 0;
+    const subtotal = Math.max(0, quantity * unitPrice);
 
-    item.patchValue({ subtotal });
+    item.patchValue({ subtotal }, { emitEvent: false });
     this.calculateTotals();
   }
 
   getItemSubtotal(index: number): number {
     const item = this.itemsArray.at(index);
-    const quantity = item.get('quantity')?.value || 0;
-    const unitPrice = item.get('unitPrice')?.value || 0;
-    return quantity * unitPrice;
+    const quantity = Number(item.get('quantity')?.value) || 0;
+    const unitPrice = Number(item.get('unitPrice')?.value) || 0;
+    return Math.max(0, quantity * unitPrice);
   }
 
   calculateTotals(): void {
+    // 1. Sous-total HT = somme des prestations/articles
     this.subtotal = this.itemsArray.controls.reduce((sum, item) => {
-      const quantity = item.get('quantity')?.value || 0;
-      const unitPrice = item.get('unitPrice')?.value || 0;
-      return sum + quantity * unitPrice;
+      const quantity = Number(item.get('quantity')?.value) || 0;
+      const unitPrice = Number(item.get('unitPrice')?.value) || 0;
+      return sum + Math.max(0, quantity * unitPrice);
     }, 0);
 
-    const vatRate = this.quoteForm.get('vatRate')?.value || 0;
-    this.vatAmount = this.subtotal * (vatRate / 100);
-    this.total = this.subtotal + this.vatAmount;
+    // 2. Gestion de la remise (appliquée sur le HT)
+    const hasDiscount = !!this.quoteForm.get('hasDiscount')?.value;
+    const discountType = this.quoteForm.get('discountType')?.value || 'percentage';
+    let discountVal = Number(this.quoteForm.get('discountValue')?.value) || 0;
+
+    if (discountVal < 0) {
+      discountVal = 0;
+      this.quoteForm.patchValue({ discountValue: 0 }, { emitEvent: false });
+    }
+
+    if (hasDiscount && this.subtotal > 0) {
+      if (discountType === 'percentage') {
+        if (discountVal > 100) {
+          discountVal = 100;
+          this.quoteForm.patchValue({ discountValue: 100 }, { emitEvent: false });
+        }
+        this.discountAmount = (this.subtotal * discountVal) / 100;
+      } else {
+        // Montant fixe : plafonné au sous-total HT
+        if (discountVal > this.subtotal) {
+          discountVal = this.subtotal;
+          this.quoteForm.patchValue({ discountValue: this.subtotal }, { emitEvent: false });
+        }
+        this.discountAmount = discountVal;
+      }
+    } else {
+      this.discountAmount = 0;
+    }
+
+    // 3. Montant HT après remise
+    this.subtotalAfterDiscount = Math.max(0, this.subtotal - this.discountAmount);
+
+    // 4. Calcul de la TVA sur le montant HT après remise
+    let vatRate = Number(this.quoteForm.get('vatRate')?.value);
+    if (isNaN(vatRate) || vatRate < 0) vatRate = 0;
+    if (vatRate > 100) {
+      vatRate = 100;
+      this.quoteForm.patchValue({ vatRate: 100 }, { emitEvent: false });
+    }
+    this.vatAmount = (this.subtotalAfterDiscount * vatRate) / 100;
+
+    // 5. Total TTC
+    this.total = this.subtotalAfterDiscount + this.vatAmount;
+
+    // 6. Gestion du précompte (calculé sur le montant de la TVA)
+    const hasPrecompte = !!this.quoteForm.get('hasPrecompte')?.value;
+    let precompteRate = Number(this.quoteForm.get('precompteRate')?.value) || 0;
+
+    if (precompteRate < 0) {
+      precompteRate = 0;
+      this.quoteForm.patchValue({ precompteRate: 0 }, { emitEvent: false });
+    }
+    if (precompteRate > 100) {
+      precompteRate = 100;
+      this.quoteForm.patchValue({ precompteRate: 100 }, { emitEvent: false });
+    }
+
+    if (hasPrecompte && this.vatAmount > 0) {
+      this.precompteAmount = (this.vatAmount * precompteRate) / 100;
+    } else {
+      this.precompteAmount = 0;
+    }
+
+    // 7. Net à payer = Total TTC - Précompte
+    this.netToPay = Math.max(0, this.total - this.precompteAmount);
   }
 
   onSelectPart(index: number): void {
@@ -540,7 +779,6 @@ export class QuoteFormComponent implements OnInit {
 
     try {
       const formValue = this.quoteForm.value;
-
       this.calculateTotals();
 
       const quoteData: Omit<Quote, 'id'> = {
@@ -551,13 +789,23 @@ export class QuoteFormComponent implements OnInit {
         quoteNumber: formValue.quoteNumber,
         items: formValue.items.map((item: any) => ({
           ...item,
-          subtotal: item.quantity * item.unitPrice,
+          subtotal: (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0),
         })),
         subtotal: this.subtotal,
-        vatRate: formValue.vatRate,
+        hasDiscount: !!formValue.hasDiscount,
+        discountType: formValue.discountType,
+        discountValue: Number(formValue.discountValue) || 0,
+        discountAmount: this.discountAmount,
+        subtotalAfterDiscount: this.subtotalAfterDiscount,
+        vatRate: Number(formValue.vatRate) || 0,
         vatAmount: this.vatAmount,
         total: this.total,
+        hasPrecompte: !!formValue.hasPrecompte,
+        precompteRate: Number(formValue.precompteRate) || 0,
+        precompteAmount: this.precompteAmount,
+        netToPay: this.netToPay,
         status: 'Pending',
+        isVisibleToClient: false,
         validUntil: new Date(formValue.validUntil),
         kilometrage: formValue.kilometrage,
         revisionHistory: [],
@@ -565,24 +813,9 @@ export class QuoteFormComponent implements OnInit {
         updatedAt: new Date(),
       };
 
-      // await this.garageDataService.create('quotes', quoteData);
-      // this.notificationService.showSuccess('Quote created successfully');
+      await this.garageDataService.create('quotes', quoteData);
 
-      // 1. Créer le devis et récupérer l'ID généré
-      const quoteRef = await this.garageDataService.create('quotes', quoteData);
-      const quoteId = quoteRef;
-
-      // 2. Créer une notification associée au devis
-      if (this.client) {
-        // Envoyer les notifications selon les options sélectionnées
-        await this.sendQuoteNotifications(
-          this.client,
-          formValue.quoteNumber,
-          quoteId
-        );
-      }
-
-      this.notificationService.showSuccess('Devis créé avec succès');
+      this.notificationService.showSuccess('Devis créé avec succès (enregistré en brouillon)');
 
       this.router.navigate(['/quotes']);
     } catch (error) {

@@ -295,22 +295,54 @@ export class PDFService {
       });
 
       // --- TOTAUX ---
-      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      let currentY = (doc as any).lastAutoTable.finalY + 10;
       doc.setFont('times', 'normal');
-      doc.setFontSize(12);
-      doc.text(`Sous-total : ${this.formatAmount(quote.subtotal)}`, 140, finalY);
+      doc.setFontSize(11);
+
+      doc.text(`Sous-total HT : ${this.formatAmount(quote.subtotal)}`, 130, currentY);
+
+      if (quote.hasDiscount && (quote.discountAmount || 0) > 0) {
+        currentY += 6;
+        const discountLabel = quote.discountType === 'percentage'
+          ? `Remise (${quote.discountValue}%)`
+          : 'Remise';
+        doc.text(`${discountLabel} : -${this.formatAmount(quote.discountAmount!)}`, 130, currentY);
+
+        currentY += 6;
+        const subAfter = quote.subtotalAfterDiscount ?? (quote.subtotal - quote.discountAmount!);
+        doc.text(`Total HT après remise : ${this.formatAmount(subAfter)}`, 130, currentY);
+      }
+
+      currentY += 6;
       doc.text(
         `TVA (${quote.vatRate}%) : ${this.formatAmount(quote.vatAmount)}`,
-        140,
-        finalY + 6
+        130,
+        currentY
       );
 
-      doc.setFont('times', 'bold');
-      doc.setFontSize(13);
+      currentY += 6;
       doc.text(
-        `Total à payer : ${this.formatAmount(quote.total)}`,
-        140,
-        finalY + 14
+        `Total TTC : ${this.formatAmount(quote.total)}`,
+        130,
+        currentY
+      );
+
+      if (quote.hasPrecompte && (quote.precompteAmount || 0) > 0) {
+        currentY += 6;
+        const precompteLabel = quote.precompteRate
+          ? `Précompte TVA (${quote.precompteRate}%)`
+          : 'Précompte TVA';
+        doc.text(`${precompteLabel} : -${this.formatAmount(quote.precompteAmount!)}`, 130, currentY);
+      }
+
+      currentY += 8;
+      doc.setFont('times', 'bold');
+      doc.setFontSize(12);
+      const netToPay = quote.netToPay ?? (quote.hasPrecompte && quote.precompteAmount ? quote.total - quote.precompteAmount : quote.total);
+      doc.text(
+        `Net à payer : ${this.formatAmount(netToPay)}`,
+        130,
+        currentY
       );
 
       /// --- PIED DE PAGE ---

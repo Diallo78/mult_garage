@@ -190,7 +190,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                     <p class="text-sm text-gray-500 mt-1">{{ quote.createdAt | firestoreDate | date:'mediumDate' }}</p>
                   </div>
                   <div class="text-right">
-                    <p class="font-semibold">{{ quote.total | currency:'GNF ':'symbol':'1.2-2' }}</p>
+                    <p class="font-semibold">{{ (quote.netToPay ?? quote.total) | currency:'GNF ':'symbol':'1.2-2' }}</p>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1"
                           [ngClass]="{
                             'bg-green-100 text-green-800': quote.status === 'Accepted',
@@ -314,12 +314,16 @@ export class ClientDashboardComponent implements OnInit {
           { field: 'clientId', operator: '==', value: this.client.id }
         ]),
         this.garageDataService.getWithFilter<Quote>('quotes', [
-          { field: 'clientId', operator: '==', value: this.client.id }
+          { field: 'clientId', operator: '==', value: this.client.id },
+          { field: 'isVisibleToClient', operator: '==', value: true }
         ]),
         this.garageDataService.getWithFilter<Invoice>('invoices', [
           { field: 'clientId', operator: '==', value: this.client.id }
         ])
       ]);
+
+      // Filtrer les devis autorisés pour le client
+      this.quotes = (this.quotes || []).filter((q) => q.isVisibleToClient === true);
 
       // Filter recent items
       // this.recentQuotes = this.quotes.slice(0, 2);
