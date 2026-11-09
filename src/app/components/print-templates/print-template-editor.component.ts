@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
   FormGroup,
+  FormArray,
   ReactiveFormsModule,
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -11,12 +12,16 @@ import { NotificationService } from '../../services/notification.service';
 import { PrintTemplateService } from '../../services/print-template.service';
 import {
   PrintDocumentData,
+  PrintFinancialData,
   PrintGarageInfo,
   PrintRendererService,
 } from '../../services/print-renderer.service';
 import {
   DEFAULT_BODY_SECTION_ORDER,
+  DEFAULT_FINANCIAL_DISPLAY,
+  DEFAULT_TABLE_COLUMNS,
   PrintBodySection,
+  PrintColumnConfig,
   PrintDocumentType,
   PrintTemplateData,
   PRINT_DOCUMENT_TYPES,
@@ -177,10 +182,12 @@ type EditorTab = 'header' | 'body' | 'footer' | 'signature' | 'style';
             </div>
 
             <!-- Onglet : Contenu -->
-            <div *ngIf="activeTab === 'body'" class="space-y-4">
-              <div formGroupName="bodySettings" class="space-y-4">
+            <div *ngIf="activeTab === 'body'" class="space-y-6">
+              <div formGroupName="bodySettings" class="space-y-5">
+
+                <!-- Ordre des sections -->
                 <div>
-                  <p class="form-label">Ordre des sections</p>
+                  <p class="form-label font-semibold">Ordre des sections</p>
                   <ul class="divide-y divide-gray-200 border rounded-lg">
                     <li
                       *ngFor="let section of sectionOrder; let i = index"
@@ -195,6 +202,7 @@ type EditorTab = 'header' | 'body' | 'footer' | 'signature' | 'style';
                   </ul>
                 </div>
 
+                <!-- Sections visibles -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div class="flex items-center gap-2" *ngFor="let item of bodyToggles">
                     <input type="checkbox" [formControlName]="item.control" [id]="item.control" class="h-4 w-4 text-primary-600 rounded" />
@@ -202,6 +210,7 @@ type EditorTab = 'header' | 'body' | 'footer' | 'signature' | 'style';
                   </div>
                 </div>
 
+                <!-- Paramètres visuels du tableau -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label class="form-label">Taille du texte (px)</label>
@@ -232,6 +241,46 @@ type EditorTab = 'header' | 'body' | 'footer' | 'signature' | 'style';
                 <div>
                   <label class="form-label">Conditions générales</label>
                   <textarea formControlName="conditionsText" rows="3" class="form-input"></textarea>
+                </div>
+              </div>
+
+              <!-- Section : Informations financières -->
+              <div class="border border-blue-100 rounded-xl p-4 bg-blue-50/40 space-y-3">
+                <div class="flex items-center gap-2 mb-1">
+                  <svg class="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h4 class="text-sm font-semibold text-blue-800">Affichage des informations financières</h4>
+                </div>
+                <p class="text-xs text-blue-600">Ces options contrôlent uniquement la visibilité. Les calculs du devis ne sont pas modifiés.</p>
+                <div [formGroup]="financialDisplayForm" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div class="flex items-center gap-2" *ngFor="let item of financialToggles">
+                    <input type="checkbox" [formControlName]="item.control" [id]="'fin-' + item.control" class="h-4 w-4 text-primary-600 rounded" />
+                    <label [for]="'fin-' + item.control" class="text-sm text-gray-700">{{ item.label }}</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section : Colonnes du tableau -->
+              <div class="border border-green-100 rounded-xl p-4 bg-green-50/40 space-y-3">
+                <div class="flex items-center gap-2 mb-1">
+                  <svg class="w-5 h-5 text-green-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M10 3v18M14 3v18" />
+                  </svg>
+                  <h4 class="text-sm font-semibold text-green-800">Colonnes du tableau des prestations</h4>
+                </div>
+                <p class="text-xs text-green-700">Cochez les colonnes à afficher. Utilisez ↑↓ pour modifier l'ordre.</p>
+                <div class="divide-y divide-green-100 border border-green-200 rounded-lg overflow-hidden">
+                  <div *ngFor="let col of tableColumnsArray.controls; let i = index"
+                       [formGroup]="getColumnFormGroup(i)"
+                       class="flex items-center gap-3 px-3 py-2 bg-white hover:bg-green-50 transition-colors">
+                    <input type="checkbox" formControlName="enabled" [id]="'col-' + i" class="h-4 w-4 text-primary-600 rounded flex-shrink-0" />
+                    <label [for]="'col-' + i" class="text-sm text-gray-700 flex-1 cursor-pointer">{{ columnLabels[getColumnKey(i)] || getColumnKey(i) }}</label>
+                    <span class="flex gap-1">
+                      <button type="button" class="px-2 py-0.5 border rounded text-xs disabled:opacity-40" [disabled]="i === 0" (click)="moveColumn(i, -1)">↑</button>
+                      <button type="button" class="px-2 py-0.5 border rounded text-xs disabled:opacity-40" [disabled]="i === tableColumnsArray.length - 1" (click)="moveColumn(i, 1)">↓</button>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -307,12 +356,30 @@ type EditorTab = 'header' | 'body' | 'footer' | 'signature' | 'style';
 
             <!-- Onglet : Signatures -->
             <div *ngIf="activeTab === 'signature'" formGroupName="signatureSettings" class="space-y-4">
-              <div *ngFor="let zone of signatureZones" [formGroupName]="zone.key" class="border rounded-lg p-3">
-                <div class="flex items-center gap-2 mb-3">
+              <p class="text-sm text-gray-600">
+                La signature du <strong>DG / Responsable</strong> est toujours positionnée à droite du document.
+              </p>
+              <div *ngFor="let zone of signatureZones" [formGroupName]="zone.key" class="border rounded-xl p-4 space-y-3">
+                <div class="flex items-center gap-2 mb-1">
                   <input type="checkbox" formControlName="enabled" [id]="'sig-' + zone.key" class="h-4 w-4 text-primary-600 rounded" />
-                  <label [for]="'sig-' + zone.key" class="text-sm font-medium text-gray-700">{{ zone.label }}</label>
+                  <label [for]="'sig-' + zone.key" class="text-sm font-semibold text-gray-800">{{ zone.label }}</label>
                 </div>
-                <input type="text" formControlName="label" class="form-input" placeholder="Libellé affiché" />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="form-label text-xs">Libellé affiché</label>
+                    <input type="text" formControlName="label" class="form-input" placeholder="Libellé affiché" />
+                  </div>
+                  <div>
+                    <label class="form-label text-xs">Position
+                      <span *ngIf="zone.key === 'responsible'" class="ml-1 text-xs text-orange-600 font-medium">(fixe : droite)</span>
+                    </label>
+                    <select formControlName="position" class="form-input" [attr.disabled]="zone.key === 'responsible' ? true : null">
+                      <option value="left">Gauche</option>
+                      <option value="center">Centre</option>
+                      <option value="right">Droite</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -463,6 +530,8 @@ type EditorTab = 'header' | 'body' | 'footer' | 'signature' | 'style';
 })
 export class PrintTemplateEditorComponent implements OnInit, OnDestroy {
   form?: FormGroup;
+  /** FormGroup autonome lié à bodySettings.financialDisplay. */
+  financialDisplayForm!: FormGroup;
   documentType: PrintDocumentType = 'quote';
   documentLabel = '';
   documentDescription = '';
@@ -501,8 +570,27 @@ export class PrintTemplateEditorComponent implements OnInit, OnDestroy {
     { control: 'showConditions', label: 'Conditions générales' },
   ];
 
+  /** Libellés des options de visibilité financière. */
+  readonly financialToggles = [
+    { control: 'showSubtotal', label: 'Afficher le sous-total HT' },
+    { control: 'showDiscount', label: 'Afficher la remise' },
+    { control: 'showVat', label: 'Afficher la TVA' },
+    { control: 'showTotal', label: 'Afficher le total TTC' },
+    { control: 'showPrecompte', label: 'Afficher le précompte' },
+    { control: 'showNetToPay', label: 'Afficher le net à payer' },
+  ];
+
+  /** Libellés affichés pour chaque clé de colonne. */
+  readonly columnLabels: Record<string, string> = {
+    designation: 'Désignation',
+    quantity: 'Quantité',
+    unitPrice: 'Prix unitaire',
+    discount: 'Remise',
+    total: 'Total',
+  };
+
   readonly signatureZones = [
-    { key: 'responsible', label: 'Signature du responsable' },
+    { key: 'responsible', label: 'DG / Responsable du garage (toujours à droite)' },
     { key: 'client', label: 'Signature du client' },
     { key: 'mechanic', label: 'Signature du mécanicien' },
     { key: 'stamp', label: "Cachet de l'entreprise" },
@@ -562,6 +650,44 @@ export class PrintTemplateEditorComponent implements OnInit, OnDestroy {
       (this.form?.get('bodySettings.sectionOrder')?.value as PrintBodySection[]) ??
       []
     );
+  }
+
+  /** FormArray des colonnes du tableau des prestations. */
+  get tableColumnsArray(): FormArray {
+    return this.form?.get('bodySettings.tableColumns') as FormArray;
+  }
+
+  getColumnFormGroup(index: number): FormGroup {
+    return this.tableColumnsArray?.at(index) as FormGroup;
+  }
+
+  getColumnKey(index: number): string {
+    return this.tableColumnsArray?.at(index)?.get('key')?.value ?? '';
+  }
+
+  /** Déplace une colonne dans l'ordre du tableau. */
+  moveColumn(index: number, direction: -1 | 1): void {
+    const arr = this.tableColumnsArray;
+    if (!arr) return;
+    const target = index + direction;
+    if (target < 0 || target >= arr.length) return;
+    const aVal = { ...arr.at(index).value, order: target };
+    const bVal = { ...arr.at(target).value, order: index };
+    arr.at(index).setValue(bVal);
+    arr.at(target).setValue(aVal);
+    // Reorder controls so they appear in correct visual order
+    const aCtrl = arr.at(index);
+    const bCtrl = arr.at(target);
+    arr.removeAt(Math.max(index, target));
+    arr.removeAt(Math.min(index, target));
+    if (direction === -1) {
+      arr.insert(index, bCtrl);
+      arr.insert(target, aCtrl);
+    } else {
+      arr.insert(index, aCtrl);
+      arr.insert(target, bCtrl);
+    }
+    this.form?.markAsDirty();
   }
 
   /** Déplace une section dans l'ordre d'affichage. */
@@ -660,21 +786,86 @@ export class PrintTemplateEditorComponent implements OnInit, OnDestroy {
   }
 
   private applyTemplate(template: PrintTemplateData): void {
+    // Résolution des valeurs avec compatibilité ascendante
+    const fd = { ...DEFAULT_FINANCIAL_DISPLAY, ...(template.bodySettings.financialDisplay ?? {}) };
+    const cols: PrintColumnConfig[] =
+      template.bodySettings.tableColumns?.length
+        ? template.bodySettings.tableColumns
+        : DEFAULT_TABLE_COLUMNS.map((c) => ({ ...c }));
+
+    // FormArray des colonnes
+    const tableColumnsArray = this.fb.array(
+      [...cols].sort((a, b) => a.order - b.order).map((col) =>
+        this.fb.group({
+          key: [col.key],
+          enabled: [col.enabled],
+          order: [col.order],
+        })
+      )
+    );
+
+    // FormGroup financialDisplay autonome (valeurs transmises depuis bodySettings)
+    this.financialDisplayForm = this.fb.group({
+      showDiscount: [fd.showDiscount],
+      showPrecompte: [fd.showPrecompte],
+      showSubtotal: [fd.showSubtotal],
+      showVat: [fd.showVat],
+      showTotal: [fd.showTotal],
+      showNetToPay: [fd.showNetToPay],
+    });
+
+    // Responsible est toujours fixé à 'right'
+    const sigResp = template.signatureSettings.responsible;
+    const sigClient = template.signatureSettings.client;
+    const sigMechanic = template.signatureSettings.mechanic;
+    const sigStamp = template.signatureSettings.stamp;
+
     this.form = this.fb.group({
       documentType: [template.documentType],
       templateName: [template.templateName],
       pageSettings: this.fb.group({ ...template.pageSettings }),
       headerSettings: this.fb.group({ ...template.headerSettings }),
       bodySettings: this.fb.group({
-        ...template.bodySettings,
         sectionOrder: [this.normalizeSectionOrder(template.bodySettings.sectionOrder)],
+        showDocumentInfo: [template.bodySettings.showDocumentInfo],
+        showClientInfo: [template.bodySettings.showClientInfo],
+        showVehicleInfo: [template.bodySettings.showVehicleInfo],
+        showItems: [template.bodySettings.showItems],
+        showTotals: [template.bodySettings.showTotals],
+        showNotes: [template.bodySettings.showNotes],
+        showConditions: [template.bodySettings.showConditions],
+        fontSize: [template.bodySettings.fontSize],
+        tableHeadColor: [template.bodySettings.tableHeadColor],
+        tableHeadTextColor: [template.bodySettings.tableHeadTextColor],
+        tableBorderColor: [template.bodySettings.tableBorderColor],
+        tableZebra: [template.bodySettings.tableZebra],
+        sectionSpacing: [template.bodySettings.sectionSpacing],
+        conditionsText: [template.bodySettings.conditionsText],
+        tableColumns: tableColumnsArray,
+        financialDisplay: this.financialDisplayForm,
       }),
       footerSettings: this.fb.group({ ...template.footerSettings }),
       signatureSettings: this.fb.group({
-        responsible: this.fb.group({ ...template.signatureSettings.responsible }),
-        client: this.fb.group({ ...template.signatureSettings.client }),
-        mechanic: this.fb.group({ ...template.signatureSettings.mechanic }),
-        stamp: this.fb.group({ ...template.signatureSettings.stamp }),
+        responsible: this.fb.group({
+          enabled: [sigResp.enabled],
+          label: [sigResp.label],
+          position: [{ value: 'right', disabled: true }], // toujours à droite
+        }),
+        client: this.fb.group({
+          enabled: [sigClient.enabled],
+          label: [sigClient.label],
+          position: [sigClient.position ?? 'left'],
+        }),
+        mechanic: this.fb.group({
+          enabled: [sigMechanic.enabled],
+          label: [sigMechanic.label],
+          position: [sigMechanic.position ?? 'center'],
+        }),
+        stamp: this.fb.group({
+          enabled: [sigStamp.enabled],
+          label: [sigStamp.label],
+          position: [sigStamp.position ?? 'center'],
+        }),
       }),
       styleSettings: this.fb.group({ ...template.styleSettings }),
     });

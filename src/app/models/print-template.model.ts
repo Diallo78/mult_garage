@@ -20,6 +20,16 @@ export type PrintDocumentType =
 /** Alignement horizontal d'un bloc. */
 export type PrintAlign = 'left' | 'center' | 'right';
 
+/** Colonnes disponibles dans le tableau des prestations. */
+export type PrintItemColumn = 'designation' | 'quantity' | 'unitPrice' | 'discount' | 'total';
+
+/** Configuration d'une colonne du tableau des prestations. */
+export interface PrintColumnConfig {
+  key: PrintItemColumn;
+  enabled: boolean;
+  order: number;
+}
+
 /** Format papier. */
 export type PrintPageFormat = 'A4' | 'A5' | 'Letter';
 
@@ -92,6 +102,20 @@ export interface PrintBodySettings {
   tableZebra: boolean;
   sectionSpacing: number;
   conditionsText: string;
+  /** Visibilité des lignes financières dans la section des totaux. */
+  financialDisplay: PrintFinancialDisplay;
+  /** Configuration des colonnes du tableau des prestations. */
+  tableColumns: PrintColumnConfig[];
+}
+
+/** Contrôle l'affichage de chaque ligne financière dans le document imprimé. */
+export interface PrintFinancialDisplay {
+  showDiscount: boolean;
+  showPrecompte: boolean;
+  showSubtotal: boolean;
+  showVat: boolean;
+  showTotal: boolean;
+  showNetToPay: boolean;
 }
 
 /** Pied de page du document. */
@@ -115,6 +139,8 @@ export interface PrintFooterSettings {
 export interface PrintSignatureZone {
   enabled: boolean;
   label: string;
+  /** Position de la signature sur le document (le responsable/DG est toujours à droite). */
+  position?: PrintAlign;
 }
 
 /** Signatures et cachets. */
@@ -228,6 +254,25 @@ export const DEFAULT_BODY_SECTION_ORDER: PrintBodySection[] = [
   'conditions',
 ];
 
+/** Colonnes par défaut du tableau des prestations (dans l'ordre). */
+export const DEFAULT_TABLE_COLUMNS: PrintColumnConfig[] = [
+  { key: 'designation', enabled: true, order: 0 },
+  { key: 'quantity', enabled: true, order: 1 },
+  { key: 'unitPrice', enabled: true, order: 2 },
+  { key: 'discount', enabled: false, order: 3 },
+  { key: 'total', enabled: true, order: 4 },
+];
+
+/** Affichage financier par défaut (tout visible sauf précompte et remise, optionnels). */
+export const DEFAULT_FINANCIAL_DISPLAY: PrintFinancialDisplay = {
+  showDiscount: true,
+  showPrecompte: true,
+  showSubtotal: true,
+  showVat: true,
+  showTotal: true,
+  showNetToPay: true,
+};
+
 /** Crée un modèle par défaut (aspect professionnel) pour un type de document. */
 export function createDefaultPrintTemplate(
   documentType: PrintDocumentType
@@ -282,6 +327,8 @@ export function createDefaultPrintTemplate(
       sectionSpacing: 6,
       conditionsText:
         'Les travaux supplémentaires éventuels feront l’objet d’un accord préalable. Le véhicule non retiré dans un délai de 30 jours pourra être mis en gage.',
+      financialDisplay: { ...DEFAULT_FINANCIAL_DISPLAY },
+      tableColumns: DEFAULT_TABLE_COLUMNS.map((c) => ({ ...c })),
     },
 
     footerSettings: {
@@ -301,10 +348,10 @@ export function createDefaultPrintTemplate(
     },
 
     signatureSettings: {
-      responsible: { enabled: true, label: 'Le responsable' },
-      client: { enabled: true, label: 'Le client' },
-      mechanic: { enabled: false, label: 'Le mécanicien' },
-      stamp: { enabled: true, label: 'Cachet de l’entreprise' },
+      responsible: { enabled: true, label: 'Le responsable', position: 'right' },
+      client: { enabled: true, label: 'Le client', position: 'left' },
+      mechanic: { enabled: false, label: 'Le mécanicien', position: 'center' },
+      stamp: { enabled: true, label: 'Cachet de l’entreprise', position: 'center' },
     },
 
     styleSettings: {
@@ -337,7 +384,17 @@ export function mergeWithDefaultTemplate(
     documentType,
     pageSettings: { ...base.pageSettings, ...(saved.pageSettings ?? {}) },
     headerSettings: { ...base.headerSettings, ...(saved.headerSettings ?? {}) },
-    bodySettings: { ...base.bodySettings, ...(saved.bodySettings ?? {}) },
+    bodySettings: {
+      ...base.bodySettings,
+      ...(saved.bodySettings ?? {}),
+      financialDisplay: {
+        ...base.bodySettings.financialDisplay,
+        ...((saved.bodySettings as any)?.financialDisplay ?? {}),
+      },
+      tableColumns: (saved.bodySettings as any)?.tableColumns?.length
+        ? (saved.bodySettings as any).tableColumns
+        : base.bodySettings.tableColumns,
+    },
     footerSettings: { ...base.footerSettings, ...(saved.footerSettings ?? {}) },
     signatureSettings: {
       ...base.signatureSettings,

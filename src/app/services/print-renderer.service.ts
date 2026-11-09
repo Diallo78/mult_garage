@@ -5,8 +5,13 @@ import { GarageDataService } from './garage-data.service';
 import { GarageDtoFunction } from './fonction/garageDto-function';
 import { Garage } from '../models/user.model';
 import {
+  DEFAULT_FINANCIAL_DISPLAY,
+  DEFAULT_TABLE_COLUMNS,
   PrintBodySection,
+  PrintColumnConfig,
   PrintDocumentType,
+  PrintFinancialDisplay,
+  PrintItemColumn,
   PrintPageFormat,
   PrintTemplateData,
   getDocumentTypeInfo,
@@ -72,6 +77,28 @@ export interface PrintDocumentData {
   totals?: PrintTotalLine[];
   notes?: string;
   currency?: string;
+  /** Données financières structurées (pour filtrage dynamique via financialDisplay). */
+  financialData?: PrintFinancialData;
+}
+
+/**
+ * Décomposition financière brute transmise depuis le devis ou la facture.
+ * Le renderer l'utilise conjointement à `financialDisplay` pour construire
+ * dynamiquement les lignes de totaux visibles.
+ */
+export interface PrintFinancialData {
+  subtotal?: number;
+  hasDiscount?: boolean;
+  discountLabel?: string;
+  discountAmount?: number;
+  subtotalAfterDiscount?: number;
+  vatRate?: number;
+  vatAmount?: number;
+  total?: number;
+  hasPrecompte?: boolean;
+  precompteRate?: number;
+  precompteAmount?: number;
+  netToPay?: number;
 }
 
 /** Informations d'identité de l'entreprise utilisées dans l'en-tête / le pied. */
@@ -565,13 +592,39 @@ ${lines.join('<br/>')}
   ): string {
     const body = template.bodySettings;
     const currency = data.currency ? ` (${this.escape(data.currency)})` : '';
-    const head = data.itemsHead ?? [
-      'Désignation',
-      'Quantité',
-      `Prix unitaire${currency}`,
-      `Total${currency}`,
-    ];
-    const alignments = ['left', 'center', 'right', 'right'];
+
+    // Resolve active columns from template config (backward-compatible)
+    const columnConfigs: PrintColumnConfig[] =
+      body.tableColumns?.length
+        ? [...body.tableColumns].sort((a, b) => a.order - b.order)
+        : DEFAULT_TABLE_COLUMNS.filter((c) => c.key !== 'discount');
+
+    const activeColumns = columnConfigs.filter((c) => c.enabled);
+
+    const columnMeta: Record<
+      PrintItemColumn,
+      { label: (c: string) => string; align: string }
+    > = {
+      designation: { label: () => 'Désignation', align: 'left' },
+      quantity: { label: () => 'Quantité', align: 'center' },
+      unitPrice: { label: (c) => `Prix unitaire${c}`, align: 'right' },
+      discount: { label: (c) => `Remise${c}`, align: 'right' },
+      total: { label: (c) => `Total${c}`, align: 'right' },
+    };
+
+    // If caller provided custom itemsHead, use it (legacy support)
+    let head: string[];
+    let alignments: string[];
+
+    if (data.itemsHead?.length) {
+      head = data.itemsHead;
+      alignments = head.map((_, i) =>
+        i === 0 ? 'left' : i === 1 ? 'center' : 'right'
+      );
+    } else {
+      head = activeColumns.map((c) => columnMeta[c.key].label(currency));
+      alignments = activeColumns.map((c) => columnMeta[c.key].align);
+    }
 
     const headCells = head
       .map(
@@ -586,16 +639,35 @@ ${lines.join('<br/>')}
           body.tableZebra && index % 2 === 1
             ? `background:${ZEBRA_COLOR};`
             : '';
-        const cells = [
-          this.escape(item.designation),
-          this.escape(String(item.quantity)),
-          this.formatCell(item.unitPrice, data.currency),
-          this.formatCell(item.total, data.currency),
-        ]
+
+        let cellValues: string[];
+
+        if (data.itemsHead?.length) {
+          // Legacy: fixed 4-column layout
+          cellValues = [
+            this.escape(item.designation),
+            this.escape(String(item.quantity)),
+            this.formatCell(item.unitPrice, data.currency),
+            this.formatCell(item.total, data.currency),
+          ];
+        } else {
+          cellValues = activeColumns.map((col) => {
+            switch (col.key) {
+              case 'designation': return this.escape(item.designation);
+              case 'quantity': return this.escape(String(item.quantity));
+              case 'unitPrice': return this.formatCell(item.unitPrice, data.currency);
+              case 'discount': return this.formatCell((item as any).discount, data.currency);
+              case 'total': return this.formatCell(item.total, data.currency);
+              default: return '';
+            }
+          });
+        }
+
+        const cells = cellValues
           .map(
             (value, cellIndex) =>
               `<td style="padding:2mm;border:1px solid ${body.tableBorderColor};text-align:${alignments[cellIndex] ?? 'left'};font-size:${body.fontSize}px;">${
-                cellIndex === 3 ? `<strong>${value}</strong>` : value
+                alignments[cellIndex] === 'right' ? `<strong>${value}</strong>` : value
               }</td>`
           )
           .join('');
@@ -617,10 +689,70 @@ ${lines.join('<br/>')}
     template: PrintTemplateData,
     data: PrintDocumentData
   ): string {
+    const style = template.styleSettings;
+    const fd = { ...DEFAULT_FINANCIAL_DISPLAY, ...(template.bodySettings.financialDisplay ?? {}) };
+    const currency = data.currency || '';
+    const fmt = (v: number) =>
+      currency ? `${v.toLocaleString('fr-FR')} ${this.escape(currency)}` : v.toLocaleString('fr-FR');
+
+    // If structured financial data is available, build lines dynamically
+    if (data.financialData) {
+      const f = data.financialData;
+      const lines: PrintTotalLine[] = [];
+
+      if (fd.showSubtotal && f.subtotal !== undefined) {
+        lines.push({ label: 'Sous-total HT', value: fmt(f.subtotal) });
+      }
+      if (fd.showDiscount && f.hasDiscount && f.discountAmount) {
+        const discLabel = f.discountLabel || 'Remise';
+        lines.push({ label: discLabel, value: `- ${fmt(f.discountAmount)}` });
+        if (f.subtotalAfterDiscount !== undefined) {
+          lines.push({ label: 'Total HT après remise', value: fmt(f.subtotalAfterDiscount) });
+        }
+      }
+      if (fd.showVat && f.vatAmount !== undefined) {
+        const vatLabel = f.vatRate ? `TVA (${f.vatRate} %)` : 'TVA';
+        lines.push({ label: vatLabel, value: fmt(f.vatAmount) });
+      }
+      if (fd.showTotal && f.total !== undefined) {
+        lines.push({ label: 'Total TTC', value: fmt(f.total) });
+      }
+      if (fd.showPrecompte && f.hasPrecompte && f.precompteAmount) {
+        const precompteLabel = f.precompteRate
+          ? `Précompte TVA (${f.precompteRate} %)`
+          : 'Précompte TVA';
+        lines.push({ label: precompteLabel, value: `- ${fmt(f.precompteAmount)}` });
+      }
+      if (fd.showNetToPay && f.netToPay !== undefined) {
+        lines.push({ label: 'Net à payer', value: fmt(f.netToPay), strong: true });
+      }
+
+      if (!lines.length) return '';
+      return this.buildTotalsHtml(lines, template);
+    }
+
+    // Legacy path: use pre-built totals array, filtered by financialDisplay flags
     const totals = data.totals ?? [];
     if (!totals.length) return '';
-    const style = template.styleSettings;
 
+    // Filter: apply visibility flags based on common label patterns
+    const filtered = totals.filter((line) => {
+      const label = line.label.toLowerCase();
+      if (!fd.showDiscount && (label.includes('remise') || label.includes('discount'))) return false;
+      if (!fd.showPrecompte && (label.includes('précompte') || label.includes('precompte'))) return false;
+      if (!fd.showSubtotal && (label.includes('sous-total') || label.includes('subtotal'))) return false;
+      if (!fd.showVat && (label.includes('tva') || label.includes('taxe'))) return false;
+      if (!fd.showTotal && (label.includes('total ttc') || label.includes('total à payer'))) return false;
+      if (!fd.showNetToPay && (label.includes('net à payer') || label.includes('net to pay'))) return false;
+      return true;
+    });
+
+    if (!filtered.length) return '';
+    return this.buildTotalsHtml(filtered, template);
+  }
+
+  private buildTotalsHtml(totals: PrintTotalLine[], template: PrintTemplateData): string {
+    const style = template.styleSettings;
     const rows = totals
       .map(
         (line) => `<tr>
@@ -640,31 +772,52 @@ ${lines.join('<br/>')}
     garage: PrintGarageInfo | null
   ): string {
     const signature = template.signatureSettings;
-    const zones = [
-      signature.responsible,
-      signature.client,
-      signature.mechanic,
-      signature.stamp,
-    ].filter((zone) => zone.enabled);
 
-    if (!zones.length) return '';
+    // Build positioned zones: left, center, right
+    const allZones = [
+      { zone: signature.client, key: 'client' },
+      { zone: signature.mechanic, key: 'mechanic' },
+      { zone: signature.stamp, key: 'stamp' },
+      // responsible always rendered last (forced to right)
+      { zone: signature.responsible, key: 'responsible' },
+    ].filter(({ zone }) => zone.enabled);
 
-    const cells = zones
-      .map((zone, index) => {
-        const isResponsible = zone === signature.responsible;
-        const image =
-          isResponsible && garage?.signature
-            ? `<img src="${garage.signature}" alt="Signature" style="max-height:14mm;object-fit:contain;" />`
-            : '';
-        return `<div style="flex:1;text-align:center;">
+    if (!allZones.length) return '';
+
+    // Group by position; responsible is always 'right'
+    const left = allZones.filter(
+      ({ zone, key }) => key !== 'responsible' && (zone.position ?? 'center') === 'left'
+    );
+    const center = allZones.filter(
+      ({ zone, key }) => key !== 'responsible' && (zone.position ?? 'center') === 'center'
+    );
+    const right = allZones.filter(({ key }) => key === 'responsible');
+
+    const renderCell = ({ zone, key }: { zone: typeof signature.responsible; key: string }) => {
+      const isResponsible = key === 'responsible';
+      const image =
+        isResponsible && garage?.signature
+          ? `<img src="${garage.signature}" alt="Signature" style="max-height:14mm;object-fit:contain;" />`
+          : '';
+      return `<div style="text-align:center;min-width:40mm;flex:1;">
   <div style="font-size:${template.styleSettings.baseFontSize - 1}px;color:#4b5563;margin-bottom:2mm;">${this.escape(zone.label)}</div>
   <div style="height:18mm;display:flex;align-items:center;justify-content:center;">${image}</div>
-  <div style="border-top:1px solid #9ca3af;margin:0 ${index === 0 ? '0' : '2mm'};"></div>
+  <div style="border-top:1px solid #9ca3af;margin:0 2mm;"></div>
 </div>`;
-      })
-      .join('');
+    };
 
-    return `<section style="display:flex;gap:6mm;margin-top:8mm;">${cells}</section>`;
+    const renderGroup = (zones: typeof allZones, justify: string) => {
+      if (!zones.length) return '';
+      return `<div style="display:flex;gap:4mm;justify-content:${justify};flex:1;">${zones.map(renderCell).join('')}</div>`;
+    };
+
+    const leftHtml = renderGroup(left, 'flex-start');
+    const centerHtml = renderGroup(center, 'center');
+    const rightHtml = renderGroup(right, 'flex-end');
+
+    const groups = [leftHtml, centerHtml, rightHtml].filter(Boolean);
+
+    return `<section style="display:flex;gap:6mm;margin-top:8mm;align-items:flex-start;">${groups.join('')}</section>`;
   }
 
   private renderFooter(
