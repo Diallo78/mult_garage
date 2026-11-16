@@ -106,6 +106,12 @@ export interface PrintBodySettings {
   financialDisplay: PrintFinancialDisplay;
   /** Configuration des colonnes du tableau des prestations. */
   tableColumns: PrintColumnConfig[];
+  /** Afficher le montant en toutes lettres. */
+  showAmountInWords?: boolean;
+  /** Libellé accompagnant le montant en lettres (ex : "Arrêté le présent devis à la somme de :"). */
+  amountInWordsLabel?: string;
+  /** Emplacement du montant en lettres dans le document. */
+  amountInWordsPosition?: 'afterTotals' | 'beforeSignatures';
 }
 
 /** Contrôle l'affichage de chaque ligne financière dans le document imprimé. */
@@ -273,6 +279,24 @@ export const DEFAULT_FINANCIAL_DISPLAY: PrintFinancialDisplay = {
   showNetToPay: true,
 };
 
+/** Libellé par défaut du montant en toutes lettres selon le type de document. */
+export function getDefaultAmountInWordsLabel(documentType: PrintDocumentType): string {
+  switch (documentType) {
+    case 'quote':
+      return 'Arrêté le présent devis à la somme de :';
+    case 'invoice':
+      return "La présente facture s'élève à la somme de :";
+    case 'paymentReceipt':
+      return 'Reçu la somme de :';
+    case 'repairOrder':
+      return 'Montant estimatif en toutes lettres :';
+    case 'deliveryNote':
+      return 'Montant en toutes lettres :';
+    default:
+      return 'Montant total en toutes lettres :';
+  }
+}
+
 /** Crée un modèle par défaut (aspect professionnel) pour un type de document. */
 export function createDefaultPrintTemplate(
   documentType: PrintDocumentType
@@ -329,6 +353,9 @@ export function createDefaultPrintTemplate(
         'Les travaux supplémentaires éventuels feront l’objet d’un accord préalable. Le véhicule non retiré dans un délai de 30 jours pourra être mis en gage.',
       financialDisplay: { ...DEFAULT_FINANCIAL_DISPLAY },
       tableColumns: DEFAULT_TABLE_COLUMNS.map((c) => ({ ...c })),
+      showAmountInWords: true,
+      amountInWordsLabel: getDefaultAmountInWordsLabel(documentType),
+      amountInWordsPosition: 'afterTotals',
     },
 
     footerSettings: {
@@ -387,6 +414,12 @@ export function mergeWithDefaultTemplate(
     bodySettings: {
       ...base.bodySettings,
       ...(saved.bodySettings ?? {}),
+      showAmountInWords:
+        saved.bodySettings?.showAmountInWords ?? base.bodySettings.showAmountInWords ?? false,
+      amountInWordsLabel:
+        saved.bodySettings?.amountInWordsLabel ?? base.bodySettings.amountInWordsLabel ?? getDefaultAmountInWordsLabel(documentType),
+      amountInWordsPosition:
+        saved.bodySettings?.amountInWordsPosition ?? base.bodySettings.amountInWordsPosition ?? 'afterTotals',
       financialDisplay: {
         ...base.bodySettings.financialDisplay,
         ...((saved.bodySettings as any)?.financialDisplay ?? {}),

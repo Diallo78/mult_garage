@@ -275,12 +275,6 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
           </div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-2 sm:mt-0">
             <button
-              (click)="downloadPDF()"
-              class="btn-secondary w-full sm:w-auto"
-            >
-              Télécharger PDF
-            </button>
-            <button
               type="button"
               (click)="printWithTemplate()"
               class="btn-primary w-full sm:w-auto"
@@ -611,17 +605,11 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
                       </div>
                       <div class="sm:hidden mt-1">
                         <button
-                          (click)="downloadPaymentReceipt(payment)"
-                          class="text-primary-600 hover:text-primary-900 text-xs"
-                        >
-                          Reçu
-                        </button>
-                        <button
                           type="button"
                           (click)="printReceiptWithTemplate(payment)"
-                          class="text-primary-600 hover:text-primary-900 text-xs ml-2"
+                          class="text-primary-600 hover:text-primary-900 text-xs"
                         >
-                          Imprimer
+                          Imprimer le reçu
                         </button>
                       </div>
                     </div>
@@ -647,17 +635,11 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
                     class="px-3 py-4 whitespace-nowrap text-sm font-medium hidden sm:table-cell"
                   >
                     <button
-                      (click)="downloadPaymentReceipt(payment)"
-                      class="text-primary-600 hover:text-primary-900"
-                    >
-                      Reçu
-                    </button>
-                    <button
                       type="button"
                       (click)="printReceiptWithTemplate(payment)"
-                      class="text-primary-600 hover:text-primary-900 ml-3"
+                      class="text-primary-600 hover:text-primary-900"
                     >
-                      Imprimer
+                      Imprimer le reçu
                     </button>
                   </td>
                 </tr>
@@ -719,50 +701,9 @@ export class InvoiceDetailComponent implements OnInit {
     }
   }
 
-  async downloadPDF(): Promise<void> {
-    if (!this.invoice || !this.client || !this.vehicle) return;
-
-    try {
-      const clientName = `${this.client.firstName} ${this.client.lastName}`;
-      const vehicleInfo = `${this.vehicle.brand} ${this.vehicle.model} (${this.vehicle.licensePlate})`;
-
-      const pipeDate = new FirestoreDatePipeTS();
-      const _createdAt = pipeDate.transform(this.invoice.createdAt);
-      const dueDate = pipeDate.transform(this.invoice.dueDate);
-      this.invoice.dueDate = new Date(dueDate);
-      this.invoice.createdAt = new Date(_createdAt);
-
-      await this.pdfService.generateInvoicePDF(
-        this.invoice,
-        clientName,
-        vehicleInfo
-      );
-      this.notificationService.showSuccess('PDF downloaded successfully');
-    } catch (error) {
-      this.notificationService.showError('Failed to generate PDF');
-      console.log('Failed to generate PDF ' + error);
-    }
-  }
-
-  async downloadPaymentReceipt(payment: any): Promise<void> {
-    if (!this.invoice || !this.client) return;
-
-    try {
-      const clientName = `${this.client.firstName} ${this.client.lastName}`;
-      await this.pdfService.generatePaymentReceiptPDF(
-        payment,
-        this.invoice.invoiceNumber,
-        clientName
-      );
-      this.notificationService.showSuccess('Receipt downloaded successfully');
-    } catch (error) {
-      this.notificationService.showError('Failed to generate receipt');
-    }
-  }
-
   /**
    * Imprime la facture avec le modèle d'impression personnalisé du garage
-   * (repli sur le modèle par défaut). Le bouton PDF existant reste inchangé.
+   * (repli sur le modèle par défaut).
    */
   async printWithTemplate(): Promise<void> {
     if (!this.invoice || !this.client || !this.vehicle) return;
@@ -791,10 +732,18 @@ export class InvoiceDetailComponent implements OnInit {
         items: this.invoice.items.map((item) => ({
           designation: item.description,
           quantity: item.quantity,
-          unitPrice: this.formatMoney(item.unitPrice, currency),
-          total: this.formatMoney(item.subtotal, currency),
+          unitPrice: item.unitPrice,
+          total: item.subtotal,
         })),
-        itemsHead: ['Désignation', 'Qté', 'Prix unitaire', 'Total'],
+        amountToConvert: this.invoice.totalAmount,
+        financialData: {
+          subtotal: this.invoice.subtotal,
+          hasDiscount: !!this.invoice.discountAmount,
+          discountAmount: this.invoice.discountAmount,
+          vatAmount: this.invoice.vatAmount,
+          total: this.invoice.totalAmount,
+          netToPay: this.invoice.totalAmount,
+        },
         totals: [
           {
             label: 'Sous-total',
@@ -860,6 +809,7 @@ export class InvoiceDetailComponent implements OnInit {
         ],
         clientName: this.getClientName(),
         clientLines: this.getClientLines(),
+        amountToConvert: Number(payment?.amount) || 0,
         totals: [
           {
             label: 'Montant réglé',

@@ -283,7 +283,7 @@ import { DateFonction } from '../../services/fonction/date-fonction';
 
             <p class="text-sm text-gray-600 mb-6">
               <span *ngIf="pendingVisibilityState">
-                Êtes-vous sûr de vouloir rendre ce devis visible par le client ? Celui-ci pourra alors le consulter, le télécharger et l'accepter ou le rejeter depuis son espace client.
+                Êtes-vous sûr de vouloir rendre ce devis visible par le client ? Celui-ci pourra alors le consulter, l'imprimer et l'accepter ou le rejeter depuis son espace client.
               </span>
               <span *ngIf="!pendingVisibilityState">
                 Êtes-vous sûr de vouloir retirer temporairement l'accès à ce devis ? Le client ne pourra plus le consulter depuis son espace.

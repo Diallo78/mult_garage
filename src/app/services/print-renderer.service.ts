@@ -4,9 +4,11 @@ import html2canvas from 'html2canvas';
 import { GarageDataService } from './garage-data.service';
 import { GarageDtoFunction } from './fonction/garageDto-function';
 import { Garage } from '../models/user.model';
+import { NumberToWordsService } from './number-to-words.service';
 import {
   DEFAULT_FINANCIAL_DISPLAY,
   DEFAULT_TABLE_COLUMNS,
+  getDefaultAmountInWordsLabel,
   PrintBodySection,
   PrintColumnConfig,
   PrintDocumentType,
@@ -27,6 +29,7 @@ export interface PrintLineItem {
   designation: string;
   quantity: string | number;
   unitPrice: string | number;
+  discount?: string | number;
   total: string | number;
 }
 
@@ -79,6 +82,10 @@ export interface PrintDocumentData {
   currency?: string;
   /** Données financières structurées (pour filtrage dynamique via financialDisplay). */
   financialData?: PrintFinancialData;
+  /** Montant spécifique à convertir en toutes lettres (ex: montant net devis/facture, montant payé du reçu). */
+  amountToConvert?: number;
+  /** Montant en toutes lettres précalculé (optionnel, sinon généré via NumberToWordsService). */
+  amountInWords?: string;
 }
 
 /**
@@ -127,7 +134,10 @@ export interface PrintGarageInfo {
   providedIn: 'root',
 })
 export class PrintRendererService {
-  constructor(private readonly garageDataService: GarageDataService) {}
+  constructor(
+    private readonly garageDataService: GarageDataService,
+    private readonly numberToWordsService: NumberToWordsService
+  ) {}
 
   // ---------------------------------------------------------------------------
   // Dimensions
@@ -289,9 +299,16 @@ ${printScript}
       'position:relative',
     ].join(';');
 
+    const wordsBeforeSignatures =
+      template.bodySettings.showAmountInWords &&
+      template.bodySettings.amountInWordsPosition === 'beforeSignatures'
+        ? this.renderAmountInWords(template, data)
+        : '';
+
     return `<div class="cg-page" style="${pageStyle}">
 ${this.renderHeader(template, data, garage)}
 ${this.renderBody(template, data)}
+${wordsBeforeSignatures}
 ${this.renderSignatures(template, garage)}
 ${this.renderFooter(template, garage)}
 </div>`;
@@ -480,9 +497,14 @@ ${lines.join('<br/>')}
           ? this.renderItemsSection(template, data)
           : '';
       case 'totals':
-        return template.bodySettings.showTotals
-          ? this.renderTotals(template, data)
-          : '';
+        if (!template.bodySettings.showTotals) return '';
+        const totalsHtml = this.renderTotals(template, data);
+        const wordsAfterTotals =
+          template.bodySettings.showAmountInWords &&
+          (template.bodySettings.amountInWordsPosition ?? 'afterTotals') === 'afterTotals'
+            ? this.renderAmountInWords(template, data)
+            : '';
+        return [totalsHtml, wordsAfterTotals].filter(Boolean).join('\n');
       case 'notes':
         return template.bodySettings.showNotes && data.notes
           ? this.blockHtml('Observations', this.escape(data.notes).replace(/\n/g, '<br/>'), template)
@@ -511,6 +533,72 @@ ${lines.join('<br/>')}
   <div style="font-size:${style.baseFontSize - 1}px;font-weight:700;color:${style.secondaryColor};margin-bottom:1.5mm;">${this.escape(title)}</div>
   <div style="font-size:${style.baseFontSize - 1}px;line-height:1.5;">${content}</div>
 </section>`;
+  }
+
+  /**
+   * Rendu visuel du montant en toutes lettres.
+   */
+  private renderAmountInWords(
+    template: PrintTemplateData,
+    data: PrintDocumentData
+  ): string {
+    const textInWords = this.resolveAmountInWords(template, data);
+    if (!textInWords) return '';
+
+    const style = template.styleSettings;
+    const body = template.bodySettings;
+    const label =
+      body.amountInWordsLabel?.trim() ||
+      getDefaultAmountInWordsLabel(data.documentType);
+
+    return `<section style="margin:2.5mm 0 ${body.sectionSpacing}mm;padding:2.5mm 3.5mm;background:#f9fafb;border-left:3px solid ${style.primaryColor};border-radius:2px;">
+  <div style="font-size:${style.baseFontSize - 1}px;font-style:italic;color:#374151;line-height:1.5;">
+    <strong style="color:${style.titleColor};font-style:normal;">${this.escape(label)}</strong> ${this.escape(textInWords)}.
+  </div>
+</section>`;
+  }
+
+  /**
+   * Détermine le montant en lettres à afficher à partir des données transmises
+   * ou calculées depuis le document.
+   */
+  private resolveAmountInWords(
+    template: PrintTemplateData,
+    data: PrintDocumentData
+  ): string {
+    if (data.amountInWords) {
+      return data.amountInWords;
+    }
+
+    let targetAmount: number | undefined = data.amountToConvert;
+
+    if (targetAmount === undefined && data.financialData) {
+      // Priorité au net à payer, sinon total, sinon sous-total
+      targetAmount =
+        data.financialData.netToPay ??
+        data.financialData.total ??
+        data.financialData.subtotal;
+    }
+
+    if (targetAmount === undefined && data.totals?.length) {
+      // Recherche de la ligne mise en valeur (strong) ou dernière ligne de total
+      const strongLine = data.totals.find((t) => t.strong);
+      const targetLine = strongLine ?? data.totals[data.totals.length - 1];
+      if (targetLine) {
+        const digits = targetLine.value.replace(/[^0-9,-]/g, '').replace(',', '.');
+        const parsed = parseFloat(digits);
+        if (!isNaN(parsed)) {
+          targetAmount = parsed;
+        }
+      }
+    }
+
+    if (targetAmount !== undefined && !isNaN(targetAmount)) {
+      const currency = data.currency || this.getGarageInfoFromStorage()?.currency || 'GNF';
+      return this.numberToWordsService.toWords(targetAmount, currency);
+    }
+
+    return '';
   }
 
   /**
@@ -612,11 +700,12 @@ ${lines.join('<br/>')}
       total: { label: (c) => `Total${c}`, align: 'right' },
     };
 
-    // If caller provided custom itemsHead, use it (legacy support)
+    // Résolution des colonnes actives : priorité à la configuration du modèle
+    const hasConfiguredColumns = !!body.tableColumns?.length;
     let head: string[];
     let alignments: string[];
 
-    if (data.itemsHead?.length) {
+    if (!hasConfiguredColumns && data.itemsHead?.length) {
       head = data.itemsHead;
       alignments = head.map((_, i) =>
         i === 0 ? 'left' : i === 1 ? 'center' : 'right'
@@ -642,8 +731,8 @@ ${lines.join('<br/>')}
 
         let cellValues: string[];
 
-        if (data.itemsHead?.length) {
-          // Legacy: fixed 4-column layout
+        if (!hasConfiguredColumns && data.itemsHead?.length) {
+          // Repli ancien format : 4 colonnes fixes
           cellValues = [
             this.escape(item.designation),
             this.escape(String(item.quantity)),
@@ -742,7 +831,7 @@ ${lines.join('<br/>')}
       if (!fd.showPrecompte && (label.includes('précompte') || label.includes('precompte'))) return false;
       if (!fd.showSubtotal && (label.includes('sous-total') || label.includes('subtotal'))) return false;
       if (!fd.showVat && (label.includes('tva') || label.includes('taxe'))) return false;
-      if (!fd.showTotal && (label.includes('total ttc') || label.includes('total à payer'))) return false;
+      if (!fd.showTotal && (label.includes('total ttc') || label.includes('total à payer') || label === 'total' || label.startsWith('total'))) return false;
       if (!fd.showNetToPay && (label.includes('net à payer') || label.includes('net to pay'))) return false;
       return true;
     });

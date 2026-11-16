@@ -47,9 +47,6 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
             </p>
           </div>
           <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
-            <button (click)="downloadPDF()" class="btn-secondary">
-              Télécharger PDF
-            </button>
             <button
               type="button"
               (click)="printWithTemplate()"
@@ -339,31 +336,9 @@ export class DiagnosticDetailComponent implements OnInit {
     }
   }
 
-  async downloadPDF(): Promise<void> {
-    if (!this.diagnostic || !this.client || !this.vehicle) return;
-
-    try {
-      const clientName = `${this.client.firstName} ${this.client.lastName}`;
-      const vehicleInfo = `${this.vehicle.brand} ${this.vehicle.model} (${this.vehicle.licensePlate})`;
-
-      const pipeDate = new FirestoreDatePipeTS();
-      const dateFonctio = pipeDate.transform(this.diagnostic.createdAt);
-      this.diagnostic.createdAt = new Date(dateFonctio);
-
-      await this.pdfService.generateDiagnosticReportPDF(
-        this.diagnostic,
-        clientName,
-        vehicleInfo
-      );
-      this.notificationService.showSuccess('PDF downloaded successfully');
-    } catch (error) {
-      this.notificationService.showError('Failed to generate PDF');
-    }
-  }
-
   /**
    * Imprime le rapport de diagnostic avec le modèle personnalisé du garage
-   * (repli sur le modèle par défaut). Le bouton PDF existant reste inchangé.
+   * (repli sur le modèle par défaut).
    */
   async printWithTemplate(): Promise<void> {
     if (!this.diagnostic || !this.client || !this.vehicle) return;

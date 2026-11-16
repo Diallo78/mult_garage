@@ -412,12 +412,6 @@ import { FormsModule } from '@angular/forms';
             </button>
 
             <button
-              (click)="downloadPDF()"
-              class="btn-secondary w-full sm:w-auto"
-            >
-              Télécharger PDF
-            </button>
-            <button
               type="button"
               (click)="printWithTemplate()"
               class="btn-primary w-full sm:w-auto"
@@ -1046,31 +1040,9 @@ export class QuoteDetailComponent implements OnInit {
     }
   }
 
-  async downloadPDF(): Promise<void> {
-    if (!this.quote || !this.client || !this.vehicle) return;
-
-    try {
-      const clientName = `${this.client.firstName} ${this.client.lastName}`;
-      const vehicleInfo = `${this.vehicle.brand} ${this.vehicle.model} (${this.vehicle.licensePlate})`;
-
-      const pipeDate = new FirestoreDatePipeTS();
-      const dateFonctio = pipeDate.transform(this.quote.createdAt);
-      this.quote.createdAt = new Date(dateFonctio);
-      await this.pdfService.generateQuotePDF(
-        this.quote,
-        clientName,
-        vehicleInfo
-      );
-      this.notificationService.showSuccess('PDF downloaded successfully');
-    } catch (error) {
-      this.notificationService.showError('Failed to generate PDF ' + error);
-    }
-  }
-
   /**
    * Imprime le devis en utilisant le modèle d'impression personnalisé du
    * garage (repli sur le modèle par défaut si aucun n'a été configuré).
-   * Le bouton « Télécharger PDF » existant reste inchangé.
    */
   async printWithTemplate(): Promise<void> {
     if (!this.quote || !this.client || !this.vehicle) return;
@@ -1106,10 +1078,25 @@ export class QuoteDetailComponent implements OnInit {
         items: this.quote.items.map((item) => ({
           designation: item.designation,
           quantity: item.quantity,
-          unitPrice: this.formatMoney(item.unitPrice, currency),
-          total: this.formatMoney(item.subtotal, currency),
+          unitPrice: item.unitPrice,
+          discount: (item as any).discount ?? '-',
+          total: item.subtotal,
         })),
-        itemsHead: ['Désignation', 'Qté', 'Prix unitaire', 'Total'],
+        financialData: {
+          subtotal: this.quote.subtotal,
+          hasDiscount: this.quote.hasDiscount,
+          discountLabel: `Remise (${this.quote.discountType === 'percentage' ? this.quote.discountValue + '%' : 'Fixe'})`,
+          discountAmount: this.quote.discountAmount,
+          subtotalAfterDiscount: this.quote.subtotalAfterDiscount ?? (this.quote.subtotal - (this.quote.discountAmount || 0)),
+          vatRate: this.quote.vatRate,
+          vatAmount: this.quote.vatAmount,
+          total: this.quote.total,
+          hasPrecompte: this.quote.hasPrecompte,
+          precompteRate: this.quote.precompteRate,
+          precompteAmount: this.quote.precompteAmount,
+          netToPay: this.quote.netToPay ?? (this.quote.total - (this.quote.precompteAmount || 0)),
+        },
+        amountToConvert: this.quote.netToPay ?? (this.quote.total - (this.quote.precompteAmount || 0)),
         totals: [
           {
             label: 'Sous-total HT',

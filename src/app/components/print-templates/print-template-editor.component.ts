@@ -20,6 +20,7 @@ import {
   DEFAULT_BODY_SECTION_ORDER,
   DEFAULT_FINANCIAL_DISPLAY,
   DEFAULT_TABLE_COLUMNS,
+  getDefaultAmountInWordsLabel,
   PrintBodySection,
   PrintColumnConfig,
   PrintDocumentType,
@@ -182,8 +183,8 @@ type EditorTab = 'header' | 'body' | 'footer' | 'signature' | 'style';
             </div>
 
             <!-- Onglet : Contenu -->
-            <div *ngIf="activeTab === 'body'" class="space-y-6">
-              <div formGroupName="bodySettings" class="space-y-5">
+            <div *ngIf="activeTab === 'body'" formGroupName="bodySettings" class="space-y-6">
+              <div class="space-y-5">
 
                 <!-- Ordre des sections -->
                 <div>
@@ -253,7 +254,7 @@ type EditorTab = 'header' | 'body' | 'footer' | 'signature' | 'style';
                   <h4 class="text-sm font-semibold text-blue-800">Affichage des informations financières</h4>
                 </div>
                 <p class="text-xs text-blue-600">Ces options contrôlent uniquement la visibilité. Les calculs du devis ne sont pas modifiés.</p>
-                <div [formGroup]="financialDisplayForm" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div formGroupName="financialDisplay" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div class="flex items-center gap-2" *ngFor="let item of financialToggles">
                     <input type="checkbox" [formControlName]="item.control" [id]="'fin-' + item.control" class="h-4 w-4 text-primary-600 rounded" />
                     <label [for]="'fin-' + item.control" class="text-sm text-gray-700">{{ item.label }}</label>
@@ -270,9 +271,9 @@ type EditorTab = 'header' | 'body' | 'footer' | 'signature' | 'style';
                   <h4 class="text-sm font-semibold text-green-800">Colonnes du tableau des prestations</h4>
                 </div>
                 <p class="text-xs text-green-700">Cochez les colonnes à afficher. Utilisez ↑↓ pour modifier l'ordre.</p>
-                <div class="divide-y divide-green-100 border border-green-200 rounded-lg overflow-hidden">
+                <div formArrayName="tableColumns" class="divide-y divide-green-100 border border-green-200 rounded-lg overflow-hidden">
                   <div *ngFor="let col of tableColumnsArray.controls; let i = index"
-                       [formGroup]="getColumnFormGroup(i)"
+                       [formGroupName]="i"
                        class="flex items-center gap-3 px-3 py-2 bg-white hover:bg-green-50 transition-colors">
                     <input type="checkbox" formControlName="enabled" [id]="'col-' + i" class="h-4 w-4 text-primary-600 rounded flex-shrink-0" />
                     <label [for]="'col-' + i" class="text-sm text-gray-700 flex-1 cursor-pointer">{{ columnLabels[getColumnKey(i)] || getColumnKey(i) }}</label>
@@ -280,6 +281,44 @@ type EditorTab = 'header' | 'body' | 'footer' | 'signature' | 'style';
                       <button type="button" class="px-2 py-0.5 border rounded text-xs disabled:opacity-40" [disabled]="i === 0" (click)="moveColumn(i, -1)">↑</button>
                       <button type="button" class="px-2 py-0.5 border rounded text-xs disabled:opacity-40" [disabled]="i === tableColumnsArray.length - 1" (click)="moveColumn(i, 1)">↓</button>
                     </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section : Montant en toutes lettres -->
+              <div class="border border-purple-100 rounded-xl p-4 bg-purple-50/40 space-y-3">
+                <div class="flex items-center justify-between mb-1">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-purple-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                    <h4 class="text-sm font-semibold text-purple-900">Montant en toutes lettres</h4>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" formControlName="showAmountInWords" id="showAmountInWords" class="h-4 w-4 text-primary-600 rounded" />
+                    <label for="showAmountInWords" class="text-sm font-medium text-purple-900 cursor-pointer">Afficher</label>
+                  </div>
+                </div>
+                <p class="text-xs text-purple-700">Convertit automatiquement le montant net du document en toutes lettres en français selon les règles grammaticales.</p>
+
+                <div *ngIf="form?.get('bodySettings.showAmountInWords')?.value" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  <div>
+                    <label class="form-label text-xs">Libellé personnalisé</label>
+                    <input
+                      type="text"
+                      formControlName="amountInWordsLabel"
+                      class="form-input"
+                      [placeholder]="defaultAmountInWordsLabel"
+                    />
+                    <p class="mt-1 text-xs text-gray-500">Exemple : « {{ defaultAmountInWordsLabel }} »</p>
+                  </div>
+                  <div>
+                    <label class="form-label text-xs">Emplacement dans le document</label>
+                    <select formControlName="amountInWordsPosition" class="form-input">
+                      <option value="afterTotals">Après les totaux</option>
+                      <option value="beforeSignatures">Avant les signatures</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Position du bloc de montant en lettres.</p>
                   </div>
                 </div>
               </div>
@@ -671,23 +710,18 @@ export class PrintTemplateEditorComponent implements OnInit, OnDestroy {
     if (!arr) return;
     const target = index + direction;
     if (target < 0 || target >= arr.length) return;
-    const aVal = { ...arr.at(index).value, order: target };
-    const bVal = { ...arr.at(target).value, order: index };
-    arr.at(index).setValue(bVal);
-    arr.at(target).setValue(aVal);
-    // Reorder controls so they appear in correct visual order
-    const aCtrl = arr.at(index);
-    const bCtrl = arr.at(target);
-    arr.removeAt(Math.max(index, target));
-    arr.removeAt(Math.min(index, target));
-    if (direction === -1) {
-      arr.insert(index, bCtrl);
-      arr.insert(target, aCtrl);
-    } else {
-      arr.insert(index, aCtrl);
-      arr.insert(target, bCtrl);
-    }
+
+    const currentControl = arr.at(index);
+    arr.removeAt(index);
+    arr.insert(target, currentControl);
+
+    // Mettre à jour l'ordre de chaque colonne
+    arr.controls.forEach((ctrl, idx) => {
+      ctrl.patchValue({ order: idx }, { emitEvent: false });
+    });
+
     this.form?.markAsDirty();
+    this.schedulePreview();
   }
 
   /** Déplace une section dans l'ordre d'affichage. */
@@ -767,6 +801,11 @@ export class PrintTemplateEditorComponent implements OnInit, OnDestroy {
     return getDocumentTypeInfo(this.documentType)?.defaultTitle ?? '';
   }
 
+  /** Libellé par défaut du montant en lettres pour le type de document courant. */
+  get defaultAmountInWordsLabel(): string {
+    return getDefaultAmountInWordsLabel(this.documentType);
+  }
+
   // ---------------------------------------------------------------------------
   // Interne
   // ---------------------------------------------------------------------------
@@ -843,6 +882,13 @@ export class PrintTemplateEditorComponent implements OnInit, OnDestroy {
         conditionsText: [template.bodySettings.conditionsText],
         tableColumns: tableColumnsArray,
         financialDisplay: this.financialDisplayForm,
+        showAmountInWords: [template.bodySettings.showAmountInWords ?? true],
+        amountInWordsLabel: [
+          template.bodySettings.amountInWordsLabel ?? this.defaultAmountInWordsLabel,
+        ],
+        amountInWordsPosition: [
+          template.bodySettings.amountInWordsPosition ?? 'afterTotals',
+        ],
       }),
       footerSettings: this.fb.group({ ...template.footerSettings }),
       signatureSettings: this.fb.group({
@@ -904,10 +950,12 @@ export class PrintTemplateEditorComponent implements OnInit, OnDestroy {
   }
 
   private currentTemplate(): PrintTemplateData {
-    return mergeWithDefaultTemplate(
-      this.documentType,
-      (this.form?.value ?? {}) as Partial<PrintTemplateData>
-    );
+    const raw = (this.form?.getRawValue() ?? {}) as Partial<PrintTemplateData>;
+    // Règle métier stricte : la signature du responsable / DG est toujours à droite
+    if (raw.signatureSettings?.responsible) {
+      raw.signatureSettings.responsible.position = 'right';
+    }
+    return mergeWithDefaultTemplate(this.documentType, raw);
   }
 
   /** Données fictives réalistes utilisées pour l'aperçu et le test d'impression. */
@@ -943,26 +991,48 @@ export class PrintTemplateEditorComponent implements OnInit, OnDestroy {
           designation: 'Vidange moteur et remplacement du filtre à huile',
           quantity: 1,
           unitPrice: 350000,
-          total: 350000,
+          discount: 35000,
+          total: 315000,
         },
         {
           designation: 'Plaquettes de frein avant (jeu complet)',
           quantity: 1,
           unitPrice: 620000,
+          discount: '-',
           total: 620000,
         },
         {
           designation: "Main d'œuvre mécanique",
           quantity: 3.5,
           unitPrice: 80000,
+          discount: '-',
           total: 280000,
         },
       ],
       totals: [
-        { label: 'Sous-total', value: format(1250000) },
-        { label: 'TVA (18 %)', value: format(225000) },
-        { label: 'Total à payer', value: format(1475000), strong: true },
+        { label: 'Sous-total HT', value: format(1250000) },
+        { label: 'Remise (10 %)', value: `- ${format(125000)}` },
+        { label: 'Total HT après remise', value: format(1125000) },
+        { label: 'TVA (18 %)', value: format(202500) },
+        { label: 'Total TTC', value: format(1327500) },
+        { label: 'Précompte TVA (33.33 %)', value: `- ${format(67493)}` },
+        { label: 'Net à payer', value: format(1260007), strong: true },
       ],
+      financialData: {
+        subtotal: 1250000,
+        hasDiscount: true,
+        discountLabel: 'Remise (10 %)',
+        discountAmount: 125000,
+        subtotalAfterDiscount: 1125000,
+        vatRate: 18,
+        vatAmount: 202500,
+        total: 1327500,
+        hasPrecompte: true,
+        precompteRate: 33.33,
+        precompteAmount: 67493,
+        netToPay: 1260007,
+      },
+      amountToConvert: 1260007,
       notes: 'Véhicule à retirer avant 18h00. Pièces garanties 6 mois.',
       currency,
     };
