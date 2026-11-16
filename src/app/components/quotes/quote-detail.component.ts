@@ -861,7 +861,7 @@ import { FormsModule } from '@angular/forms';
 
           <p class="text-sm text-gray-600 mb-6">
             <span *ngIf="pendingVisibilityState">
-              En confirmant, ce devis deviendra immédiatement accessible au client dans son espace personnel. Le client pourra le consulter, le télécharger et l'accepter ou le refuser.
+              En confirmant, ce devis deviendra immédiatement accessible au client dans son espace personnel. Le client pourra le consulter, l'imprimer et l'accepter ou le refuser.
             </span>
             <span *ngIf="!pendingVisibilityState">
               En confirmant, la visibilité de ce devis sera temporairement retirée de l'espace client. Le client ne pourra plus y accéder jusqu'à un nouvel envoi.

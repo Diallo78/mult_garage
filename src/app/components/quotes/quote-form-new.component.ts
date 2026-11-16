@@ -1036,7 +1036,7 @@ export class QuoteFormNewComponent implements OnInit {
 
       Nous avons le plaisir de vous informer que votre devis N° ${quoteNumber} est désormais disponible.
 
-      Vous pouvez le consulter et le télécharger en suivant ce lien :
+      Vous pouvez le consulter et l'imprimer en suivant ce lien :
       ${window.location.origin}/quotes/${quoteId}
 
       Nous restons à votre disposition pour toute information complémentaire.

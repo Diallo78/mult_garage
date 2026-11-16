@@ -438,17 +438,7 @@ export class PaymentFormComponent implements OnInit {
         updateData
       );
 
-      // Generate receipt
-      if (this.client) {
-        const clientName = `${this.client.firstName} ${this.client.lastName}`;
-        await this.pdfService.generatePaymentReceiptPDF(
-          payment,
-          this.invoice.invoiceNumber,
-          clientName
-        );
-      }
-
-      this.notificationService.showSuccess('Payment recorded successfully');
+      this.notificationService.showSuccess('Paiement enregistré avec succès');
       this.router.navigate(['/invoices', this.invoiceId]);
     } catch (error) {
       this.notificationService.showError('Failed to record payment');

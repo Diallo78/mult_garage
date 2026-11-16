@@ -9,6 +9,11 @@ import { Client } from '../../models/client.model';
 import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 import { PDFService } from '../../services/pdf.service';
 import { DateFonction } from '../../services/fonction/date-fonction';
+import { PrintTemplateService } from '../../services/print-template.service';
+import {
+  PrintDocumentData,
+  PrintRendererService,
+} from '../../services/print-renderer.service';
 
 @Component({
   selector: 'app-payment-list',
@@ -262,10 +267,11 @@ import { DateFonction } from '../../services/fonction/date-fonction';
                       Voir la facture
                     </button>
                     <button
-                      (click)="downloadReceipt(payment)"
+                      type="button"
+                      (click)="printReceipt(payment)"
                       class="text-secondary-600 hover:text-secondary-900"
                     >
-                      Reçu
+                      Imprimer le reçu
                     </button>
                   </td>
                 </tr>
@@ -291,7 +297,9 @@ export class PaymentListComponent implements OnInit {
   constructor(
     private readonly garageDataService: GarageDataService,
     private readonly notificationService: NotificationService,
-    private readonly pdfService: PDFService
+    private readonly pdfService: PDFService,
+    private readonly printTemplateService: PrintTemplateService,
+    private readonly printRendererService: PrintRendererService
   ) {}
 
   ngOnInit(): void {
@@ -412,28 +420,44 @@ export class PaymentListComponent implements OnInit {
     return this.payments.length;
   }
 
-  async downloadReceipt(payment: any) {
-    // Implementation for downloading receipt
-    // Generate receipt
-    const pipeDate = new FirestoreDatePipeTS();
-    const dateFonctio = pipeDate.transform(payment.date);
-    payment.date = new Date(dateFonctio);
-    this.isLoading = true;
+  async printReceipt(payment: any): Promise<void> {
     try {
-      if (payment) {
-        await this.pdfService.generatePaymentReceiptPDF(
-          payment,
-          payment.invoiceNumber,
-          payment.clientName
-        );
-      }
-      //  this.notificationService.showSuccess(
-      //    'Le téléchargement de votre reçu paiement a été effectué avec succès!'
-      //  );
+      const template = await this.printTemplateService.getTemplate(
+        'paymentReceipt'
+      );
+      const garage = await this.printRendererService.loadGarageInfo();
+      const currency = garage?.currency ?? 'GNF';
+
+      const pipeDate = new FirestoreDatePipeTS();
+      const dateFonctio = pipeDate.transform(payment?.date);
+      const paymentDate = new Date(dateFonctio);
+
+      const data: PrintDocumentData = {
+        documentType: 'paymentReceipt',
+        documentNumber: payment?.invoiceNumber || '',
+        documentDate: paymentDate.toLocaleDateString('fr-FR'),
+        meta: [
+          { label: 'Facture', value: payment?.invoiceNumber || '' },
+          { label: 'Mode de paiement', value: payment?.method || '' },
+          { label: 'Référence', value: payment?.reference || '' },
+        ],
+        clientName: payment?.clientName || '',
+        amountToConvert: Number(payment?.amount) || 0,
+        totals: [
+          {
+            label: 'Montant réglé',
+            value: `${(Number(payment?.amount) || 0).toLocaleString('fr-FR')} ${currency}`,
+            strong: true,
+          },
+        ],
+        notes: payment?.notes ?? '',
+        currency,
+      };
+
+      this.printRendererService.print(template, data, garage);
+      this.notificationService.showSuccess('Reçu prêt pour impression');
     } catch (error) {
-      this.notificationService.showError('Erreure de telechargement' + error);
-    } finally {
-      this.isLoading = false;
+      this.notificationService.showError("Échec de l'impression : " + error);
     }
   }
 }
