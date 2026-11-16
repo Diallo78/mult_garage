@@ -301,7 +301,7 @@ type EditorTab = 'header' | 'body' | 'footer' | 'signature' | 'style';
                 </div>
                 <p class="text-xs text-purple-700">Convertit automatiquement le montant net du document en toutes lettres en français selon les règles grammaticales.</p>
 
-                <div *ngIf="form?.get('bodySettings.showAmountInWords')?.value" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div *ngIf="form.get('bodySettings.showAmountInWords')?.value" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                   <div>
                     <label class="form-label text-xs">Libellé personnalisé</label>
                     <input
