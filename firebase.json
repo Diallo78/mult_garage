@@ -1,5 +1,7 @@
+
 {
   "hosting": {
+    "site": "garage-9ceb6",
     "public": "dist/multi_garage/browser",
     "ignore": [
       "firebase.json",

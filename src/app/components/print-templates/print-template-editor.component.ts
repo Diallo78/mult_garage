@@ -491,41 +491,79 @@ type EditorTab = 'header' | 'body' | 'footer' | 'signature' | 'style';
                 </div>
               </div>
 
-              <div formGroupName="styleSettings" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="sm:col-span-2">
-                  <label class="form-label">Police</label>
-                  <select formControlName="fontFamily" class="form-input">
-                    <option value="Helvetica, Arial, sans-serif">Helvetica / Arial</option>
-                    <option value="Georgia, 'Times New Roman', serif">Georgia / Times</option>
-                    <option value="'Times New Roman', Times, serif">Times New Roman</option>
-                    <option value="'Segoe UI', Tahoma, sans-serif">Segoe UI</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="form-label">Taille de base (px)</label>
-                  <input type="number" formControlName="baseFontSize" class="form-input" />
-                </div>
-                <div class="flex items-center gap-2 mt-6">
-                  <input type="checkbox" formControlName="showSeparators" id="showSeparators" class="h-4 w-4 text-primary-600 rounded" />
-                  <label for="showSeparators" class="text-sm text-gray-700">Séparateurs</label>
-                </div>
-                <div>
-                  <label class="form-label">Couleur principale</label>
-                  <input type="color" formControlName="primaryColor" class="form-input h-10" />
-                </div>
-                <div>
-                  <label class="form-label">Couleur secondaire</label>
-                  <input type="color" formControlName="secondaryColor" class="form-input h-10" />
-                </div>
-                <div>
-                  <label class="form-label">Couleur des titres</label>
-                  <input type="color" formControlName="titleColor" class="form-input h-10" />
-                </div>
-                <div>
-                  <label class="form-label">Couleur du texte</label>
-                  <input type="color" formControlName="textColor" class="form-input h-10" />
-                </div>
-              </div>
+
+          <div formGroupName="styleSettings" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="sm:col-span-2">
+              <label class="form-label">Police d'écriture</label>
+              <select formControlName="fontFamily" class="form-input">
+                <optgroup label="Polices modernes">
+                  <option value="Arial, Helvetica, sans-serif">Arial</option>
+                  <option value="'Segoe UI', Tahoma, sans-serif">Segoe UI</option>
+                  <option value="Roboto, Arial, sans-serif">Roboto</option>
+                  <option value="'Open Sans', Arial, sans-serif">Open Sans</option>
+                  <option value="Lato, Arial, sans-serif">Lato</option>
+                  <option value="Inter, Arial, sans-serif">Inter</option>
+                  <option value="Poppins, Arial, sans-serif">Poppins</option>
+                  <option value="Montserrat, Arial, sans-serif">Montserrat</option>
+                  <option value="Nunito, Arial, sans-serif">Nunito</option>
+                  <option value="Verdana, Geneva, sans-serif">Verdana</option>
+                </optgroup>
+
+                <optgroup label="Polices classiques">
+                  <option value="Helvetica, Arial, sans-serif">Helvetica</option>
+                  <option value="Georgia, 'Times New Roman', serif">Georgia</option>
+                  <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                  <option value="Garamond, serif">Garamond</option>
+                  <option value="Palatino, 'Book Antiqua', serif">Palatino</option>
+                </optgroup>
+
+                <optgroup label="Polices techniques">
+                  <option value="'Courier New', Courier, monospace">Courier New</option>
+                  <option value="Consolas, monospace">Consolas</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <div>
+              <label class="form-label">Taille de base (px)</label>
+              <input type="number" formControlName="baseFontSize"
+                class="form-input" min="8" max="24" />
+            </div>
+
+            <div class="flex items-center gap-2 mt-6">
+              <input type="checkbox" formControlName="showSeparators"
+                id="showSeparators"
+                class="h-4 w-4 text-primary-600 rounded" />
+              <label for="showSeparators" class="text-sm text-gray-700">
+                Séparateurs
+              </label>
+            </div>
+
+            <div>
+              <label class="form-label">Couleur principale</label>
+              <input type="color" formControlName="primaryColor"
+                class="form-input h-10" />
+            </div>
+
+            <div>
+              <label class="form-label">Couleur secondaire</label>
+              <input type="color" formControlName="secondaryColor"
+                class="form-input h-10" />
+            </div>
+
+            <div>
+              <label class="form-label">Couleur des titres</label>
+              <input type="color" formControlName="titleColor"
+                class="form-input h-10" />
+            </div>
+
+            <div>
+              <label class="form-label">Couleur du texte</label>
+              <input type="color" formControlName="textColor"
+                class="form-input h-10" />
+            </div>
+          </div>
+
             </div>
           </form>
         </div>
