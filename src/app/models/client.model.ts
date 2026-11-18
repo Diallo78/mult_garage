@@ -44,6 +44,21 @@ export function getClientDisplayName(client: Client): string {
   return name || 'Client';
 }
 
+/** Téléphone à afficher : celui du contact pour une entreprise, sinon celui du client. */
+export function getClientPhone(client: Client): string {
+  return (isCompanyClient(client) ? client.contactPhone : client.phone) || '';
+}
+
+/** E-mail à afficher : celui du contact pour une entreprise, sinon celui du client. */
+export function getClientEmail(client: Client): string {
+  return (isCompanyClient(client) ? client.contactEmail : client.email) || '';
+}
+
+/** Adresse à afficher : celle de l'entreprise ou l'adresse personnelle. */
+export function getClientAddress(client: Client): string {
+  return (isCompanyClient(client) ? client.companyAddress : client.address) || '';
+}
+
 export interface Driver {
   id: string;
   name: string;

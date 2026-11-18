@@ -10,7 +10,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { Client, Vehicle, Visit } from '../../models/client.model';
+import { Client, Vehicle, Visit, getClientDisplayName } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { Diagnostic, DiagnosticCategory } from '../../models/diagnostic.model';
@@ -59,8 +59,7 @@ import { Personnel } from '../../models/garage.model';
               Créer un rapport de diagnostic
             </h2>
             <p class="text-lg text-gray-600">
-              {{ vehicle.brand }} {{ vehicle.model }} - {{ client.firstName }}
-              {{ client.lastName }}
+              {{ vehicle.brand }} {{ vehicle.model }} - {{ getClientName(client) }}
             </p>
           </div>
         </div>
@@ -568,6 +567,11 @@ export class DiagnosticFormComponent implements OnInit {
   //     this.notificationService.showError('Failed to load personnel');
   //   }
   // }
+
+  /** Nom d'affichage du client (personne physique ou entreprise). */
+  getClientName(client: Client): string {
+    return getClientDisplayName(client);
+  }
 
   private async loadVisitAndPersonnelData(): Promise<void> {
     this.isLoading = true;

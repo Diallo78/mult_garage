@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { Invoice } from '../../models/invoice.model';
-import { Client } from '../../models/client.model';
+import { Client, getClientDisplayName } from '../../models/client.model';
 import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 import { PDFService } from '../../services/pdf.service';
 import { DateFonction } from '../../services/fonction/date-fonction';
@@ -330,9 +330,7 @@ export class PaymentListComponent implements OnInit {
 
     this.invoices.forEach((invoice) => {
       const client = this.clients.find((c) => c.id === invoice.clientId);
-      const clientName = client
-        ? `${client.firstName} ${client.lastName}`
-        : 'Unknown';
+      const clientName = client ? getClientDisplayName(client) : 'Unknown';
 
       invoice.payments.forEach((payment) => {
         this.payments.push({

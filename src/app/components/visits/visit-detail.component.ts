@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { Client, Vehicle, Visit } from '../../models/client.model';
+import { Client, Vehicle, Visit, getClientDisplayName, getClientPhone, getClientEmail } from '../../models/client.model';
 import { Diagnostic } from '../../models/diagnostic.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
@@ -89,17 +89,17 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                   [routerLink]="['/clients', client.id]"
                   class="text-primary-600 hover:text-primary-900"
                 >
-                  {{ client.firstName }} {{ client.lastName }}
+                  {{ getClientName(client) }}
                 </a>
               </p>
             </div>
             <div>
               <label class="text-sm font-medium text-gray-500">Téléphone</label>
-              <p class="mt-1 text-sm text-gray-900">{{ client.phone }}</p>
+              <p class="mt-1 text-sm text-gray-900">{{ clientPhone(client) || 'N/A' }}</p>
             </div>
             <div>
               <label class="text-sm font-medium text-gray-500">E-mail</label>
-              <p class="mt-1 text-sm text-gray-900">{{ client.email }}</p>
+              <p class="mt-1 text-sm text-gray-900">{{ clientEmail(client) || 'N/A' }}</p>
             </div>
           </div>
         </div>
@@ -246,6 +246,21 @@ export class VisitDetailComponent implements OnInit {
     if (this.visitId) {
       await this.loadVisitData();
     }
+  }
+
+  /** Nom d'affichage du client (personne physique ou entreprise). */
+  getClientName(client: Client): string {
+    return getClientDisplayName(client);
+  }
+
+  /** Téléphone du client (celui du contact pour une entreprise). */
+  clientPhone(client: Client): string {
+    return getClientPhone(client);
+  }
+
+  /** E-mail du client (celui du contact pour une entreprise). */
+  clientEmail(client: Client): string {
+    return getClientEmail(client);
   }
 
   private async loadVisitData(): Promise<void> {

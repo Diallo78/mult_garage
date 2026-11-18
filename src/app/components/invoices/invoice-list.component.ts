@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { Invoice } from '../../models/invoice.model';
-import { Client, Vehicle } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName } from '../../models/client.model';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
 import { AuthService } from '../../services/auth.service';
 import { DateFonction } from '../../services/fonction/date-fonction';
@@ -718,7 +718,7 @@ export class InvoiceListComponent implements OnInit {
 
   getClientName(clientId: string): string {
     const client = this.clients.find((c) => c.id === clientId);
-    return client ? `${client.firstName} ${client.lastName}` : 'Unknown';
+    return client ? getClientDisplayName(client) : 'Unknown';
   }
 
   getVehicleInfo(vehicleId: string): string {

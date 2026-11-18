@@ -277,7 +277,9 @@ import { AuthService } from '../../services/auth.service';
                     <div class="sm:hidden mt-1 text-xs text-gray-500">
                       <div>{{ getContactEmail(client) }}</div>
                       <div>{{ getContactPhone(client) }}</div>
-                      <div class="mt-1">{{ getAddress(client) || 'N/A' }}</div>
+                      <div class="mt-1 truncate" [title]="getAddress(client) || 'N/A'">
+                        {{ getAddress(client) || 'N/A' }}
+                      </div>
                       <div class="mt-1">
                         {{ client.createdAt | firestoreDate | date : 'short' }}
                       </div>
@@ -306,7 +308,10 @@ import { AuthService } from '../../services/auth.service';
                   </td>
 
                   <td class="px-3 py-4 whitespace-nowrap hidden md:table-cell">
-                    <div class="text-sm text-gray-900">
+                    <div
+                      class="text-sm text-gray-900 max-w-[180px] truncate"
+                      [title]="getAddress(client) || 'N/A'"
+                    >
                       {{ getAddress(client) || 'N/A' }}
                     </div>
                   </td>

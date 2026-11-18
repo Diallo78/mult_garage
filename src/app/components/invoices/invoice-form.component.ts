@@ -7,7 +7,7 @@ import { NotificationService } from '../../services/notification.service';
 import { Invoice } from '../../models/invoice.model';
 import { Intervention } from '../../models/intervention.model';
 import { Quote } from '../../models/quote.model';
-import { Client, Vehicle } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName, getClientPhone, getClientEmail } from '../../models/client.model';
 import { EmailService } from '../../services/email.service';
 
 @Component({
@@ -24,8 +24,7 @@ import { EmailService } from '../../services/email.service';
             Créer une facture
           </h2>
           <p class="text-lg text-gray-600">
-            {{ vehicle.brand }} {{ vehicle.model }} - {{ client.firstName }}
-            {{ client.lastName }}
+            {{ vehicle.brand }} {{ vehicle.model }} - {{ getClientName(client) }}
           </p>
         </div>
       </div>
@@ -578,17 +577,17 @@ export class InvoiceFormComponent implements OnInit {
   ): Promise<void> {
     try {
       // Envoi par WhatsApp
-      if (this.sendWhatsApp && client.phone) {
+      if (this.sendWhatsApp && getClientPhone(client)) {
         await this.sendWhatsAppNotification(client, invoiceNumber, invoiceId);
       }
 
       // Envoi par Email
-      if (this.sendEmail && client.email) {
+      if (this.sendEmail && getClientEmail(client)) {
         await this.sendEmailNotification(client, invoiceNumber, invoiceId);
       }
 
       // Envoi par SMS
-      if (this.sendSMS && client.phone) {
+      if (this.sendSMS && getClientPhone(client)) {
         await this.sendSMSNotification(client, invoiceNumber, invoiceId);
       }
 
@@ -602,15 +601,20 @@ export class InvoiceFormComponent implements OnInit {
     }
   }
 
+  /** Nom d'affichage du client (personne physique ou entreprise). */
+  getClientName(client: Client): string {
+    return getClientDisplayName(client);
+  }
+
   private async sendWhatsAppNotification(
     client: Client,
     invoiceNumber: string,
     invoiceId: string
   ): Promise<void> {
     try {
-      const message = `Bonjour ${client.firstName},\n\nVotre facture N° ${invoiceNumber} est prêt !\n\nVous pouvez le consulter en cliquant sur le lien suivant :\n${window.location.origin}/invoices/${invoiceId}\n\nMerci de votre confiance !`;
+      const message = `Bonjour ${getClientDisplayName(client)},\n\nVotre facture N° ${invoiceNumber} est prêt !\n\nVous pouvez le consulter en cliquant sur le lien suivant :\n${window.location.origin}/invoices/${invoiceId}\n\nMerci de votre confiance !`;
 
-      await this.emailService.sendWhatsAppMessage(client.phone!, message);
+      await this.emailService.sendWhatsAppMessage(getClientPhone(client), message);
       this.notificationService.showSuccess(
         'WhatsApp ouvert avec le message pré-rempli'
       );
@@ -627,7 +631,7 @@ export class InvoiceFormComponent implements OnInit {
     try {
       const formValue = this.invoiceForm.value;
       const emailData = {
-        clientName: `${client.firstName} ${client.lastName}`,
+        clientName: getClientDisplayName(client),
         quoteNumber: invoiceNumber,
         quoteId: invoiceId,
         total: 0,
@@ -651,7 +655,7 @@ export class InvoiceFormComponent implements OnInit {
       // Ici vous pouvez intégrer avec un service SMS comme Twilio, etc.
       // Pour l'instant, on simule l'envoi
       console.log(
-        `SMS envoyé à ${client.phone}: Facture ${invoiceNumber} disponible`
+        `SMS envoyé à ${getClientPhone(client)}: Facture ${invoiceNumber} disponible`
       );
       this.notificationService.showSuccess('SMS envoyé au client');
     } catch (error) {
@@ -667,13 +671,13 @@ export class InvoiceFormComponent implements OnInit {
     try {
       const notification = {
         title: 'Nouveau facture',
-        message: `Facture N° ${invoiceNumber} disponible pour ${client.firstName} ${client.lastName}`,
+        message: `Facture N° ${invoiceNumber} disponible pour ${getClientDisplayName(client)}`,
         read: false,
         quoteId: invoiceId,
         type: 'Facture',
         clientId: client.id,
         createdAt: new Date(),
-        emailDesitnateur: client.email,
+        emailDesitnateur: getClientEmail(client),
       };
 
       await this.garageDataService.create('notifications', notification);

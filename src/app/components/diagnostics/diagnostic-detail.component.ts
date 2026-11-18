@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Diagnostic } from '../../models/diagnostic.model';
-import { Client, Vehicle, Visit } from '../../models/client.model';
+import { Client, Vehicle, Visit, getClientDisplayName, getClientPhone, getClientEmail } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { PDFService } from '../../services/pdf.service';
@@ -74,16 +74,16 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
               <div>
                 <label class="text-sm font-medium text-gray-500">Nom complet</label>
                 <p class="mt-1 text-sm text-gray-900">
-                  {{ client.firstName }} {{ client.lastName }}
+                  {{ getClientName() }}
                 </p>
               </div>
               <div>
                 <label class="text-sm font-medium text-gray-500">Téléphone</label>
-                <p class="mt-1 text-sm text-gray-900">{{ client.phone }}</p>
+                <p class="mt-1 text-sm text-gray-900">{{ clientPhone || 'N/A' }}</p>
               </div>
               <div>
                 <label class="text-sm font-medium text-gray-500">E-mail</label>
-                <p class="mt-1 text-sm text-gray-900">{{ client.email }}</p>
+                <p class="mt-1 text-sm text-gray-900">{{ clientEmail || 'N/A' }}</p>
               </div>
             </div>
           </div>
@@ -362,8 +362,8 @@ export class DiagnosticDetailComponent implements OnInit {
         ],
         clientName: this.getClientName(),
         clientLines: [
-          this.client.phone ? `Tél. : ${this.client.phone}` : '',
-          this.client.email ? `E-mail : ${this.client.email}` : '',
+          this.clientPhone ? `Tél. : ${this.clientPhone}` : '',
+          this.clientEmail ? `E-mail : ${this.clientEmail}` : '',
         ].filter((line) => !!line),
         vehicleLines: [
           `${this.vehicle.brand} ${this.vehicle.model}`,
@@ -390,12 +390,18 @@ export class DiagnosticDetailComponent implements OnInit {
   }
 
   /** Nom d'affichage du client (personne physique ou entreprise). */
-  private getClientName(): string {
-    if (!this.client) return '';
-    if (this.client.clientType === 'company') {
-      return this.client.companyName || this.client.contactName || '';
-    }
-    return `${this.client.firstName ?? ''} ${this.client.lastName ?? ''}`.trim();
+  getClientName(): string {
+    return this.client ? getClientDisplayName(this.client) : '';
+  }
+
+  /** Téléphone du client (celui du contact pour une entreprise). */
+  get clientPhone(): string {
+    return this.client ? getClientPhone(this.client) : '';
+  }
+
+  /** E-mail du client (celui du contact pour une entreprise). */
+  get clientEmail(): string {
+    return this.client ? getClientEmail(this.client) : '';
   }
 
   /** Convertit une date Firestore en date lisible (fr-FR). */

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Quote } from '../../models/quote.model';
-import { Client, Vehicle } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName, getClientEmail } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
@@ -433,7 +433,7 @@ export class QuoteListComponent implements OnInit {
 
   getClientName(clientId: string): string {
     const client = this.clients.find((c) => c.id === clientId);
-    return client ? `${client.firstName} ${client.lastName}` : 'Unknown';
+    return client ? getClientDisplayName(client) : 'Unknown';
   }
 
   getVehicleInfo(vehicleId: string): string {
@@ -499,13 +499,13 @@ export class QuoteListComponent implements OnInit {
       // Création d'une notification pour le client si visibilité accordée
       if (makeVisible && this.targetQuoteForVisibility.clientId) {
         const client = this.clients.find((c) => c.id === this.targetQuoteForVisibility!.clientId);
-        if (client?.email) {
+        if (client && getClientEmail(client)) {
           await this.garageDataService.create('notifications', {
             title: 'Nouveau devis disponible',
             message: `Votre devis N° ${this.targetQuoteForVisibility.quoteNumber} est maintenant disponible sur votre espace client.`,
             read: false,
             quoteId: quoteId,
-            emailDesitnateur: client.email,
+            emailDesitnateur: getClientEmail(client),
             type: 'Devis',
             garageId: this.targetQuoteForVisibility.garageId,
             createdAt: new Date(),

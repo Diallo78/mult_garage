@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
-import { Client, Vehicle } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName } from '../../models/client.model';
 import { AuthService } from '../../services/auth.service';
 import { UserManagementService } from '../../services/user-management.service';
 import { DateFonction } from '../../services/fonction/date-fonction';
@@ -249,7 +249,7 @@ export class VehicleListComponent implements OnInit {
 
   getClientName(clientId: string): string {
     const client = this.clients.find((c) => c.id === clientId);
-    return client ? `${client.firstName} ${client.lastName}` : 'Unknown';
+    return client ? getClientDisplayName(client) : 'Unknown';
   }
 
   async deleteVehicle(vehicle: Vehicle): Promise<void> {

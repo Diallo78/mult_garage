@@ -12,7 +12,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { StorageService } from '../../services/storage.service';
 import { NotificationService } from '../../services/notification.service';
-import { Visit, Client, Vehicle } from '../../models/client.model';
+import { Visit, Client, Vehicle, getClientDisplayName } from '../../models/client.model';
 import { FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 import { AuthService } from '../../services/auth.service';
 import { UserManagementService } from '../../services/user-management.service';
@@ -96,7 +96,7 @@ interface VisitDocument {
               >
                 <option value="">Sélectionnez un client</option>
                 <option *ngFor="let client of clients" [value]="client.id">
-                  {{ client.firstName }} {{ client.lastName }}
+                  {{ getClientName(client) }}
                 </option>
               </select>
               <div
@@ -554,6 +554,11 @@ export class VisitFormEnhancedComponent implements OnInit {
 
   get reportedIssuesArray(): FormArray {
     return this.visitForm.get('reportedIssues') as FormArray;
+  }
+
+  /** Nom d'affichage du client (personne physique ou entreprise). */
+  getClientName(client: Client): string {
+    return getClientDisplayName(client);
   }
 
   private async loadDataClient(): Promise<void> {

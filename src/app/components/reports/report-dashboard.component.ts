@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
-import { Client, Vehicle, Visit } from '../../models/client.model';
+import { Client, Vehicle, Visit, getClientDisplayName } from '../../models/client.model';
 import { Diagnostic } from '../../models/diagnostic.model';
 import { Quote } from '../../models/quote.model';
 import { Intervention } from '../../models/intervention.model';
@@ -507,7 +507,7 @@ export class ReportDashboardComponent implements OnInit {
     this.invoices.forEach((invoice) => {
       const client = this.clients.find((c) => c.id === invoice.clientId);
       if (client) {
-        const clientName = `${client.firstName} ${client.lastName}`;
+        const clientName = getClientDisplayName(client);
         if (!clientData[clientName]) {
           clientData[clientName] = {
             name: clientName,
@@ -523,7 +523,7 @@ export class ReportDashboardComponent implements OnInit {
     this.visits.forEach((visit) => {
       const client = this.clients.find((c) => c.id === visit.clientId);
       if (client) {
-        const clientName = `${client.firstName} ${client.lastName}`;
+        const clientName = getClientDisplayName(client);
         if (clientData[clientName]) {
           clientData[clientName].visitCount++;
           if (

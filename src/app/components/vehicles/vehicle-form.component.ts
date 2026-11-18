@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router, ActivatedRoute } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
-import { Client, Vehicle } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName } from '../../models/client.model';
 import { AuthService } from '../../services/auth.service';
 import { UserManagementService } from '../../services/user-management.service';
 
@@ -33,13 +33,42 @@ import { UserManagementService } from '../../services/user-management.service';
             >
               <option value="">Sélectionner un client</option>
               <option *ngFor="let client of clients" [value]="client.id">
-                {{ client.firstName }} {{ client.lastName }}
+                {{ getClientName(client) }}
               </option>
             </select>
             <div *ngIf="vehicleForm.get('clientId')?.invalid && vehicleForm.get('clientId')?.touched" class="mt-1 text-sm text-red-600">
               Veuillez sélectionner un client
             </div>
           </div>
+
+          <div>
+            <label class="form-label">Propriétaire *</label>
+
+            <select
+              formControlName="clientId"
+              class="form-input"
+              [class.border-red-500]="
+                vehicleForm.get('clientId')?.invalid &&
+                vehicleForm.get('clientId')?.touched
+              "
+            >
+              <option value="">Sélectionner un propriétaire</option>
+
+              <option *ngFor="let client of clients" [value]="client.id">
+                {{ getClientName(client) }}
+              </option>
+            </select>
+
+            <div
+              *ngIf="
+                vehicleForm.get('clientId')?.invalid &&
+                vehicleForm.get('clientId')?.touched
+              "
+              class="mt-1 text-sm text-red-600"
+            >
+              Veuillez sélectionner un propriétaire
+            </div>
+        </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -206,7 +235,12 @@ export class VehicleFormComponent implements OnInit {
 
   }
 
-  private async loadClients(): Promise<void> {
+  // Ajouter 18/11/2026
+  getClientName(client: Client): string {
+    return getClientDisplayName(client);
+  }
+
+  private async loadClientsV1(): Promise<void> {
     try {
       if (this.authService.isClient) {
         const currentUser = this.authService.getCurrentUser();
@@ -224,6 +258,31 @@ export class VehicleFormComponent implements OnInit {
     } catch (error) {
       this.notificationService.showError('Failed to load clients ' + error);
     } finally { this._isLoading = false }
+  }
+
+  // Ajouter 18/11/2026
+  private async loadClients(): Promise<void> {
+    try {
+      if (this.authService.isClient) {
+        const currentUser = this.authService.getCurrentUser();
+
+        if (currentUser) {
+          const client = await this.userManagementService.getClientByUserId(
+            currentUser.uid
+          ) as Client | null;
+
+          this.clients = client ? [client] : [];
+        }
+      } else {
+        this.clients = await this.garageDataService.getAll<Client>('clients');
+      }
+    } catch (error) {
+      this.notificationService.showError(
+        'Erreur lors du chargement des propriétaires : ' + error
+      );
+    } finally {
+      this._isLoading = false;
+    }
   }
 
   private async loadVehicle(): Promise<void> {

@@ -6,7 +6,7 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { Quote } from '../../models/quote.model';
 import { Diagnostic } from '../../models/diagnostic.model';
-import { Visit, Client, Vehicle } from '../../models/client.model';
+import { Visit, Client, Vehicle, getClientDisplayName, getClientPhone, getClientEmail } from '../../models/client.model';
 import { UserManagementService } from '../../services/user-management.service';
 import { AuthService } from '../../services/auth.service';
 import { firstValueFrom } from 'rxjs';
@@ -26,8 +26,7 @@ import { EmailService } from '../../services/email.service';
             Créer un devis
           </h2>
           <p class="text-lg text-gray-600">
-            {{ vehicle.brand }} {{ vehicle.model }} - {{ client.firstName }}
-            {{ client.lastName }}
+            {{ vehicle.brand }} {{ vehicle.model }} - {{ getClientName(client) }}
           </p>
         </div>
       </div>
@@ -558,6 +557,11 @@ export class QuoteFormComponent implements OnInit {
     })();
   }
 
+  /** Nom d'affichage du client (personne physique ou entreprise). */
+  getClientName(client: Client): string {
+    return getClientDisplayName(client);
+  }
+
   private async checkEditPermissions(): Promise<void> {
     const currentUser = await firstValueFrom(this.authService.currentUser$);
     if (currentUser) {
@@ -843,17 +847,17 @@ export class QuoteFormComponent implements OnInit {
   ): Promise<void> {
     try {
       // Envoi par WhatsApp
-      if (this.sendWhatsApp && client.phone) {
+      if (this.sendWhatsApp && getClientPhone(client)) {
         await this.sendWhatsAppNotification(client, quoteNumber, quoteId);
       }
 
       // Envoi par Email
-      if (this.sendEmail && client.email) {
+      if (this.sendEmail && getClientEmail(client)) {
         await this.sendEmailNotification(client, quoteNumber, quoteId);
       }
 
       // Envoi par SMS
-      if (this.sendSMS && client.phone) {
+      if (this.sendSMS && getClientPhone(client)) {
         await this.sendSMSNotification(client, quoteNumber, quoteId);
       }
 
@@ -873,7 +877,7 @@ export class QuoteFormComponent implements OnInit {
     quoteId: string
   ): Promise<void> {
     try {
-      const message = `Bonjour ${client.firstName},
+      const message = `Bonjour ${getClientDisplayName(client)},
 
       Nous avons le plaisir de vous informer que votre devis N° ${quoteNumber} est désormais disponible.
 
@@ -885,7 +889,7 @@ export class QuoteFormComponent implements OnInit {
       Merci de votre confiance,
       L’équipe CarGest 🚘📑`;
 
-      await this.emailService.sendWhatsAppMessage(client.phone!, message);
+      await this.emailService.sendWhatsAppMessage(getClientPhone(client), message);
       this.notificationService.showSuccess(
         'WhatsApp ouvert avec le message pré-rempli'
       );
@@ -902,7 +906,7 @@ export class QuoteFormComponent implements OnInit {
     try {
       const formValue = this.quoteForm.value;
       const emailData = {
-        clientName: `${client.firstName} ${client.lastName}`,
+        clientName: getClientDisplayName(client),
         quoteNumber: quoteNumber,
         quoteId: quoteId,
         total: this.total,
@@ -926,7 +930,7 @@ export class QuoteFormComponent implements OnInit {
       // Ici vous pouvez intégrer avec un service SMS comme Twilio, etc.
       // Pour l'instant, on simule l'envoi
       console.log(
-        `SMS envoyé à ${client.phone}: Devis ${quoteNumber} disponible`
+        `SMS envoyé à ${getClientPhone(client)}: Devis ${quoteNumber} disponible`
       );
       this.notificationService.showSuccess('SMS envoyé au client');
     } catch (error) {
@@ -942,13 +946,13 @@ export class QuoteFormComponent implements OnInit {
     try {
       const notification = {
         title: 'Nouveau devis disponible',
-        message: `Devis N° ${quoteNumber} créé pour ${client.firstName} ${client.lastName}`,
+        message: `Devis N° ${quoteNumber} créé pour ${getClientDisplayName(client)}`,
         read: false,
         quoteId: quoteId,
         type: 'Devis',
         clientId: client.id,
         createdAt: new Date(),
-        emailDesitnateur: client.email,
+        emailDesitnateur: getClientEmail(client),
       };
 
       await this.garageDataService.create('notifications', notification);

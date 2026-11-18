@@ -6,7 +6,7 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { PDFService } from '../../services/pdf.service';
 import { Invoice, Payment, PaymentMethod } from '../../models/invoice.model';
-import { Client, Vehicle } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName } from '../../models/client.model';
 
 @Component({
   selector: 'app-payment-form',
@@ -22,8 +22,7 @@ import { Client, Vehicle } from '../../models/client.model';
             Ajouter un paiement
           </h2>
           <p class="text-lg text-gray-600">
-            Facture {{ invoice.invoiceNumber }} - {{ client.firstName }}
-            {{ client.lastName }}
+            Facture {{ invoice.invoiceNumber }} - {{ getClientName(client) }}
           </p>
         </div>
       </div>
@@ -338,6 +337,11 @@ export class PaymentFormComponent implements OnInit {
         this.setupAmountValidation();
       }
     })();
+  }
+
+  /** Nom d'affichage du client (personne physique ou entreprise). */
+  getClientName(client: Client): string {
+    return getClientDisplayName(client);
   }
 
   private async loadInvoiceData(): Promise<void> {

@@ -15,7 +15,7 @@ import {
   TechnicalCheck,
   EXAM_CATEGORIES,
 } from '../../models/exam.model';
-import { Client, Vehicle } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName, getClientEmail, getClientPhone } from '../../models/client.model';
 import { FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 
 @Component({
@@ -103,9 +103,7 @@ import { FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
                 >
                   <option value="">-- Sélectionner un client --</option>
                   <option *ngFor="let client of clients" [value]="client.id">
-                    {{ client.firstName }} {{ client.lastName }} ({{
-                      client.email
-                    }})
+                    {{ getClientName(client) }} ({{ clientEmail(client) }})
                   </option>
                 </select>
               </div>
@@ -440,6 +438,16 @@ export class ExameFormComponent implements OnInit {
     })();
   }
 
+  /** Nom d'affichage du client (personne physique ou entreprise). */
+  getClientName(client: Client): string {
+    return getClientDisplayName(client);
+  }
+
+  /** E-mail du client (celui du contact pour une entreprise). */
+  clientEmail(client: Client): string {
+    return getClientEmail(client);
+  }
+
   private addDynamicControls(): void {
     // Ajouter des contrôles pour chaque élément de vérification
     this.examCategories.forEach((category) => {
@@ -517,8 +525,8 @@ export class ExameFormComponent implements OnInit {
       const selectedClient = this.clients.find((c) => c.id === clientId);
       if (selectedClient) {
         this.examForm.patchValue({
-          clientName: `${selectedClient.firstName} ${selectedClient.lastName}`,
-          clientPhone: selectedClient.phone || '',
+          clientName: getClientDisplayName(selectedClient),
+          clientPhone: getClientPhone(selectedClient),
         });
       }
     } catch (error) {

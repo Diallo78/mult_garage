@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { Client, Vehicle, Visit } from '../../models/client.model';
+import { Client, Vehicle, Visit, getClientDisplayName, getClientPhone, getClientEmail, getClientAddress } from '../../models/client.model';
 import { NotificationService } from '../../services/notification.service';
 import { GarageDataService } from '../../services/garage-data.service';
 import { AuthService } from '../../services/auth.service';
@@ -242,7 +242,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                   [routerLink]="['/clients', owner.id]"
                   class="text-primary-600 hover:text-primary-900"
                 >
-                  {{ owner.firstName }} {{ owner.lastName }}
+                  {{ getOwnerName() }}
                 </a>
               </p>
             </div>
@@ -251,7 +251,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                 >Téléphone</label
               >
               <p class="mt-1 text-xs sm:text-sm text-gray-900">
-                {{ owner.phone }}
+                {{ getOwnerPhone() || 'N/A' }}
               </p>
             </div>
             <div class="sm:col-span-2">
@@ -259,7 +259,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                 >Email</label
               >
               <p class="mt-1 text-xs sm:text-sm text-gray-900">
-                {{ owner.email }}
+                {{ getOwnerEmail() || 'N/A' }}
               </p>
             </div>
             <div class="sm:col-span-2">
@@ -267,7 +267,7 @@ import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
                 >Adresse</label
               >
               <p class="mt-1 text-xs sm:text-sm text-gray-900">
-                {{ owner.address || 'N/A' }}
+                {{ getOwnerAddress() || 'N/A' }}
               </p>
             </div>
           </div>
@@ -346,6 +346,26 @@ export class VehicleDetailComponent implements OnInit {
     if (this.vehicleId) {
       await this.loadVehicleData();
     }
+  }
+
+  /** Nom d'affichage du propriétaire (personne physique ou entreprise). */
+  getOwnerName(): string {
+    return this.owner ? getClientDisplayName(this.owner) : '';
+  }
+
+  /** Téléphone du propriétaire (celui du contact pour une entreprise). */
+  getOwnerPhone(): string {
+    return this.owner ? getClientPhone(this.owner) : '';
+  }
+
+  /** E-mail du propriétaire (celui du contact pour une entreprise). */
+  getOwnerEmail(): string {
+    return this.owner ? getClientEmail(this.owner) : '';
+  }
+
+  /** Adresse du propriétaire (celle de l'entreprise ou l'adresse personnelle). */
+  getOwnerAddress(): string {
+    return this.owner ? getClientAddress(this.owner) : '';
   }
 
   private async loadVehicleData(): Promise<void> {

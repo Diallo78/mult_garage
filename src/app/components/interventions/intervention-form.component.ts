@@ -7,7 +7,7 @@ import { NotificationService } from '../../services/notification.service';
 import { AuthService } from '../../services/auth.service';
 import { Intervention } from '../../models/intervention.model';
 import { Quote } from '../../models/quote.model';
-import { Client, Vehicle } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName } from '../../models/client.model';
 import { firstValueFrom } from 'rxjs';
 import { Personnel } from '../../models/garage.model';
 
@@ -23,7 +23,7 @@ import { Personnel } from '../../models/garage.model';
             Créer une intervention
           </h2>
           <p class="text-lg text-gray-600">
-            {{ vehicle.brand }} {{ vehicle.model }} - {{ client.firstName }} {{ client.lastName }}
+            {{ vehicle.brand }} {{ vehicle.model }} - {{ getClientName(client) }}
           </p>
         </div>
       </div>
@@ -316,6 +316,11 @@ export class InterventionFormComponent implements OnInit {
         this.setDefaultStartDate();
       }
     })()
+  }
+
+  /** Nom d'affichage du client (personne physique ou entreprise). */
+  getClientName(client: Client): string {
+    return getClientDisplayName(client);
   }
 
   private async loadQuoteData(): Promise<void> {

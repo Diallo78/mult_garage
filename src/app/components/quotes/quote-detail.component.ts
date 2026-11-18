@@ -10,7 +10,7 @@ import {
   PrintRendererService,
 } from '../../services/print-renderer.service';
 import { Quote } from '../../models/quote.model';
-import { Client, Vehicle } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName, getClientPhone, getClientEmail, getClientAddress } from '../../models/client.model';
 import {
   FirestoreDatePipe,
   FirestoreDatePipeTS,
@@ -528,7 +528,7 @@ import { FormsModule } from '@angular/forms';
                   >Client</label
                 >
                 <p class="mt-1 text-xs sm:text-sm text-gray-900">
-                  {{ client.firstName }} {{ client.lastName }}
+                  {{ getClientName() }}
                 </p>
               </div>
               <div>
@@ -536,7 +536,7 @@ import { FormsModule } from '@angular/forms';
                   >Téléphone</label
                 >
                 <p class="mt-1 text-xs sm:text-sm text-gray-900">
-                  {{ client.phone }}
+                  {{ clientPhone }}
                 </p>
               </div>
               <div>
@@ -930,6 +930,16 @@ export class QuoteDetailComponent implements OnInit {
     })()
   }
 
+  /** Nom d'affichage du client (personne physique ou entreprise). */
+  getClientName(): string {
+    return this.client ? getClientDisplayName(this.client) : '';
+  }
+
+  /** Téléphone du client (celui du contact pour une entreprise). */
+  get clientPhone(): string {
+    return this.client ? getClientPhone(this.client) : '';
+  }
+
   private async loadQuoteData(): Promise<void> {
     this.isLoading = true;
     try {
@@ -1060,11 +1070,11 @@ export class QuoteDetailComponent implements OnInit {
           { label: "Valable jusqu'au", value: this.formatDate(this.quote.validUntil) },
           { label: 'Statut', value: this.quote.status },
         ],
-        clientName: `${this.client.firstName} ${this.client.lastName}`,
+        clientName: getClientDisplayName(this.client),
         clientLines: [
-          this.client.phone ? `Tél. : ${this.client.phone}` : '',
-          this.client.email ? `E-mail : ${this.client.email}` : '',
-          this.client.address ? `Adresse : ${this.client.address}` : '',
+          getClientPhone(this.client) ? `Tél. : ${getClientPhone(this.client)}` : '',
+          getClientEmail(this.client) ? `E-mail : ${getClientEmail(this.client)}` : '',
+          getClientAddress(this.client) ? `Adresse : ${getClientAddress(this.client)}` : '',
         ].filter((line) => !!line),
         vehicleLines: [
           `${this.vehicle.brand} ${this.vehicle.model}`,
@@ -1189,13 +1199,13 @@ export class QuoteDetailComponent implements OnInit {
       await this.garageDataService.update('quotes', this.quoteId, updates);
 
       // Notification pour le client si visibilité accordée
-      if (makeVisible && this.client?.email) {
+      if (makeVisible && this.client && getClientEmail(this.client)) {
         await this.garageDataService.create('notifications', {
           title: 'Nouveau devis disponible',
           message: `Votre devis N° ${this.quote.quoteNumber} est désormais consultable dans votre espace client.`,
           read: false,
           quoteId: this.quoteId,
-          emailDesitnateur: this.client.email,
+          emailDesitnateur: getClientEmail(this.client),
           type: 'Devis',
           garageId: this.quote.garageId,
           createdAt: new Date(),

@@ -6,7 +6,7 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { Intervention } from '../../models/intervention.model';
 import { Quote } from '../../models/quote.model';
-import { Client, Vehicle } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName } from '../../models/client.model';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
 import { DateFonction } from '../../services/fonction/date-fonction';
 
@@ -348,7 +348,7 @@ export class InterventionListComponent implements OnInit {
     const quote = this.quotes.find((q) => q.id === quoteId);
     if (quote) {
       const client = this.clients.find((c) => c.id === quote.clientId);
-      return client ? `${client.firstName} ${client.lastName}` : 'Unknown';
+      return client ? getClientDisplayName(client) : 'Unknown';
     }
     return 'Unknown';
   }

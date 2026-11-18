@@ -10,7 +10,7 @@ import {
   PrintRendererService,
 } from '../../services/print-renderer.service';
 import { Invoice } from '../../models/invoice.model';
-import { Client, Vehicle } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName, getClientPhone, getClientEmail } from '../../models/client.model';
 import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 
 @Component({
@@ -350,7 +350,7 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
                   >Client</label
                 >
                 <p class="mt-1 text-xs sm:text-sm text-gray-900">
-                  {{ client.firstName }} {{ client.lastName }}
+                  {{ getClientName() }}
                 </p>
               </div>
               <div>
@@ -358,7 +358,7 @@ import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-dat
                   >Téléphone</label
                 >
                 <p class="mt-1 text-xs sm:text-sm text-gray-900">
-                  {{ client.phone }}
+                  {{ clientPhone || 'N/A' }}
                 </p>
               </div>
               <div>
@@ -829,12 +829,18 @@ export class InvoiceDetailComponent implements OnInit {
   }
 
   /** Nom d'affichage du client (personne physique ou entreprise). */
-  private getClientName(): string {
-    if (!this.client) return '';
-    if (this.client.clientType === 'company') {
-      return this.client.companyName || this.client.contactName || '';
-    }
-    return `${this.client.firstName ?? ''} ${this.client.lastName ?? ''}`.trim();
+  getClientName(): string {
+    return this.client ? getClientDisplayName(this.client) : '';
+  }
+
+  /** Téléphone du client (celui du contact pour une entreprise). */
+  get clientPhone(): string {
+    return this.client ? getClientPhone(this.client) : '';
+  }
+
+  /** E-mail du client (celui du contact pour une entreprise). */
+  get clientEmail(): string {
+    return this.client ? getClientEmail(this.client) : '';
   }
 
   /** Coordonnées du client pour l'impression. */

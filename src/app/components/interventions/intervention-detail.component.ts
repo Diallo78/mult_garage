@@ -6,7 +6,7 @@ import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { Intervention, InterventionTask } from '../../models/intervention.model';
 import { Quote } from '../../models/quote.model';
-import { Client, Vehicle } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName, getClientPhone } from '../../models/client.model';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
 import { Personnel } from '../../models/garage.model';
 
@@ -137,12 +137,12 @@ import { Personnel } from '../../models/garage.model';
               <div>
                 <label class="text-sm font-medium text-gray-500">Client</label>
                 <p class="mt-1 text-sm text-gray-900">
-                  {{ client.firstName }} {{ client.lastName }}
+                  {{ getClientName(client) }}
                 </p>
               </div>
               <div>
                   <label class="text-sm font-medium text-gray-500">Téléphone</label>
-                <p class="mt-1 text-sm text-gray-900">{{ client.phone }}</p>
+                <p class="mt-1 text-sm text-gray-900">{{ clientPhone(client) || 'N/A' }}</p>
               </div>
               <div>
                 <label class="text-sm font-medium text-gray-500">Véhicule</label>
@@ -395,6 +395,16 @@ export class InterventionDetailComponent implements OnInit {
     if (this.interventionId) {
       await this.loadInterventionData();
     }
+  }
+
+  /** Nom d'affichage du client (personne physique ou entreprise). */
+  getClientName(client: Client): string {
+    return getClientDisplayName(client);
+  }
+
+  /** Téléphone du client (celui du contact pour une entreprise). */
+  clientPhone(client: Client): string {
+    return getClientPhone(client);
   }
 
   private async loadInterventionData(): Promise<void> {

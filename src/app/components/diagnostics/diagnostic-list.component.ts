@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Diagnostic, DiagnosticCategory } from '../../models/diagnostic.model';
-import { Client, Vehicle, Visit } from '../../models/client.model';
+import { Client, Vehicle, Visit, getClientDisplayName } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { FirestoreDatePipe } from '../../pipe/firestore-date.pipe';
@@ -303,7 +303,7 @@ export class DiagnosticListComponent implements OnInit {
     const visit = this.visits.find((v) => v.id === visitId);
     if (visit) {
       const client = this.clients.find((c) => c.id === visit.clientId);
-      return client ? `${client.firstName} ${client.lastName}` : 'Unknown';
+      return client ? getClientDisplayName(client) : 'Unknown';
     }
     return 'Unknown';
   }
