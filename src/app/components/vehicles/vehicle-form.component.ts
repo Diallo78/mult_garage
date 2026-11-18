@@ -31,44 +31,15 @@ import { UserManagementService } from '../../services/user-management.service';
               class="form-input"
               [class.border-red-500]="vehicleForm.get('clientId')?.invalid && vehicleForm.get('clientId')?.touched"
             >
-              <option value="">Sélectionner un client</option>
+              <option value="">Sélectionner un propriétaire</option>
               <option *ngFor="let client of clients" [value]="client.id">
                 {{ getClientName(client) }}
               </option>
             </select>
             <div *ngIf="vehicleForm.get('clientId')?.invalid && vehicleForm.get('clientId')?.touched" class="mt-1 text-sm text-red-600">
-              Veuillez sélectionner un client
-            </div>
-          </div>
-
-          <div>
-            <label class="form-label">Propriétaire *</label>
-
-            <select
-              formControlName="clientId"
-              class="form-input"
-              [class.border-red-500]="
-                vehicleForm.get('clientId')?.invalid &&
-                vehicleForm.get('clientId')?.touched
-              "
-            >
-              <option value="">Sélectionner un propriétaire</option>
-
-              <option *ngFor="let client of clients" [value]="client.id">
-                {{ getClientName(client) }}
-              </option>
-            </select>
-
-            <div
-              *ngIf="
-                vehicleForm.get('clientId')?.invalid &&
-                vehicleForm.get('clientId')?.touched
-              "
-              class="mt-1 text-sm text-red-600"
-            >
               Veuillez sélectionner un propriétaire
             </div>
-        </div>
+          </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
