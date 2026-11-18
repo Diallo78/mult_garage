@@ -252,25 +252,18 @@ import { AuthService } from '../../services/auth.service';
                       >
                         {{ isCompany(client) ? 'Entreprise' : 'Particulier' }}
                       </span>
-                      <div class="sm:hidden ml-auto flex space-x-2">
+                      <div class="sm:hidden ml-auto">
                         <button
-                          [routerLink]="['/clients', client.id]"
-                          class="text-primary-600 hover:text-primary-900 text-xs"
+                          type="button"
+                          (click)="toggleActionsMenu(client, $event)"
+                          class="inline-flex items-center justify-center p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                          [ngClass]="openMenuClientId === client.id ? 'bg-gray-100 text-gray-900' : ''"
+                          title="Actions"
+                          aria-label="Actions"
                         >
-                          Voir
-                        </button>
-                        <button
-                          (click)="sendClientWhatsApp(client)"
-                          class="text-green-600 hover:text-green-900 text-xs"
-                        >
-                          WhatsApp
-                        </button>
-                        <button
-                          *ngIf="this.authService.canBtnAccessInterventions"
-                          [routerLink]="['/clients', client.id, 'edit']"
-                          class="text-secondary-600 hover:text-secondary-900 text-xs"
-                        >
-                          Modifier
+                          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z" />
+                          </svg>
                         </button>
                       </div>
                     </div>
@@ -282,15 +275,6 @@ import { AuthService } from '../../services/auth.service';
                       </div>
                       <div class="mt-1">
                         {{ client.createdAt | firestoreDate | date : 'short' }}
-                      </div>
-                      <div class="mt-1">
-                        <button
-                          *ngIf="this.authService.canAccessBtnDelete"
-                          (click)="deleteClient(client)"
-                          class="text-red-600 hover:text-red-900 text-xs"
-                        >
-                          Supprimer
-                        </button>
                       </div>
                     </div>
                   </td>
@@ -324,39 +308,71 @@ import { AuthService } from '../../services/auth.service';
                   <td
                     class="px-3 py-4 whitespace-nowrap text-sm font-medium hidden sm:table-cell"
                   >
-                    <div class="flex flex-wrap gap-2">
-                      <button
-                        [routerLink]="['/clients', client.id]"
-                        class="text-primary-600 hover:text-primary-900"
-                      >
-                        Voir
-                      </button>
-                      <button
-                        (click)="sendClientWhatsApp(client)"
-                        class="text-green-600 hover:text-green-900"
-                      >
-                        WhatsApp
-                      </button>
-                      <button
-                        *ngIf="this.authService.canBtnAccessInterventions"
-                        [routerLink]="['/clients', client.id, 'edit']"
-                        class="text-secondary-600 hover:text-secondary-900"
-                      >
-                        Modifier
-                      </button>
-                      <button
-                        *ngIf="this.authService.canAccessBtnDelete"
-                        (click)="deleteClient(client)"
-                        class="text-red-600 hover:text-red-900"
-                      >
-                        Supprimer
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      (click)="toggleActionsMenu(client, $event)"
+                      class="inline-flex items-center justify-center p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                      [ngClass]="openMenuClientId === client.id ? 'bg-gray-100 text-gray-900' : ''"
+                      title="Actions"
+                      aria-label="Actions"
+                    >
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
+        </div>
+
+        <!-- Menu déroulant des actions -->
+        <div
+          *ngIf="menuClient"
+          class="fixed inset-0 z-40"
+          (click)="closeActionsMenu()"
+        ></div>
+        <div
+          *ngIf="menuClient"
+          class="fixed z-50 w-52 rounded-lg border border-gray-200 bg-white shadow-xl py-1"
+          [style.top.px]="menuTop"
+          [style.left.px]="menuLeft"
+        >
+          <a
+            [routerLink]="['/clients', menuClient.id]"
+            (click)="closeActionsMenu()"
+            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Voir le détail
+          </a>
+          <button
+            type="button"
+            (click)="onMenuWhatsApp(menuClient)"
+            class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Envoyer sur WhatsApp
+          </button>
+          <a
+            *ngIf="this.authService.canBtnAccessInterventions"
+            [routerLink]="['/clients', menuClient.id, 'edit']"
+            (click)="closeActionsMenu()"
+            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Modifier
+          </a>
+          <div
+            *ngIf="this.authService.canAccessBtnDelete"
+            class="my-1 border-t border-gray-100"
+          ></div>
+          <button
+            *ngIf="this.authService.canAccessBtnDelete"
+            type="button"
+            (click)="onMenuDelete(menuClient)"
+            class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+          >
+            Supprimer
+          </button>
         </div>
       </div>
     </div>
@@ -367,6 +383,53 @@ export class ClientListComponent implements OnInit {
   filteredClients: Client[] = [];
   searchTerm = '';
   isLoading = true;
+
+  /** Client dont le menu d'actions est ouvert. */
+  openMenuClientId: string | null = null;
+  menuClient: Client | null = null;
+  menuTop = 0;
+  menuLeft = 0;
+
+  /** Ouvre / ferme le menu déroulant des actions, positionné sous le bouton. */
+  toggleActionsMenu(client: Client, event: Event): void {
+    const trigger = event.currentTarget as HTMLElement;
+    if (this.openMenuClientId === client.id) {
+      this.closeActionsMenu();
+      return;
+    }
+
+    const rect = trigger.getBoundingClientRect();
+    const menuWidth = 208;
+    const menuHeight = 184;
+    const left = Math.max(
+      8,
+      Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8)
+    );
+    const top =
+      window.innerHeight - rect.bottom < menuHeight
+        ? Math.max(8, rect.top - menuHeight)
+        : rect.bottom + 4;
+
+    this.menuClient = client;
+    this.openMenuClientId = client.id;
+    this.menuTop = top;
+    this.menuLeft = left;
+  }
+
+  closeActionsMenu(): void {
+    this.openMenuClientId = null;
+    this.menuClient = null;
+  }
+
+  onMenuWhatsApp(client: Client): void {
+    this.closeActionsMenu();
+    this.sendClientWhatsApp(client);
+  }
+
+  onMenuDelete(client: Client): void {
+    this.closeActionsMenu();
+    this.deleteClient(client);
+  }
 
   constructor(
     private readonly garageDataService: GarageDataService,
