@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Diagnostic } from '../../models/diagnostic.model';
-import { Client, Vehicle, Visit, getClientDisplayName, getClientPhone, getClientEmail } from '../../models/client.model';
+import { Client, Vehicle, Visit, getClientDisplayName, getClientPhone, getClientEmail, getClientPrintInfo } from '../../models/client.model';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { PDFService } from '../../services/pdf.service';
@@ -361,10 +361,7 @@ export class DiagnosticDetailComponent implements OnInit {
           },
         ],
         clientName: this.getClientName(),
-        clientLines: [
-          this.clientPhone ? `Tél. : ${this.clientPhone}` : '',
-          this.clientEmail ? `E-mail : ${this.clientEmail}` : '',
-        ].filter((line) => !!line),
+        clientLines: this.client ? getClientPrintInfo(this.client).lines : [],
         vehicleLines: [
           `${this.vehicle.brand} ${this.vehicle.model}`,
           this.vehicle.licensePlate

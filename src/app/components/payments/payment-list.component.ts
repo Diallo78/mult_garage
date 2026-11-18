@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 import { GarageDataService } from '../../services/garage-data.service';
 import { NotificationService } from '../../services/notification.service';
 import { Invoice } from '../../models/invoice.model';
-import { Client, getClientDisplayName } from '../../models/client.model';
+import { Client, getClientDisplayName, getClientPrintInfo } from '../../models/client.model';
 import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 import { PDFService } from '../../services/pdf.service';
 import { DateFonction } from '../../services/fonction/date-fonction';
@@ -337,6 +337,7 @@ export class PaymentListComponent implements OnInit {
           ...payment,
           invoiceId: invoice.id,
           invoiceNumber: invoice.invoiceNumber,
+          clientId: invoice.clientId,
           clientName,
         });
       });
@@ -430,6 +431,11 @@ export class PaymentListComponent implements OnInit {
       const dateFonctio = pipeDate.transform(payment?.date);
       const paymentDate = new Date(dateFonctio);
 
+      const client = this.clients.find((c) => c.id === payment?.clientId);
+      const clientInfo = client
+        ? getClientPrintInfo(client)
+        : { name: payment?.clientName || '', lines: [] as string[] };
+
       const data: PrintDocumentData = {
         documentType: 'paymentReceipt',
         documentNumber: payment?.invoiceNumber || '',
@@ -439,7 +445,8 @@ export class PaymentListComponent implements OnInit {
           { label: 'Mode de paiement', value: payment?.method || '' },
           { label: 'Référence', value: payment?.reference || '' },
         ],
-        clientName: payment?.clientName || '',
+        clientName: clientInfo.name,
+        clientLines: clientInfo.lines,
         amountToConvert: Number(payment?.amount) || 0,
         totals: [
           {

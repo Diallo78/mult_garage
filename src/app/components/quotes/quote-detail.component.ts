@@ -10,7 +10,7 @@ import {
   PrintRendererService,
 } from '../../services/print-renderer.service';
 import { Quote } from '../../models/quote.model';
-import { Client, Vehicle, getClientDisplayName, getClientPhone, getClientEmail, getClientAddress } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName, getClientPhone, getClientEmail, getClientPrintInfo } from '../../models/client.model';
 import {
   FirestoreDatePipe,
   FirestoreDatePipeTS,
@@ -1061,6 +1061,7 @@ export class QuoteDetailComponent implements OnInit {
       const template = await this.printTemplateService.getTemplate('quote');
       const garage = await this.printRendererService.loadGarageInfo();
       const currency = garage?.currency ?? 'GNF';
+      const clientInfo = getClientPrintInfo(this.client);
 
       const data: PrintDocumentData = {
         documentType: 'quote',
@@ -1070,12 +1071,8 @@ export class QuoteDetailComponent implements OnInit {
           { label: "Valable jusqu'au", value: this.formatDate(this.quote.validUntil) },
           { label: 'Statut', value: this.quote.status },
         ],
-        clientName: getClientDisplayName(this.client),
-        clientLines: [
-          getClientPhone(this.client) ? `Tél. : ${getClientPhone(this.client)}` : '',
-          getClientEmail(this.client) ? `E-mail : ${getClientEmail(this.client)}` : '',
-          getClientAddress(this.client) ? `Adresse : ${getClientAddress(this.client)}` : '',
-        ].filter((line) => !!line),
+        clientName: clientInfo.name,
+        clientLines: clientInfo.lines,
         vehicleLines: [
           `${this.vehicle.brand} ${this.vehicle.model}`,
           this.vehicle.licensePlate

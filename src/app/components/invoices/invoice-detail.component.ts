@@ -10,7 +10,7 @@ import {
   PrintRendererService,
 } from '../../services/print-renderer.service';
 import { Invoice } from '../../models/invoice.model';
-import { Client, Vehicle, getClientDisplayName, getClientPhone, getClientEmail } from '../../models/client.model';
+import { Client, Vehicle, getClientDisplayName, getClientPhone, getClientEmail, getClientPrintInfo } from '../../models/client.model';
 import { FirestoreDatePipe, FirestoreDatePipeTS } from '../../pipe/firestore-date.pipe';
 
 @Component({
@@ -845,19 +845,7 @@ export class InvoiceDetailComponent implements OnInit {
 
   /** Coordonnées du client pour l'impression. */
   private getClientLines(): string[] {
-    if (!this.client) return [];
-    if (this.client.clientType === 'company') {
-      return [
-        this.client.companyAddress ? `Adresse : ${this.client.companyAddress}` : '',
-        this.client.contactPhone ? `Tél. : ${this.client.contactPhone}` : '',
-        this.client.contactEmail ? `E-mail : ${this.client.contactEmail}` : '',
-      ].filter((line) => !!line);
-    }
-    return [
-      this.client.phone ? `Tél. : ${this.client.phone}` : '',
-      this.client.email ? `E-mail : ${this.client.email}` : '',
-      this.client.address ? `Adresse : ${this.client.address}` : '',
-    ].filter((line) => !!line);
+    return this.client ? getClientPrintInfo(this.client).lines : [];
   }
 
   /** Convertit une date Firestore en date lisible (fr-FR). */
