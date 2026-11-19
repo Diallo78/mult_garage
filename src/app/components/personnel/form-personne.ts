@@ -316,6 +316,25 @@ export class PersonnelFormComponent implements OnInit {
     }
   }
 
+  /**
+   * Convertit une valeur de date Firestore (Timestamp, objet {seconds}, Date,
+   * chaîne ISO...) en Date valide. Retombe sur la date du jour si invalide.
+   */
+  private toValidDate(value: any): Date {
+    if (!value) return new Date();
+
+    let date: Date;
+    if (typeof value.toDate === 'function') {
+      date = value.toDate();
+    } else if (typeof value.seconds === 'number') {
+      date = new Date(value.seconds * 1000);
+    } else {
+      date = new Date(value);
+    }
+
+    return isNaN(date.getTime()) ? new Date() : date;
+  }
+
   private async loadPersonnel(): Promise<void> {
     try {
       const personnel = await this.garageDataService.getById<Personnel>('personnel', this.personnelId!);
@@ -326,7 +345,7 @@ export class PersonnelFormComponent implements OnInit {
           email: personnel.email,
           phone: personnel.phone,
           role: personnel.role,
-          hireDate: new Date(personnel.hireDate).toISOString().split('T')[0],
+          hireDate: this.toValidDate(personnel.hireDate).toISOString().split('T')[0],
           salary: personnel.salary,
           isActive: personnel.isActive
         });

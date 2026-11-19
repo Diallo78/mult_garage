@@ -604,6 +604,25 @@ export class QuoteFormNewComponent implements OnInit {
     })();
   }
 
+  /**
+   * Convertit une valeur de date Firestore (Timestamp, objet {seconds}, Date,
+   * chaîne ISO...) en Date valide. Retombe sur la date du jour si invalide.
+   */
+  private toValidDate(value: any): Date {
+    if (!value) return new Date();
+
+    let date: Date;
+    if (typeof value.toDate === 'function') {
+      date = value.toDate();
+    } else if (typeof value.seconds === 'number') {
+      date = new Date(value.seconds * 1000);
+    } else {
+      date = new Date(value);
+    }
+
+    return isNaN(date.getTime()) ? new Date() : date;
+  }
+
   private async loadExistingQuote(id: string): Promise<void> {
     this.isLoading = true;
     try {
@@ -613,8 +632,9 @@ export class QuoteFormNewComponent implements OnInit {
           await this.loadVehiclesForClient(this.existingQuote.clientId);
         }
 
-        const validUntilDate = this.existingQuote.validUntil ? new Date(this.existingQuote.validUntil) : new Date();
-        const formattedValidUntil = validUntilDate.toISOString().split('T')[0];
+        const formattedValidUntil = this.toValidDate(this.existingQuote.validUntil)
+          .toISOString()
+          .split('T')[0];
 
         this.quoteForm.patchValue({
           quoteNumber: this.existingQuote.quoteNumber,
