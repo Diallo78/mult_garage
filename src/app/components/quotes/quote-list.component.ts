@@ -536,4 +536,28 @@ export class QuoteListComponent implements OnInit {
       this.isUpdatingVisibility = false;
     }
   }
+
+  // --- Enregistrement du texte d'engagement accepté par le client ---
+  /**
+   * Enregistre le texte intégral de l'engagement auquel le client a donné son accord
+   * lors de l'acceptation électronique du devis.
+   * Ne modifie pas updateStatus() ni sa logique de notification.
+   */
+  async saveAcceptanceText(quoteId: string, acceptanceText: string): Promise<void> {
+    if (!quoteId) return;
+
+    try {
+      await this.garageDataService.update('quotes', quoteId, { acceptanceText });
+
+      // Mise à jour locale si le devis est présent dans la liste
+      const quote = this.filteredQuotes.find((q) => q.id === quoteId);
+      if (quote) {
+        quote.acceptanceText = acceptanceText;
+      }
+    } catch (error) {
+      this.notificationService.showError(
+        "Échec de l'enregistrement du texte d'engagement : " + error
+      );
+    }
+  }
 }

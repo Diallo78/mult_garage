@@ -41,6 +41,9 @@ export interface Quote {
 
     // --- Montant net à payer ---
     netToPay?: number;
+
+    // --- Acceptation et engagement du client ---
+    acceptanceText?: string;
   }
 
   export interface QuoteItem {

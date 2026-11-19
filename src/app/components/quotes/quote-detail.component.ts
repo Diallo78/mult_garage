@@ -421,7 +421,7 @@ import { FormsModule } from '@angular/forms';
             @if(this.authService.isClient){
             <div class="flex gap-2 sm:gap-3">
               <button
-                (click)="updateStatus('Accepted')"
+                (click)="openAcceptanceModal()"
                 class="btn-primary w-full sm:w-auto"
                 *ngIf="quote.status === 'Pending'"
               >
@@ -830,6 +830,62 @@ import { FormsModule } from '@angular/forms';
         </div>
       </div>
 
+      <!-- Acceptance / Engagement Modal -->
+      <div
+        *ngIf="showAcceptanceModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-2 sm:p-4"
+      >
+        <div
+          class="bg-white rounded-lg shadow-lg w-full max-w-2xl p-4 sm:p-6 animate-slide-in-right max-h-[90vh] overflow-y-auto"
+        >
+          <h2 class="text-lg font-semibold mb-3 text-gray-900">
+            Acceptation du devis N° {{ quote?.quoteNumber }}
+          </h2>
+
+          <div
+            class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 text-sm text-gray-700 leading-relaxed"
+          >
+            {{ acceptanceEngagementText }}
+          </div>
+
+          <label class="flex items-start gap-2 text-sm text-gray-700 mb-4 cursor-pointer">
+            <input
+              type="checkbox"
+              [(ngModel)]="acceptanceConfirmed"
+              class="mt-0.5 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+            />
+            <span>
+              J'ai lu et j'accepte les conditions de l'engagement ci-dessus. Je confirme mon accord sur l'intégralité du devis.
+            </span>
+          </label>
+
+          <div
+            *ngIf="acceptanceError"
+            class="mb-4 text-sm text-red-600"
+          >
+            {{ acceptanceError }}
+          </div>
+
+          <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+            <button
+              class="btn-secondary text-xs sm:text-sm"
+              (click)="cancelAcceptanceModal()"
+              [disabled]="isAccepting"
+            >
+              Annuler
+            </button>
+            <button
+              class="btn-primary text-xs sm:text-sm"
+              (click)="submitAcceptance()"
+              [disabled]="isAccepting || !acceptanceConfirmed"
+            >
+              <span *ngIf="isAccepting" class="mr-2">Enregistrement...</span>
+              Confirmer l'acceptation
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Visibility Confirmation Modal -->
       <div
         *ngIf="showVisibilityModal"
@@ -904,6 +960,14 @@ export class QuoteDetailComponent implements OnInit {
   showRejectionModal = false;
   rejectionTitle = '';
   rejectionMessage = '';
+
+  // =============MODAL ACCEPTATION / ENGAGEMENT==============
+  showAcceptanceModal = false;
+  acceptanceConfirmed = false;
+  isAccepting = false;
+  acceptanceError = '';
+  /** Texte intégral de l'engagement présenté au client et conservé dans le devis. */
+  acceptanceEngagementText = `En acceptant ce devis, je reconnais avoir pris connaissance des prestations, des tarifs et des conditions indiqués ci-dessus. Je m'engage à régler le montant total du devis selon les modalités convenues avec le garage. Toute prestation additionnelle fera l'objet d'un devis complémentaire. Je comprends que l'acceptation de ce devis engage ma responsabilité et vaut accord ferme et définitif.`;
 
   // =============MODAL VISIBILITÉ==============
   showVisibilityModal = false;
@@ -1000,6 +1064,55 @@ export class QuoteDetailComponent implements OnInit {
       this.notificationService.showError(
         `Failed to ${status.toLowerCase()} quote ${error}`
       );
+    }
+  }
+
+  // =============== MODAL ACCEPTATION ===========
+  openAcceptanceModal(): void {
+    this.acceptanceConfirmed = false;
+    this.acceptanceError = '';
+    this.showAcceptanceModal = true;
+  }
+
+  cancelAcceptanceModal(): void {
+    this.showAcceptanceModal = false;
+    this.acceptanceConfirmed = false;
+    this.acceptanceError = '';
+  }
+
+  /**
+   * Enregistre le texte d'engagement accepté par le client, puis délègue
+   * la transition de statut et la notification à updateStatus() (intacte).
+   * Ne modifie pas la logique de updateStatus().
+   */
+  async submitAcceptance(): Promise<void> {
+    if (!this.quote || !this.quoteId) return;
+
+    if (!this.acceptanceConfirmed) {
+      this.acceptanceError = "Vous devez cocher la case pour confirmer votre accord.";
+      return;
+    }
+
+    this.acceptanceError = '';
+    this.isAccepting = true;
+
+    try {
+      // Enregistrement séparé du texte d'engagement accepté
+      await this.garageDataService.update('quotes', this.quoteId, {
+        acceptanceText: this.acceptanceEngagementText,
+      });
+
+      if (this.quote) {
+        this.quote.acceptanceText = this.acceptanceEngagementText;
+      }
+
+      // On ferme le modal puis on délègue la mise à jour du statut + notification
+      this.showAcceptanceModal = false;
+      await this.updateStatus('Accepted');
+    } catch (error) {
+      this.acceptanceError = "Échec de l'enregistrement de l'acceptation : " + error;
+    } finally {
+      this.isAccepting = false;
     }
   }
 
